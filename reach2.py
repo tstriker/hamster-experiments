@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
 """
- * Follow 3. 
+ * Reach 2. 
  * Based on code from Keith Peters (www.bit-101.com). 
  * 
  * The arm follows the position of the mouse by
