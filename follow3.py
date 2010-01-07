@@ -8,7 +8,7 @@
  * each segment to the next is calculated with atan2() and the
  * position of the next is calculated with sin() and cos().
  *
- Ported from processing by Toms Baugis <toms.baugis@gmail.com>, 2010.
+ Ported from processing and spiffed up a little by Toms Baugis <toms.baugis@gmail.com>, 2010.
 """
  
 import gtk
@@ -58,9 +58,18 @@ class Canvas(graphics.Area):
         
         self.segments = []
 
-        parts = 20
+        parts = 50
         for i in range(parts):
-            self.segments.append(Segment(0, 0, "#666666"))
+            # for segment initial positions we use sinus. could as well
+            # just set 0,0.
+            segment = Segment(500 - (i / float(parts)) * 500,
+                              math.sin((i / float(parts)) * 30) * 150 + 150,
+                              "#666666")
+            if self.segments:
+                segment.drag(self.segments[-1].x, self.segments[-1].y)
+            self.segments.append(segment)
+            
+            
 
         self.connect("motion_notify_event", self.on_mouse_move)        
 
