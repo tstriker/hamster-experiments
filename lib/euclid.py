@@ -292,6 +292,14 @@ class Vector2:
         d = 2 * (self.x * normal.x + self.y * normal.y)
         return Vector2(self.x - d * normal.x,
                        self.y - d * normal.y)
+    
+    def limit(self, max_magnitude):
+        if self.magnitude() > max_magnitude:
+            self.normalize()
+            self *= max_magnitude
+            
+    def heading(self):
+        return math.atan2(self.y, self.x)
 
 class Vector3:
     __slots__ = ['x', 'y', 'z']
