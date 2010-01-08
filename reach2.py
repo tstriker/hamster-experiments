@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
+# Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
+
 """
  * Reach 2. 
  * Based on code from Keith Peters (www.bit-101.com). 
@@ -7,7 +9,7 @@
  * The arm follows the position of the mouse by
  * calculating the angles with atan2(). 
  *
- Ported from processing and spiffed up a little by Toms Baugis <toms.baugis@gmail.com>, 2010.
+ Ported from processing (http://processing.org/) examples.
 """
  
 import gtk
