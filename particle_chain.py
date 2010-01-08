@@ -2,13 +2,12 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
-import gtk
+import colorsys
 
-from hamster import pytweener
+import gtk
 from hamster import graphics
 from hamster.pytweener import Easing
 
-import colorsys
 
 class TailParticle(object):
     def __init__(self, x, y, color, follow = None):

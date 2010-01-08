@@ -11,10 +11,8 @@
 """
  
 import gtk
-
-from hamster import pytweener
-from hamster import graphics
-from hamster.pytweener import Easing
+from lib import graphics
+from lib.pytweener import Easing
 
 import math
 

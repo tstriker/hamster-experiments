@@ -13,15 +13,11 @@
  Ported from processing (http://processing.org/) examples.
 """
  
-import gtk
-
-from hamster import pytweener
-from hamster import graphics
-from hamster.pytweener import Easing
-
 import math
-import colorsys
+import gtk
+from lib import graphics
 
+PARTS = 50
 SEGMENT_LENGTH = 20
 
 class Segment(object):
@@ -60,12 +56,11 @@ class Canvas(graphics.Area):
         
         self.segments = []
 
-        parts = 50
-        for i in range(parts):
+        for i in range(PARTS):
             # for segment initial positions we use sinus. could as well
             # just set 0,0.
-            segment = Segment(500 - (i / float(parts)) * 500,
-                              math.sin((i / float(parts)) * 30) * 150 + 150,
+            segment = Segment(500 - (i / float(PARTS)) * 500,
+                              math.sin((i / float(PARTS)) * 30) * 150 + 150,
                               "#666666")
             if self.segments:
                 segment.drag(self.segments[-1].x, self.segments[-1].y)

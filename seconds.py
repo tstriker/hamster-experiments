@@ -6,15 +6,11 @@
  Nothing, but wiggly seconds (especially when it gets to the top-right quarter).
 """
  
-import gtk
-
-from hamster import pytweener
-from hamster import graphics
-from hamster.pytweener import Easing
-
 import math
-import colorsys
 import datetime as dt
+
+import gtk
+from lib import graphics
 
 SEGMENT_LENGTH = 15
 SEGMENTS = 10

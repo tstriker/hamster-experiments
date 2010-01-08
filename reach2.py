@@ -12,14 +12,9 @@
  Ported from processing (http://processing.org/) examples.
 """
  
-import gtk
-
-from hamster import pytweener
-from hamster import graphics
-from hamster.pytweener import Easing
-
 import math
-import colorsys
+import gtk
+from lib import graphics
 
 SEGMENT_LENGTH = 25
 
