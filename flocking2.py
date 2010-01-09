@@ -3,14 +3,7 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
- * Flocking 
- * by Daniel Shiffman.  
- * 
- * An implementation of Craig Reynold's Boids program to simulate
- * the flocking behavior of birds. Each boid steers itself based on 
- * rules of avoidance, alignment, and coherence.
-
- Ported from processing (http://processing.org/) examples.
+ Parts of code ported from opensteer (http://sourceforge.net/projects/opensteer/)
 """
  
 import gtk
@@ -80,8 +73,7 @@ class Boid(object):
         self.acceleration += separation
         self.acceleration += alignment
         self.acceleration += cohesion
-  
-  
+
     def update(self):
         self.velocity += self.acceleration
         self.velocity.limit(self.max_speed)
@@ -202,7 +194,7 @@ class Canvas(graphics.Area):
     def on_expose(self):
         self.context.set_line_width(1)
 
-        if len(self.flock) < 40:
+        if len(self.flock) < 80:
             self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
             
         
