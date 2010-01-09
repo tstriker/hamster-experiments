@@ -181,27 +181,14 @@ class Boid(object):
 class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
-        self.segments = []
-        self.connect("motion_notify_event", self.on_mouse_move)
-
         self.flock = []
-        
-        for i in range(40):
-            self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
-
-
-    def on_mouse_move(self, widget, event):
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
-
 
     def on_expose(self):
         self.context.set_line_width(0.5)
         self.set_color("#AA00FF")
+
+        if len(self.flock) < 40:
+            self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
 
         for boid in self.flock:
             boid.run(self.flock, self)
