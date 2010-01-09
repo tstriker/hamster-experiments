@@ -25,6 +25,8 @@ from lib.euclid import Vector2, Point2
 from lib.proximity import LQProximityStore
 
 class Boid(object):
+    __slots__ = ['acceleration', 'velocity', 'location', 'max_speed', 'max_force']
+
     radius = 3 # boid radius
 
     def __init__(self, location, max_speed, max_force):
@@ -38,24 +40,6 @@ class Boid(object):
     def run(self, flock_boids):
         self.flock(flock_boids)
         self.update()
-        self.borders()
-
-
-    def borders(self):
-        # wrapping around
-        if self.location.x < -self.radius:
-            self.location.x = 600 + self.radius
-
-        if self.location.y < -self.radius:
-            self.location.y = 400 + self.radius
-
-        if self.location.x > 600 + self.radius:
-            self.location.x = -self.radius
-
-        if self.location.y > 400 + self.radius:
-            self.location.y = -self.radius
-            
-
 
     def draw(self, area):
         area.context.save()
@@ -70,6 +54,12 @@ class Boid(object):
         area.context.line_to(0, -self.radius*2)
         
         area.context.restore()
+        
+        #area.set_color("#FF0000")
+        #area.context.move_to(self.location.x, self.location.y)
+        #area.context.line_to(self.location.x + self.velocity.x * 20, self.location.y + self.velocity.y * 20)
+        #area.context.stroke()
+
 
 
     def flock(self, boids):
@@ -179,7 +169,8 @@ class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
         self.segments = []
-        self.connect("motion_notify_event", self.on_mouse_move)
+
+        self.connect("mouse-click", self.on_mouse_click)
         
         self.proximity_radius = 50
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), self.proximity_radius)
@@ -188,71 +179,38 @@ class Canvas(graphics.Area):
         
         self.distances = 0
         
-        for i in range(100):
-            self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
-            
-        self.special = self.flock[0] # our favourite boid
-        
         self.frame = 0
 
 
-    def on_mouse_move(self, widget, event):
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
+    def wrap(self, boid):
+        "wraps boid around the edges (teleportation)"
+        if boid.location.x < -boid.radius:
+            boid.location.x = self.width + boid.radius
 
+        if boid.location.y < -boid.radius:
+            boid.location.y = self.height + boid.radius
+
+        if boid.location.x > self.width + boid.radius:
+            boid.location.x = -boid.radius
+
+        if boid.location.y > self.height + boid.radius:
+            boid.location.y = -boid.radius
+
+    def on_mouse_click(self, widget, coords):
+        self.flock.append(Boid(Vector2(*coords), 1, 1))
 
     def on_expose(self):
-        self.context.set_line_width(0.5)
-        
-        """
-        #highlight quadrants
-        from bisect import bisect
-        point = self.special
-        radius = 40
-        min_x = bisect(self.proximities.grid_x, point.location.x - radius)
-        min_y = bisect(self.proximities.grid_y, point.location.y - radius)
-        max_x = bisect(self.proximities.grid_x, point.location.x + radius)
-        max_y = bisect(self.proximities.grid_y, point.location.y + radius)
-        
+        self.context.set_line_width(1)
 
-        radius = self.proximity_radius
-        for x in range(min_x, max_x+1):
-            for y in range(min_y, max_y+1):
-                if self.proximities.positions.get((x, y)):
-                    self.fill_area(x * radius-radius, y * radius-radius, radius, radius, "#FF00FF")
-                else:
-                    self.fill_area(x * radius-radius, y * radius-radius, radius, radius, "#AAAAAA")
-
-        #print len(self.proximities.find_neighbours(self.special, 40))
-        """
-        
-
-        #draw the grid
-        self.set_color("#FFFFFF")
-        for x in range(self.proximities.point1.x, self.proximities.point2.x, self.proximities.stride):
-            self.context.move_to(x+0.5, self.proximities.point1.y)
-            self.context.line_to(x+0.5, self.proximities.point2.y)
-
-        for y in range(self.proximities.point1.y, self.proximities.point2.y, self.proximities.stride):
-            self.context.move_to(self.proximities.point1.x, y + 0.5)
-            self.context.line_to(self.proximities.point2.x, y + 0.5)
-        self.context.stroke()
-
-        
-
-                
+        if len(self.flock) < 40:
+            self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
+            
         
         self.set_color("#AA00FF")
 
-        
-
         for boid in self.flock:
             neighbours = []
-            if self.frame % 1 == 0:
+            if self.frame % 2 == 0:
                 neighbours = self.proximities.find_neighbours(boid, 50)
 
             #for boid2,d in neighbours:
@@ -260,6 +218,9 @@ class Canvas(graphics.Area):
             #    self.context.line_to(boid2.location.x, boid2.location.y)
 
             boid.run(neighbours)
+            self.wrap(boid)
+
+
             boid.draw(self)
             
 
@@ -270,7 +231,6 @@ class Canvas(graphics.Area):
         self.context.stroke()
 
         self.redraw_canvas()
-
 
 class BasicWindow:
     def __init__(self):
