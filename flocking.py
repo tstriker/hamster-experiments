@@ -3,11 +3,14 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
- Move the mouse across the screen to change the position of the rectangles.
- The positions of the mouse are recorded into a list and played back every frame.
- Between each frame, the newest value are added to the start of the list.
- 
- Ported from processing.js (http://processingjs.org/learning/basic/storinginput)
+ * Flocking 
+ * by Daniel Shiffman.  
+ * 
+ * An implementation of Craig Reynold's Boids program to simulate
+ * the flocking behavior of birds. Each boid steers itself based on 
+ * rules of avoidance, alignment, and coherence.
+
+    See flocking2 for better performance.
 """
  
 import gtk

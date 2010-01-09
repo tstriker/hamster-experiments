@@ -3,7 +3,13 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
+ * Flocking 2 - based on flocking and added the letuce clustering (or something)
+ * An implementation of Craig Reynold's Boids program to simulate
+ * the flocking behavior of birds. Each boid steers itself based on 
+ * rules of avoidance, alignment, and coherence.
+ * 
  Parts of code ported from opensteer (http://sourceforge.net/projects/opensteer/)
+ Other parts ported from processing (http://processing.org)
 """
  
 import gtk
