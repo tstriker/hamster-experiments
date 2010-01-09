@@ -56,6 +56,8 @@ class Area(gtk.DrawingArea):
         "configure_event": "override",
         "mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "button-release": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+        "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+        "mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
     }
 
     def __init__(self):
@@ -66,6 +68,7 @@ class Area(gtk.DrawingArea):
                         | gtk.gdk.BUTTON_RELEASE_MASK
                         | gtk.gdk.POINTER_MOTION_MASK
                         | gtk.gdk.POINTER_MOTION_HINT_MASK)
+        self.connect("button_press_event", self.__on_button_press)
         self.connect("button_release_event", self.__on_button_release)
         self.connect("motion_notify_event", self.__on_mouse_move)
         self.connect("leave_notify_event", self.__on_mouse_out)
@@ -81,6 +84,8 @@ class Area(gtk.DrawingArea):
         self.framerate = 80
         self.last_frame_time = None
         self.__animating = False
+        
+        self._mouse_drag = (None, None)
 
     def on_expose(self):
         """ on_expose event is where you hook in all your drawing
@@ -211,16 +216,18 @@ class Area(gtk.DrawingArea):
 
     """ mouse events """
     def __on_mouse_move(self, area, event):
-        if not self.mouse_regions:
-            return
-
         if event.is_hint:
             x, y, state = event.window.get_pointer()
         else:
             x = event.x
             y = event.y
             state = event.state
-        
+            
+        self.emit("mouse-move", (x, y))
+
+        if not self.mouse_regions:
+            return
+
         mouse_regions = []
         for region in self.mouse_regions:
             if region[0] < x < region[2] and region[1] < y < region[3]:
@@ -240,13 +247,26 @@ class Area(gtk.DrawingArea):
         self.__prev_mouse_regions = None
         self.emit("mouse-over", [])
 
-    def __on_button_release(self, area, event):
-        if not self.mouse_regions:
-            return
 
+    def __on_button_press(self, area, event):
         x = event.x
         y = event.y
         state = event.state
+        self._mouse_drag = (x, y)
+
+    def __on_button_release(self, area, event):
+        x = event.x
+        y = event.y
+        state = event.state
+        
+        drag_distance = 5
+        if self._mouse_drag and (self._mouse_drag[0] - x) ** 2 + (self._mouse_drag[1] - y) ** 2 < drag_distance ** 2:
+            #if the drag is less than the drag distance, then we have a click
+            self._mouse_drag = None
+            self.emit("mouse-click", (x,y))
+
+        if not self.mouse_regions:
+            return
         
         mouse_regions = []
         for region in self.mouse_regions:
@@ -255,8 +275,6 @@ class Area(gtk.DrawingArea):
 
         if mouse_regions:
             self.emit("button-release", mouse_regions)
-
- 
 
 
 """ simple example """
