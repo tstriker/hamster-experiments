@@ -68,19 +68,13 @@ class Canvas(graphics.Area):
             
             
 
-        self.connect("motion_notify_event", self.on_mouse_move)        
+        self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, widget, event):
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
+    def on_mouse_move(self, widget, coords):
+        x, y = coords
         
         self.segments[0].drag(x, y)
-        
         for prev, segment in zip(self.segments, self.segments[1:]):
             segment.drag(prev.x, prev.y)
 

@@ -5,8 +5,8 @@
 import colorsys
 
 import gtk
-from hamster import graphics
-from hamster.pytweener import Easing
+from lib import graphics
+from lib.pytweener import Easing
 
 
 class TailParticle(object):
@@ -39,19 +39,14 @@ class Canvas(graphics.Area):
             
             self.tail.append(TailParticle(10, 10, color, previous))
 
-        self.connect("motion_notify_event", self.on_mouse_move)        
+        self.connect("mouse-move", self.on_mouse_move)        
         self.mouse_moving = False
 
 
-    def on_mouse_move(self, widget, event):
+    def on_mouse_move(self, area, coords):
         # oh i know this should not be performed using tweeners, but hey - a demo!
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
-        
+        x, y = coords
+
         for particle in reversed(self.tail):
             new_x, new_y = x, y
             if particle.follow:

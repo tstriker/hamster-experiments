@@ -36,16 +36,11 @@ class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
         self.segments = []
-        self.connect("motion_notify_event", self.on_mouse_move)        
+        self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, widget, event):
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
+    def on_mouse_move(self, widget, coords):
+        x, y = coords
 
         segment = Segment(x, y, "#666666", 50)
         self.tweener.addTween(segment, tweenType = Easing.Cubic.easeOut, tweenTime=1.5, width = 0)

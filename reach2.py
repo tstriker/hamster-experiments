@@ -60,16 +60,11 @@ class Canvas(graphics.Area):
         for i in range(parts):
             self.segments.append(Segment(0, 0, "#666666", i))
             
-        self.connect("motion_notify_event", self.on_mouse_move)        
+        self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, widget, event):
-        if event.is_hint:
-            x, y, state = event.window.get_pointer()
-        else:
-            x = event.x
-            y = event.y
-            state = event.state
+    def on_mouse_move(self, area, coords):
+        x, y = coords
 
         def get_angle(segment, x, y):
             dx = x - segment.x
