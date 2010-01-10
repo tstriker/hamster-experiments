@@ -32,7 +32,7 @@ from random import random, randint
 from copy import deepcopy
 
 EPSILON = 0.00001
-ALPHA = 0.1
+ALPHA = 0.2
 
 class Node(object):
     def __init__(self, x, y):
@@ -42,13 +42,6 @@ class Node(object):
         self.vy = 0
         self.fixed = False #to pin down
 
-    
-    def draw(self, area):
-        area.context.set_line_width(0.5)
-        area.set_color("#aaaaaa")
-        area.context.arc(self.x, self.y, 5, 0, 2.0 * math.pi)
-        area.context.fill()
-        
 
 class Canvas(graphics.Area):
     def __init__(self):
@@ -59,40 +52,54 @@ class Canvas(graphics.Area):
         self.node_buffer = []
         self.edge_buffer = []
         
-        self.max_iterations = 1000
+        self.max_iterations = 300
         self.iteration = 0
         self.force_constant = 0
+        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("button-press", self.on_mouse_button_press)
+        
+        self.mouse_node = None
+        self.prev_mouse_node = None
 
+    def init_calculations(self):
+        self.iteration = 0
+        self.force_constant = 0.7 *  math.sqrt(self.height * self.width / len(self.nodes))
+        self.temperature = self.width / float(10)
 
     def on_expose(self):
         if not self.nodes:
-            for i in range(20):
+            for i in range(50):
                 x, y = self.width / 2, self.height / 2
                 scale_w = ALPHA * x;
                 scale_h = ALPHA * y
 
-                self.nodes.append(Node(x + random() * scale_w,
-                                       y + random() * scale_h))
+                self.nodes.append(Node(x + (random() - 0.5) * 2 * scale_w,
+                                       y + (random() - 0.5) * 2 * scale_h))
 
             self.node_buffer = deepcopy(self.nodes) # copy
                 
             node_count = len(self.nodes) - 1
             
-            for i in range(20):  #connect random nodes
+            for i in range(30):  #connect random nodes
                 from_index = randint(0, node_count)
                 to_index = randint(0, node_count)
 
                 self.edges.append((self.nodes[from_index], self.nodes[to_index]))
                 self.edge_buffer.append((self.node_buffer[from_index], self.node_buffer[to_index]))
-
-            self.force_constant = 0.7 *  math.sqrt(self.height * self.width / float(len(self.nodes)));
-            self.temperature = self.width / float(10)
-
-
+            
+            self.init_calculations()
 
         # first draw        
-        for node in self.node_buffer:
-            node.draw(self)
+        self.context.set_line_width(0.5)
+        if self.iteration < self.max_iterations:
+            self.set_color("#aaaaaa")
+        else:
+            self.set_color("#999999")
+
+        for i, node in enumerate(self.node_buffer):
+            self.draw_node(node)
+            self.register_mouse_region(node.x - 5, node.y - 5, node.x + 5, node.y + 5, i)
+            self.context.fill()
 
         for edge in self.edge_buffer:
             self.context.move_to(edge[0].x, edge[0].y)
@@ -102,7 +109,7 @@ class Canvas(graphics.Area):
 
 
         # then recalculate positions
-        if self.iteration < self.max_iterations:
+        if self.iteration <= self.max_iterations:
             for node in self.nodes:
                 if not node.fixed:
                     self.repulsion(node)
@@ -113,14 +120,14 @@ class Canvas(graphics.Area):
 
             for edge in self.edges:
                 self.atraction(edge)
-
     
             for node in self.nodes:
-                self.position(node)
+                if not node.fixed:
+                    self.position(node)
     
             self.cooldown()
             
-            # draw every now and then
+            # update image every x iterations
             if self.iteration % 10 == 0 or self.iteration == self.max_iterations:
                 for i, node in enumerate(self.node_buffer):
                     self.tweener.killTweensOf(node)
@@ -134,6 +141,10 @@ class Canvas(graphics.Area):
             self.redraw_canvas()
 
 
+    def draw_node(self, node):
+        self.context.arc(node.x, node.y, 5, 0, 2.0 * math.pi)
+
+        
     def repulsion(self, node):
         """calculate repulsion for the node"""
         node.vx, node.vy = 0, 0 # reset velocity back to zero
@@ -170,7 +181,7 @@ class Canvas(graphics.Area):
         dy = node.y - self.height / 2
         
         distance = max(EPSILON, math.sqrt(dx**2 + dy**2))
-        force = distance **2 / self.force_constant * 0.8
+        force = distance **2 / self.force_constant * 0.5
 
         node.vx -= dx / distance * force
         node.vy -= dy / distance * force
@@ -199,9 +210,33 @@ class Canvas(graphics.Area):
 
     def cooldown(self):
         self.temperature = self.temperature * (1.0 - self.iteration / float(self.max_iterations))
-        
 
 
+    # just for kicks - mouse events
+    def on_mouse_button_press(self, area, over_regions):
+        if self.prev_mouse_node is not None:
+            self.nodes[self.prev_mouse_node].fixed = False
+        if over_regions:
+            self.mouse_node = over_regions[0]
+        else:
+            self.mouse_node = None
+
+    def on_mouse_move(self, area, coords, state):
+        if self.mouse_node is not None:  #checking for none as there is the node zero
+            if gtk.gdk.BUTTON1_MASK & state:
+                # dragging around
+                self.nodes[self.mouse_node].fixed = True
+                self.nodes[self.mouse_node].x = self.node_buffer[self.mouse_node].x = coords[0]
+                self.nodes[self.mouse_node].y = self.node_buffer[self.mouse_node].y = coords[1]
+                self.init_calculations()
+                self.redraw_canvas()
+            else:
+                # release the node
+                if self.mouse_node:
+                    self.prev_mouse_node = self.mouse_node
+                    
+                self.mouse_node = None
+    
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
