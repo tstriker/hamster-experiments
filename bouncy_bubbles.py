@@ -98,9 +98,10 @@ class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
         self.balls = []
+        self.window_pos = None
+    
         
     def on_expose(self):
-        
         if not self.balls:
             for i in range(15):
                 radius = randint(10, 30)
@@ -115,6 +116,15 @@ class Canvas(graphics.Area):
             ball.colide(self.balls)
             ball.draw(self)
 
+        window_pos = self.get_toplevel().get_position()
+        if self.window_pos and window_pos != self.window_pos:
+            dx = window_pos[0] - self.window_pos[0]
+            dy = window_pos[1] - self.window_pos[1]
+            for ball in self.balls:
+                ball.x -= dx
+                ball.y -= dy
+        self.window_pos = window_pos
+            
         self.redraw_canvas()
 
 
@@ -122,7 +132,7 @@ class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("Graphics Module")
-        window.set_size_request(600, 400)
+        window.set_size_request(600, 200)
         window.connect("delete_event", lambda *args: gtk.main_quit())
     
         canvas = Canvas()
