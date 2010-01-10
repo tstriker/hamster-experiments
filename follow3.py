@@ -17,7 +17,7 @@ import math
 import gtk
 from lib import graphics
 
-PARTS = 50
+PARTS = 40
 SEGMENT_LENGTH = 20
 
 class Segment(object):
@@ -71,7 +71,7 @@ class Canvas(graphics.Area):
         self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, widget, coords):
+    def on_mouse_move(self, widget, coords, state):
         x, y = coords
         
         self.segments[0].drag(x, y)

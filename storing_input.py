@@ -39,7 +39,7 @@ class Canvas(graphics.Area):
         self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, widget, coords):
+    def on_mouse_move(self, widget, coords, state):
         x, y = coords
 
         segment = Segment(x, y, "#666666", 50)

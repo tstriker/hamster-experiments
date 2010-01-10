@@ -43,7 +43,7 @@ class Canvas(graphics.Area):
         self.mouse_moving = False
 
 
-    def on_mouse_move(self, area, coords):
+    def on_mouse_move(self, area, coords, state):
         # oh i know this should not be performed using tweeners, but hey - a demo!
         x, y = coords
 

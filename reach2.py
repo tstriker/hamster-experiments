@@ -63,7 +63,7 @@ class Canvas(graphics.Area):
         self.connect("mouse-move", self.on_mouse_move)        
 
 
-    def on_mouse_move(self, area, coords):
+    def on_mouse_move(self, area, coords, state):
         x, y = coords
 
         def get_angle(segment, x, y):
