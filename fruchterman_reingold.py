@@ -6,7 +6,7 @@
  Ported from prefuse (http://prefuse.org/).
  Extra:
    * added node gravitation towards centre
-   * buffering node positions and tweening every 10 frames or so to avoid stuttering
+   * buffering node positions and tweening every now and then to avoid stuttering
 
  Original docu:
  <p>Layout instance implementing the Fruchterman-Reingold algorithm for
@@ -63,12 +63,16 @@ class Canvas(graphics.Area):
 
     def init_calculations(self):
         self.iteration = 0
-        self.force_constant = 0.7 *  math.sqrt(self.height * self.width / len(self.nodes))
+        self.force_constant = 0.75 *  math.sqrt(self.height * self.width / len(self.nodes))
         self.temperature = self.width / float(10)
+
+    def cooldown(self):
+        self.temperature = self.temperature * (1.0 - self.iteration / float(self.max_iterations))
+
 
     def on_expose(self):
         if not self.nodes:
-            for i in range(50):
+            for i in range(randint(3, 50)):
                 x, y = self.width / 2, self.height / 2
                 scale_w = ALPHA * x;
                 scale_h = ALPHA * y
@@ -79,8 +83,9 @@ class Canvas(graphics.Area):
             self.node_buffer = deepcopy(self.nodes) # copy
                 
             node_count = len(self.nodes) - 1
-            
-            for i in range(30):  #connect random nodes
+
+            self.edges, self.edge_buffer = [], []            
+            for i in range(randint(node_count / 2, node_count)):  #connect random nodes
                 from_index = randint(0, node_count)
                 to_index = randint(0, node_count)
 
@@ -181,7 +186,7 @@ class Canvas(graphics.Area):
         dy = node.y - self.height / 2
         
         distance = max(EPSILON, math.sqrt(dx**2 + dy**2))
-        force = distance **2 / self.force_constant * 0.5
+        force = distance ** 2 / self.force_constant * 0.9
 
         node.vx -= dx / distance * force
         node.vy -= dy / distance * force
@@ -207,10 +212,6 @@ class Canvas(graphics.Area):
             node.y = self.height - margin - random() * margin * 2
             
         
-
-    def cooldown(self):
-        self.temperature = self.temperature * (1.0 - self.iteration / float(self.max_iterations))
-
 
     # just for kicks - mouse events
     def on_mouse_button_press(self, area, over_regions):
@@ -244,10 +245,19 @@ class BasicWindow:
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
     
-        canvas = Canvas()
+        self.canvas = Canvas()
         
         box = gtk.VBox()
-        box.pack_start(canvas)
+        box.pack_start(self.canvas)
+
+        button = gtk.Button("Redo")
+        def on_click(*args):
+            self.canvas.nodes = []
+            self.canvas.redraw_canvas()
+        
+        button.connect("clicked", on_click)
+        box.pack_start(button, False)
+        
         
     
         window.add(box)
