@@ -253,6 +253,7 @@ class BasicWindow:
         button = gtk.Button("Redo")
         def on_click(*args):
             self.canvas.nodes = []
+            self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
             self.canvas.redraw_canvas()
         
         button.connect("clicked", on_click)
