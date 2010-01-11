@@ -312,12 +312,12 @@ class Easing:
         @staticmethod
         def easeIn(t, b, c, d, s = 1.70158):
             t = t / d
-            return c * t**2 * ((s+1) * t - s) + b
+            return c * t * t * ((s+1) * t - s) + b
 
         @staticmethod
         def easeOut (t, b, c, d, s = 1.70158):
             t = t / d - 1
-            return c * (t**2 * ((s + 1) * t + s) + 1) + b
+            return c * (t * t * ((s + 1) * t + s) + 1) + b
 
         @staticmethod
         def easeInOut (t, b, c, d, s = 1.70158):
@@ -325,26 +325,26 @@ class Easing:
             s = s * 1.525
             
             if t < 1:
-                return c * 0.5 * (t**2 * ((s + 1) * t - s)) + b
+                return c * 0.5 * (t * t * ((s + 1) * t - s)) + b
 
             t = t - 2
-            return c / 2 * (t**2 * ((s + 1) * t + s) + 2) + b
+            return c / 2 * (t * t * ((s + 1) * t + s) + 2) + b
 
     class Bounce:
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d
             if t < 1 / 2.75:
-                return c * (7.5625 * t**2) + b
+                return c * (7.5625 * t * t) + b
             elif t < 2 / 2.75:
                 t = t - 1.5 / 2.75
-                return c * (7.5625 * t**2 + 0.75) + b
+                return c * (7.5625 * t * t + 0.75) + b
             elif t < 2.5 / 2.75:
                 t = t - 2.25 / 2.75
-                return c * (7.5625 * t**2 + .9375) + b
+                return c * (7.5625 * t * t + .9375) + b
             else:
                 t = t - 2.625 / 2.75
-                return c * (7.5625 * t**2 + 0.984375) + b
+                return c * (7.5625 * t * t + 0.984375) + b
 
         @staticmethod
         def easeIn (t, b, c, d):
@@ -363,42 +363,42 @@ class Easing:
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
-            return -c * (math.sqrt(1 - t**2) - 1) + b
+            return -c * (math.sqrt(1 - t * t) - 1) + b
 
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d - 1
-            return c * math.sqrt(1 - t**2) + b
+            return c * math.sqrt(1 - t * t) + b
 
         @staticmethod
         def easeInOut (t, b, c, d):
             t = t / (d * 0.5)
             if t < 1:
-                return -c * 0.5 * (math.sqrt(1 - t**2) - 1) + b
+                return -c * 0.5 * (math.sqrt(1 - t * t) - 1) + b
             
             t = t - 2
-            return c*0.5 * (math.sqrt(1 - t**2) + 1) + b
+            return c*0.5 * (math.sqrt(1 - t * t) + 1) + b
 
 
     class Cubic:
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
-            return c * t**3 + b
+            return c * t * t * t + b
 
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d - 1
-            return c * (t**3 + 1) + b
+            return c * (t * t * t + 1) + b
 
         @staticmethod
         def easeInOut (t, b, c, d):
             t = t / (d * 0.5)
             if t < 1:
-                return c * 0.5 * t**3 + b
+                return c * 0.5 * t * t * t + b
             
             t = t - 2
-            return c * 0.5 * (t**3 + 2) + b
+            return c * 0.5 * (t * t * t + 2) + b
 
 
     class Elastic:
@@ -514,7 +514,7 @@ class Easing:
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
-            return c * t**2 + b
+            return c * t * t + b
 
         @staticmethod
         def easeOut (t, b, c, d):
@@ -525,7 +525,7 @@ class Easing:
         def easeInOut (t, b, c, d):
             t = t / (d * 0.5)
             if t < 1:
-                return c * 0.5 * t**2 + b
+                return c * 0.5 * t * t + b
             
             t = t - 1
             return -c * 0.5 * (t * (t - 2) - 1) + b
@@ -535,42 +535,42 @@ class Easing:
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
-            return c * t**4 + b
+            return c * t * t * t * t + b
 
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d - 1
-            return -c * (t**4 - 1) + b
+            return -c * (t * t * t * t - 1) + b
 
         @staticmethod
         def easeInOut (t, b, c, d):
             t = t / (d * 0.5)
             if t < 1:
-                return c * 0.5 * t**4 + b
+                return c * 0.5 * t * t * t * t + b
             
             t = t - 2
-            return -c * 0.5 * (t**4 - 2) + b
+            return -c * 0.5 * (t * t * t * t - 2) + b
 
     
     class Quint:
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
-            return c * t**5 + b
+            return c * t * t * t * t * t + b
 
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d - 1
-            return c * (t**5 + 1) + b
+            return c * (t * t * t * t * t + 1) + b
 
         @staticmethod
         def easeInOut (t, b, c, d):
             t = t / (d * 0.5)
             if t < 1:
-                return c * 0.5 * t**5 + b
+                return c * 0.5 * t * t * t * t * t + b
             
             t = t - 2
-            return c * 0.5 * (t**5 + 2) + b
+            return c * 0.5 * (t * t * t * t * t + 2) + b
 
     class Sine:
         @staticmethod
@@ -600,10 +600,10 @@ class Easing:
             t = t / (d * 0.5)
             
             if t < 1:
-                return c * 0.5 * t**5 + b
+                return c * 0.5 * t * t * t * t * t + b
             
             t = t - 2
-            return c * 0.5 * (t**5 + 2) + b
+            return c * 0.5 * (t * t * t * t * t + 2) + b
 
 
 

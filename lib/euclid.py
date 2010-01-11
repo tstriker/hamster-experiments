@@ -144,12 +144,12 @@ class Vector2(object):
     __pos__ = __copy__
     
     def __abs__(self):
-        return math.sqrt(self.x**2 + self.y**2)
+        return math.sqrt(self.x * self.x + self.y * self.y)
 
     magnitude = __abs__
 
     def magnitude_squared(self):
-        return self.x ** 2 + self.y ** 2
+        return self.x * self.x + self.y * self.y
 
     def normalize(self):
         d = self.magnitude()
@@ -423,8 +423,8 @@ def _intersect_line2_circle(L, C):
     c = C.c.magnitude_squared() + \
         L.p.magnitude_squared() - \
         2 * C.c.dot(L.p) - \
-        C.r ** 2
-    det = b ** 2 - 4 * a * c
+        C.r * C.r
+    det = b * b - 4 * a * c
     if det < 0:
         return None
     sq = math.sqrt(det)

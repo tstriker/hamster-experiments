@@ -73,9 +73,9 @@ class Ball(object):
             dy = ball.y - self.y
             
             # we are using square as root is bit expensive
-            min_distance = (self.radius + ball.radius) ** 2
+            min_distance = (self.radius + ball.radius) * (self.radius + ball.radius)
             
-            if (dx ** 2 + dy ** 2) < min_distance:
+            if (dx * dx + dy * dy) < min_distance:
                 min_distance = self.radius + ball.radius
                 angle = math.atan2(dy, dx)
                 target_x = self.x + math.cos(angle) * min_distance

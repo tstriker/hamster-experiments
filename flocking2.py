@@ -89,7 +89,7 @@ class Boid(object):
         self.acceleration *= 0 
 
     def separate(self, boids):
-        desired_separation = 25.0 ** 2
+        desired_separation = 25 * 25.0
         sum = Vector2()
         in_zone = 0.0
         
@@ -107,7 +107,7 @@ class Boid(object):
         return sum
 
     def align(self, boids):
-        neighbour_distance = 50.0 ** 2
+        neighbour_distance = 50.0 * 50.0
         sum = Vector2()
         in_zone = 0.0
         
@@ -126,7 +126,7 @@ class Boid(object):
         """ For the average location (i.e. center) of all nearby boids,
             calculate steering vector towards that location"""
         
-        neighbour_distance = 50.0 ** 2
+        neighbour_distance = 50.0 * 50.0
         sum = Vector2()
         in_zone = 0.0
         

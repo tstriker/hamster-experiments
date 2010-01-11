@@ -161,8 +161,8 @@ class Canvas(graphics.Area):
             dx = node.x - node2.x
             dy = node.y - node2.y
             
-            distance = max(EPSILON, math.sqrt(dx**2 + dy**2))
-            force = self.force_constant **2 / distance
+            distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
+            force = self.force_constant * self.force_constant / distance
             node.vx += dx / distance * force
             node.vy += dy / distance * force
 
@@ -172,8 +172,8 @@ class Canvas(graphics.Area):
         dx = node1.x - node2.x
         dy = node1.y - node2.y
         
-        distance = max(EPSILON, math.sqrt(dx**2 + dy**2))
-        force = distance **2 / self.force_constant
+        distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
+        force = distance * distance / self.force_constant
 
         node1.vx -= dx / distance * force
         node1.vy -= dy / distance * force
@@ -185,15 +185,15 @@ class Canvas(graphics.Area):
         dx = node.x - self.width / 2
         dy = node.y - self.height / 2
         
-        distance = max(EPSILON, math.sqrt(dx**2 + dy**2))
-        force = distance ** 2 / self.force_constant * 0.9
+        distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
+        force = distance * distance / self.force_constant * 0.9
 
         node.vx -= dx / distance * force
         node.vy -= dy / distance * force
 
 
     def position(self, node):
-        distance = max(EPSILON, math.sqrt(node.vx**2 + node.vy**2))
+        distance = max(EPSILON, math.sqrt(node.vx * node.vx + node.vy * node.vy))
         
         node.x += node.vx / distance * min(distance, self.temperature)
         node.y += node.vy / distance * min(distance, self.temperature)

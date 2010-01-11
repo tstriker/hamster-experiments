@@ -79,8 +79,10 @@ class LQProximityStore(ProximityStore):
                 if boid is boid2:
                     continue
                 
-                d = (boid.location.x - boid2.location.x) ** 2 + (boid.location.y - boid2.location.y) ** 2
-                if d < radius ** 2:
+                dx = boid.location.x - boid2.location.x
+                dy = boid.location.y - boid2.location.y
+                d = dx * dx + dy * dy
+                if d < radius * radius:
                     neighbours.append((boid2, d))
 
         return neighbours
