@@ -6,17 +6,17 @@
 #
 # Released under M.I.T License - see above url
 # Python version by Ben Harling 2009
-# Performance optimizations by Toms Baugis 2010
+# All kinds of slashing and dashing by Toms Baugis 2010
 import math
 
 class Tweener(object):
-    def __init__(self, duration = 0.5, tween = None):
+    def __init__(self, default_duration = None, tween = None):
         """Tweener
         This class manages all active tweens, and provides a factory for
         creating and spawning tween motions."""
         self.currentTweens = {}
         self.defaultTweenType = tween or Easing.Cubic.easeInOut
-        self.defaultDuration = duration or 1.0
+        self.defaultDuration = default_duration or 1.0
  
     def hasTweens(self):
         return len(self.currentTweens) > 0
@@ -96,10 +96,9 @@ class Tweener(object):
         self.currentTweens = {}
  
     def update(self, timeSinceLastFrame):        
-        for obj in self.currentTweens.keys():
+        for obj in self.currentTweens:
             # updating tweens from last to first and deleting while at it
             # in order to not confuse the index
-            # TODO - should use generator instead?
             for i, t in reversed(list(enumerate(self.currentTweens[obj]))):
                 t.update(timeSinceLastFrame)
                 if t.complete:
@@ -112,78 +111,26 @@ class Tweener(object):
  
 class Tween(object):
     __slots__ = ['duration', 'delay', 'target', 'tween', 'tweenables', 'delta',
-                 'target', 'tween', 'tweenables', 'delta', 'completeFunction',
-                 'updateFunction', 'complete', 'tProps', 'tFuncs', 'paused']
+                 'target', 'ease', 'tweenables', 'delta', 'completeFunction',
+                 'updateFunction', 'complete', 'paused']
     
-    def __init__(self, obj, tduration, tweenType, completeFunction, updateFunction, delay, **kwargs):
-        """Tween object:
-            Can be created directly, but much more easily using Tweener.addTween( ... )
-            """
-        #print obj, tduration, kwargs
-        self.duration = tduration
+    def __init__(self, obj, duration, easing, on_complete, on_update, delay, **kwargs):
+        """Tween object use Tweener.addTween( ... ) to create"""
+        self.duration = duration
         self.delay = delay
         self.target = obj
-        self.tween = tweenType
-        self.tweenables = kwargs
+        self.ease = easing
+        
+        # list of (property, start_value, delta to achieve (start_value - end_value)
+        self.tweenables = [(k, self.target.__dict__[k], v - self.target.__dict__[k]) for k, v in kwargs.items()]
+        
         self.delta = 0
-        self.completeFunction = completeFunction
-        self.updateFunction = updateFunction
+        self.completeFunction = on_complete
+        self.updateFunction = on_update
         self.complete = False
-        self.tProps = []
-        self.tFuncs = []
+
         self.paused = self.delay > 0
-        self.decodeArguments()
- 
-    def decodeArguments(self):
-        """Internal setup procedure to create tweenables and work out
-           how to deal with each"""
- 
-        if len(self.tweenables) == 0:
-            # nothing to do 
-            print "TWEEN ERROR: No Tweenable properties or functions defined"
-            self.complete = True
-            return
- 
-        for k, v in self.tweenables.items():
- 
-            # check that its compatible
-            if not hasattr( self.target, k):
-                print "TWEEN ERROR: " + str(self.target) + " has no function " + k
-                self.complete = True
-                break
- 
-            prop = func = False
-            startVal = 0
-            newVal = v
- 
-            try:
-                startVal = self.target.__dict__[k]
-                prop = k
-            except:
-                func = getattr( self.target, k)
- 
-            if func:
-                try:
-                    getFunc = getattr(self.target, funcName.replace("set", "get") )
-                    startVal = getFunc()
-                except:
-                    # no start value, assume its 0
-                    # but make sure the start and change
-                    # dataTypes match :)
-                    startVal = newVal * 0
-                    
-                tweenable = (startVal, newVal - startVal)    
-                newFunc = [func, tweenable]
- 
-                self.tFuncs.append( newFunc )
- 
- 
-            if prop:
-                tweenable = (startVal, newVal - startVal)
-                newProp = [prop, tweenable]
-                self.tProps.append( newProp )  
- 
- 
+
     def pause( self, numSeconds=-1 ):
         """Pause this tween
             do tween.pause( 2 ) to pause for a specific time
@@ -197,9 +144,9 @@ class Tween(object):
             self.paused=False
  
     def update(self, ptime):
-        """Update this tween with the time since the last frame
-            if there is an update function, it is always called
-            whether the tween is running or paused"""
+        """Update tween with the time since the last frame
+           if there is an update callback, it is always called
+           whether the tween is running or paused"""
             
         if self.complete:
             return
@@ -214,15 +161,14 @@ class Tween(object):
                     self.updateFunction()
             return
  
-        self.delta = min(self.delta + ptime, self.duration)
+        self.delta = self.delta + ptime
+        if self.delta > self.duration:
+            self.delta = self.duration
  
-
-        for prop, tweenable in self.tProps:
-            self.target.__dict__[prop] = self.tween( self.delta, tweenable[0], tweenable[1], self.duration )
-        for func, tweenable in self.tFuncs:
-            func( self.tween( self.delta, tweenable[0], tweenable[1], self.duration ) )
- 
- 
+    
+        for prop, start_value, change in self.tweenables:
+            self.target.__dict__[prop] = self.ease(self.delta, start_value, change, self.duration )
+        
         if self.delta == self.duration:
             self.complete = True
             if self.completeFunction:
@@ -230,12 +176,6 @@ class Tween(object):
  
         if self.updateFunction:
             self.updateFunction()
-
- 
-    def Remove(self):
-        """Disables and removes this tween
-            without calling the complete function"""
-        self.complete = True
 
 
 """Robert Penner's easing classes ported over from actionscript by Toms Baugis (at gmail com).
