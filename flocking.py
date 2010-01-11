@@ -204,7 +204,6 @@ class Canvas(graphics.Area):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("Graphics Module")
         window.set_size_request(600, 400)
         window.connect("delete_event", lambda *args: gtk.main_quit())
     
