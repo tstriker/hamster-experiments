@@ -48,7 +48,7 @@ class Tweener(object):
         if "tweenTime" in kwargs:
             t_time = kwargs.pop("tweenTime")
         else: t_time = self.defaultDuration
- 
+        
         if "tweenType" in kwargs:
             t_type = kwargs.pop("tweenType")
         else: t_type = self.defaultTweenType
@@ -95,19 +95,17 @@ class Tweener(object):
                 t.update(t.duration)
         self.currentTweens = {}
  
-    def update(self, timeSinceLastFrame):        
-        for obj in self.currentTweens:
+    def update(self, timeSinceLastFrame):
+        for obj in self.currentTweens.keys():
             # updating tweens from last to first and deleting while at it
             # in order to not confuse the index
             for i, t in reversed(list(enumerate(self.currentTweens[obj]))):
                 t.update(timeSinceLastFrame)
                 if t.complete:
                     del self.currentTweens[obj][i]
-
-            if not self.currentTweens[obj]:
-                del self.currentTweens[obj]
-            
-            
+                
+                if not self.currentTweens[obj]:
+                    del self.currentTweens[obj]
  
 class Tween(object):
     __slots__ = ['duration', 'delay', 'target', 'tween', 'tweenables', 'delta',
@@ -121,8 +119,8 @@ class Tween(object):
         self.target = obj
         self.ease = easing
         
-        # list of (property, start_value, delta to achieve (start_value - end_value)
-        self.tweenables = [(k, self.target.__dict__[k], v - self.target.__dict__[k]) for k, v in kwargs.items()]
+        # list of (property, start_value, end_value)
+        self.tweenables = [(k, self.target.__dict__[k], v) for k, v in kwargs.items()]
         
         self.delta = 0
         self.completeFunction = on_complete
@@ -164,10 +162,10 @@ class Tween(object):
         self.delta = self.delta + ptime
         if self.delta > self.duration:
             self.delta = self.duration
- 
+
     
-        for prop, start_value, change in self.tweenables:
-            self.target.__dict__[prop] = self.ease(self.delta, start_value, change, self.duration )
+        for prop, start_value, end_value in self.tweenables:
+            self.target.__dict__[prop] = self.ease(self.delta, start_value, end_value - start_value, self.duration)
         
         if self.delta == self.duration:
             self.complete = True
