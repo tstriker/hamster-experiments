@@ -9,7 +9,7 @@
 # Performance optimizations by Toms Baugis 2010
 import math
 
-class Tweener:
+class Tweener(object):
     def __init__(self, duration = 0.5, tween = None):
         """Tweener
         This class manages all active tweens, and provides a factory for
@@ -41,8 +41,8 @@ class Tweener:
  
             tweenTime = the duration of the motion
             tweenType = one of the predefined tweening equations or your own function
-            onCompleteFunction = specify a function to call on completion of the tween
-            onUpdateFunction = specify a function to call every time the tween updates
+            onComplete = specify a function to call on completion of the tween
+            onUpdate = specify a function to call every time the tween updates
             tweenDelay = specify a delay before starting.
             """
         if "tweenTime" in kwargs:
@@ -53,12 +53,12 @@ class Tweener:
             t_type = kwargs.pop("tweenType")
         else: t_type = self.defaultTweenType
  
-        if "onCompleteFunction" in kwargs:
-            t_completeFunc = kwargs.pop("onCompleteFunction")
+        if "onComplete" in kwargs:
+            t_completeFunc = kwargs.pop("onComplete")
         else: t_completeFunc = None
  
-        if "onUpdateFunction" in kwargs:
-            t_updateFunc = kwargs.pop("onUpdateFunction")
+        if "onUpdate" in kwargs:
+            t_updateFunc = kwargs.pop("onUpdate")
         else: t_updateFunc = None
  
         if "tweenDelay" in kwargs:
@@ -82,9 +82,10 @@ class Tweener:
     def killTweensOf(self, obj):
         """Stop tweening an object, without completing the motion
         or firing the completeFunction"""
-
-        for tween in self.currentTweens.get(obj, []):
-            tween.complete = True
+        try:
+            del self.currentTweens[obj]
+        except:
+            pass
 
  
     def finish(self):
@@ -94,7 +95,7 @@ class Tweener:
                 t.update(t.duration)
         self.currentTweens = {}
  
-    def update(self, timeSinceLastFrame):
+    def update(self, timeSinceLastFrame):        
         for obj in self.currentTweens.keys():
             # updating tweens from last to first and deleting while at it
             # in order to not confuse the index
@@ -110,6 +111,10 @@ class Tweener:
             
  
 class Tween(object):
+    __slots__ = ['duration', 'delay', 'target', 'tween', 'tweenables', 'delta',
+                 'target', 'tween', 'tweenables', 'delta', 'completeFunction',
+                 'updateFunction', 'complete', 'tProps', 'tFuncs', 'paused']
+    
     def __init__(self, obj, tduration, tweenType, completeFunction, updateFunction, delay, **kwargs):
         """Tween object:
             Can be created directly, but much more easily using Tweener.addTween( ... )
@@ -166,14 +171,15 @@ class Tween(object):
                     # but make sure the start and change
                     # dataTypes match :)
                     startVal = newVal * 0
-                tweenable = Tweenable( startVal, newVal - startVal)    
+                    
+                tweenable = (startVal, newVal - startVal)    
                 newFunc = [func, tweenable]
  
                 self.tFuncs.append( newFunc )
  
  
             if prop:
-                tweenable = Tweenable( startVal, newVal - startVal)    
+                tweenable = (startVal, newVal - startVal)
                 newProp = [prop, tweenable]
                 self.tProps.append( newProp )  
  
@@ -212,9 +218,9 @@ class Tween(object):
  
 
         for prop, tweenable in self.tProps:
-            self.target.__dict__[prop] = self.tween( self.delta, tweenable.startValue, tweenable.change, self.duration )
+            self.target.__dict__[prop] = self.tween( self.delta, tweenable[0], tweenable[1], self.duration )
         for func, tweenable in self.tFuncs:
-            func( self.tween( self.delta, tweenable.startValue, tweenable.change, self.duration ) )
+            func( self.tween( self.delta, tweenable[0], tweenable[1], self.duration ) )
  
  
         if self.delta == self.duration:
@@ -224,48 +230,12 @@ class Tween(object):
  
         if self.updateFunction:
             self.updateFunction()
- 
- 
- 
-    def getTweenable(self, name):
-        """Return the tweenable values corresponding to the name of the original
-        tweening function or property. 
- 
-        Allows the parameters of tweens to be changed at runtime. The parameters
-        can even be tweened themselves!
- 
-        eg:
- 
-        # the rocket needs to escape!! - we're already moving, but must go faster!
-        twn = tweener.getTweensAffectingObject( myRocket )[0]
-        tweenable = twn.getTweenable( "thrusterPower" )
-        tweener.addTween( tweenable, change=1000.0, tweenTime=0.4, tweenType=tweener.IN_QUAD )
- 
-        """
-        ret = None
-        for n, f, t in self.tFuncs:
-            if n == name:
-                ret = t
-                return ret
-        for n, p, t in self.tProps:
-            if n == name:
-                ret = t
-                return ret
-        return ret
+
  
     def Remove(self):
         """Disables and removes this tween
             without calling the complete function"""
         self.complete = True
-
- 
-class Tweenable:
-    def __init__(self, start, change):
-        """Tweenable:
-            Holds values for anything that can be tweened
-            these are normally only created by Tweens"""
-        self.startValue = start
-        self.change = change
 
 
 """Robert Penner's easing classes ported over from actionscript by Toms Baugis (at gmail com).
@@ -307,8 +277,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-class Easing:
-    class Back:
+class Easing(object):
+    class Back(object):
         @staticmethod
         def easeIn(t, b, c, d, s = 1.70158):
             t = t / d
@@ -330,7 +300,7 @@ class Easing:
             t = t - 2
             return c / 2 * (t * t * ((s + 1) * t + s) + 2) + b
 
-    class Bounce:
+    class Bounce(object):
         @staticmethod
         def easeOut (t, b, c, d):
             t = t / d
@@ -359,7 +329,7 @@ class Easing:
 
 
         
-    class Circ:
+    class Circ(object):
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
@@ -380,7 +350,7 @@ class Easing:
             return c*0.5 * (math.sqrt(1 - t * t) + 1) + b
 
 
-    class Cubic:
+    class Cubic(object):
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
@@ -401,7 +371,7 @@ class Easing:
             return c * 0.5 * (t * t * t + 2) + b
 
 
-    class Elastic:
+    class Elastic(object):
         @staticmethod
         def easeIn (t, b, c, d, a = 0, p = 0):
             if t==0: return b
@@ -462,7 +432,7 @@ class Easing:
             return a * math.pow(2, -10 * t) * math.sin((t * d - s) * (2 * math.pi) / p) * .5 + c + b
 
 
-    class Expo:
+    class Expo(object):
         @staticmethod
         def easeIn(t, b, c, d):
             if t == 0:
@@ -492,7 +462,7 @@ class Easing:
             return c * 0.5 * (-math.pow(2, -10 * (t - 1)) + 2) + b
 
 
-    class Linear:
+    class Linear(object):
         @staticmethod
         def easeNone(t, b, c, d):
             return c * t / d + b
@@ -510,7 +480,7 @@ class Easing:
             return c * t / d + b
 
 
-    class Quad:
+    class Quad(object):
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
@@ -531,7 +501,7 @@ class Easing:
             return -c * 0.5 * (t * (t - 2) - 1) + b
 
 
-    class Quart:
+    class Quart(object):
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
@@ -552,7 +522,7 @@ class Easing:
             return -c * 0.5 * (t * t * t * t - 2) + b
 
     
-    class Quint:
+    class Quint(object):
         @staticmethod
         def easeIn (t, b, c, d):
             t = t / d
@@ -572,7 +542,7 @@ class Easing:
             t = t - 2
             return c * 0.5 * (t * t * t * t * t + 2) + b
 
-    class Sine:
+    class Sine(object):
         @staticmethod
         def easeIn (t, b, c, d):
             return -c * math.cos(t / d * (math.pi / 2)) + c + b
@@ -586,7 +556,7 @@ class Easing:
             return -c * 0.5 * (math.cos(math.pi * t / d) - 1) + b
 
 
-    class Strong:
+    class Strong(object):
         @staticmethod
         def easeIn(t, b, c, d):
             return c * (t/d)**5 + b
@@ -607,46 +577,43 @@ class Easing:
 
 
 
-class TweenTestObject:
-    def __init__(self):
-        self.pos = 20
-        self.rot = 50
- 
-    def update(self):
-        print self.pos, self.rot
- 
-    def setRotation(self, rot):
-        self.rot = rot
- 
-    def getRotation(self):
-        return self.rot
- 
-    def complete(self):
-        print "I'm done tweening now mommy!"
- 
- 
-if __name__=="__main__":
-    import time
-    T = Tweener()
-    tst = TweenTestObject()
-    mt = T.addTween( tst, setRotation=500.0, tweenTime=2.5, tweenType=T.OUT_EXPO, 
-                      pos=-200, tweenDelay=0.4, onCompleteFunction=tst.complete, 
-                      onUpdateFunction=tst.update )
-    s = time.clock()
-    changed = False
-    while T.hasTweens():
-        tm = time.clock()
-        d = tm - s
-        s = tm
-        T.update( d )
-        if mt.delta > 1.0 and not changed:
- 
-            tweenable = mt.getTweenable( "setRotation" )
- 
-            T.addTween( tweenable, change=-1000, tweenTime=0.7 )
-            T.addTween( mt, duration=-0.2, tweenTime=0.2 )
-            changed = True
-        #print mt.duration,
-        print tst.getRotation(), tst.pos
-        time.sleep(0.06)
-    print tst.getRotation(), tst.pos
+
+class _PerformanceTester(object):
+    def __init__(self, a, b, c):
+        self.a = a
+        self.b = b
+        self.c = c
+
+if __name__ == "__main__":
+    import datetime as dt
+
+    tweener = Tweener()
+    objects = []
+    for i in range(10000):
+        objects.append(_PerformanceTester(i-100, i-100, i-100))
+
+
+    total = dt.datetime.now()
+    
+    t = dt.datetime.now()
+    for i, o in enumerate(objects):
+        tweener.addTween(o, a = i, b = i, c = i, tweenTime = 1.0)
+    print "add", dt.datetime.now() - t
+
+    t = dt.datetime.now()
+
+    for i in range(10):
+        tweener.update(0.01)
+    print "update", dt.datetime.now() - t
+
+    t = dt.datetime.now()
+    
+    for i in range(10):
+        for i, o in enumerate(objects):
+            tweener.killTweensOf(o)
+            tweener.addTween(o, a = i, b = i, c = i, tweenTime = 1.0)
+    print "kill-add", dt.datetime.now() - t
+
+    print "total", dt.datetime.now() - total
+    
+
