@@ -195,7 +195,7 @@ class Canvas(graphics.Area):
             boid.location.y = -boid.radius
 
     def on_mouse_click(self, widget, coords):
-        self.flock.append(Boid(Vector2(*coords), 1, 1))
+        self.flock.append(Boid(Vector2(*coords), 2.0, 0.05))
 
     def on_expose(self):
         self.context.set_line_width(1)
