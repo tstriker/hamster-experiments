@@ -17,7 +17,7 @@
 
  <p>This implementation was ported from the implementation in the
  <a href="http://jung.sourceforge.net/">JUNG</a> framework.</p>
- 
+
  @author Scott White, Yan-Biao Boey, Danyel Fisher
  @author <a href="http://jheer.org">jeffrey heer</a>
 """
@@ -48,16 +48,16 @@ class Canvas(graphics.Area):
         graphics.Area.__init__(self)
         self.nodes = []
         self.edges = []
-        
+
         self.node_buffer = []
         self.edge_buffer = []
-        
+
         self.max_iterations = 300
         self.iteration = 0
         self.force_constant = 0
         self.connect("mouse-move", self.on_mouse_move)
         self.connect("button-press", self.on_mouse_button_press)
-        
+
         self.mouse_node = None
         self.prev_mouse_node = None
 
@@ -81,20 +81,20 @@ class Canvas(graphics.Area):
                                        y + (random() - 0.5) * 2 * scale_h))
 
             self.node_buffer = deepcopy(self.nodes) # copy
-                
+
             node_count = len(self.nodes) - 1
 
-            self.edges, self.edge_buffer = [], []            
+            self.edges, self.edge_buffer = [], []
             for i in range(randint(node_count / 2, node_count)):  #connect random nodes
                 from_index = randint(0, node_count)
                 to_index = randint(0, node_count)
 
                 self.edges.append((self.nodes[from_index], self.nodes[to_index]))
                 self.edge_buffer.append((self.node_buffer[from_index], self.node_buffer[to_index]))
-            
+
             self.init_calculations()
 
-        # first draw        
+        # first draw
         self.context.set_line_width(0.5)
         if self.iteration < self.max_iterations:
             self.set_color("#aaaaaa")
@@ -125,13 +125,13 @@ class Canvas(graphics.Area):
 
             for edge in self.edges:
                 self.atraction(edge)
-    
+
             for node in self.nodes:
                 if not node.fixed:
                     self.position(node)
-    
+
             self.cooldown()
-            
+
             # update image every x iterations
             if self.iteration % 10 == 0 or self.iteration == self.max_iterations:
                 for i, node in enumerate(self.node_buffer):
@@ -149,7 +149,7 @@ class Canvas(graphics.Area):
     def draw_node(self, node):
         self.context.arc(node.x, node.y, 5, 0, 2.0 * math.pi)
 
-        
+
     def repulsion(self, node):
         """calculate repulsion for the node"""
         node.vx, node.vy = 0, 0 # reset velocity back to zero
@@ -157,10 +157,10 @@ class Canvas(graphics.Area):
         for node2 in self.nodes:
             if node is node2 or node2.fixed:
                 continue
-            
+
             dx = node.x - node2.x
             dy = node.y - node2.y
-            
+
             distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
             force = self.force_constant * self.force_constant / distance
             node.vx += dx / distance * force
@@ -168,23 +168,23 @@ class Canvas(graphics.Area):
 
     def atraction(self, edge):
         node1, node2 = edge
-        
+
         dx = node1.x - node2.x
         dy = node1.y - node2.y
-        
+
         distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
         force = distance * distance / self.force_constant
 
         node1.vx -= dx / distance * force
         node1.vy -= dy / distance * force
-        
+
         node2.vx += dx / distance * force
         node2.vy += dy / distance * force
 
     def gravitate(self, node):
         dx = node.x - self.width / 2
         dy = node.y - self.height / 2
-        
+
         distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
         force = distance * distance / self.force_constant * 0.9
 
@@ -194,13 +194,13 @@ class Canvas(graphics.Area):
 
     def position(self, node):
         distance = max(EPSILON, math.sqrt(node.vx * node.vx + node.vy * node.vy))
-        
+
         node.x += node.vx / distance * min(distance, self.temperature)
         node.y += node.vy / distance * min(distance, self.temperature)
-        
+
         # don't let nodes leave the display
         margin = self.width / 50.0
-        
+
         if node.x < margin:
             node.x = margin + random() * margin * 2
         if node.x > self.width - margin:
@@ -210,8 +210,8 @@ class Canvas(graphics.Area):
             node.y = margin + random() * margin * 2
         if node.y > self.height - margin:
             node.y = self.height - margin - random() * margin * 2
-            
-        
+
+
 
     # just for kicks - mouse events
     def on_mouse_button_press(self, area, over_regions):
@@ -235,17 +235,17 @@ class Canvas(graphics.Area):
                 # release the node
                 if self.mouse_node:
                     self.prev_mouse_node = self.mouse_node
-                    
+
                 self.mouse_node = None
-    
+
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-    
+
         self.canvas = Canvas()
-        
+
         box = gtk.VBox()
         box.pack_start(self.canvas)
 
@@ -254,16 +254,16 @@ class BasicWindow:
             self.canvas.nodes = []
             self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
             self.canvas.redraw_canvas()
-        
+
         button.connect("clicked", on_click)
         box.pack_start(button, False)
-        
-        
-    
+
+
+
         window.add(box)
         window.show_all()
-        
-        
+
+
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()

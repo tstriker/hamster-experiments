@@ -15,11 +15,11 @@ class TailParticle(object):
         self.y = y
         self.follow = follow
         self.color = color
-    
+
     def draw(self, area):
         area.draw_rect(self.x - 5, self.y - 5, 10, 10, 3)
-        
-        
+
+
         area.set_color(self.color)
         area.context.fill()
         if self.follow:
@@ -36,10 +36,10 @@ class Canvas(graphics.Area):
         for i in range(parts):
             previous = self.tail[-1] if self.tail else None
             color = colorsys.hls_to_rgb(0.6, i / float(parts), 1)
-            
+
             self.tail.append(TailParticle(10, 10, color, previous))
 
-        self.connect("mouse-move", self.on_mouse_move)        
+        self.connect("mouse-move", self.on_mouse_move)
         self.mouse_moving = False
 
 
@@ -51,11 +51,11 @@ class Canvas(graphics.Area):
             new_x, new_y = x, y
             if particle.follow:
                 new_x, new_y = particle.follow.x, particle.follow.y
-            
+
             self.tweener.killTweensOf(particle)
-            
+
             self.animate(particle, dict(x=float(new_x), y=float(new_y)), duration = 0.3, easing = Easing.Expo.easeOut)
-        
+
         self.mouse_moving = True
 
 
@@ -72,7 +72,7 @@ class Canvas(graphics.Area):
                     self.tweener.killTweensOf(particle)
                     self.animate(particle, dict(x=new_x, y=new_y), duration = 0.3, easing = Easing.Expo.easeOut, instant = False)
 
-        self.mouse_moving = False    
+        self.mouse_moving = False
         self.redraw_canvas() # constant redraw (maintaining the requested frame rate)
 
 
@@ -81,17 +81,17 @@ class BasicWindow:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_size_request(300, 300)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-    
+
         canvas = Canvas()
-        
+
         box = gtk.VBox()
         box.pack_start(canvas)
-        
-    
+
+
         window.add(box)
         window.show_all()
-        
-        
+
+
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()

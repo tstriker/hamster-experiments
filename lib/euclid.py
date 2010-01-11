@@ -9,12 +9,12 @@
 # under the terms of the GNU Lesser General Public License as published by the
 # Free Software Foundation; either version 2.1 of the License, or (at your
 # option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with this library; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
@@ -98,7 +98,7 @@ class Vector2(object):
 
     def __sub__(self, other):
         return Vector2(self.x - other.x, self.y - other.y)
-   
+
     def __rsub__(self, other):
         return Vector2(other.x - self.x, other.y - self.y)
 
@@ -137,12 +137,12 @@ class Vector2(object):
     def __rtruediv__(self, other):
         return Vector2(operator.truediv(other, self.x),
                        operator.truediv(other, self.y))
-    
+
     def __neg__(self):
         return Vector2(-self.x, -self.y)
 
     __pos__ = __copy__
-    
+
     def __abs__(self):
         return math.sqrt(self.x * self.x + self.y * self.y)
 
@@ -178,18 +178,18 @@ class Vector2(object):
         d = 2 * (self.x * normal.x + self.y * normal.y)
         return Vector2(self.x - d * normal.x,
                        self.y - d * normal.y)
-    
+
     def limit(self, max_magnitude):
         if self.magnitude() > max_magnitude:
             self.normalize()
             self *= max_magnitude
-            
+
     def heading(self):
         return math.atan2(self.y, self.x)
 
-# a b c 
-# e f g 
-# i j k 
+# a b c
+# e f g
+# i j k
 
 class Matrix3(object):
     __slots__ = list('abcefgijk')
@@ -202,7 +202,7 @@ class Matrix3(object):
         M.a = self.a
         M.b = self.b
         M.c = self.c
-        M.e = self.e 
+        M.e = self.e
         M.f = self.f
         M.g = self.g
         M.i = self.i
@@ -275,8 +275,8 @@ class Matrix3(object):
             A = self
             B = other
             V = Vector2(0, 0)
-            V.x = A.a * B.x + A.b * B.y 
-            V.y = A.e * B.x + A.f * B.y 
+            V.x = A.a * B.x + A.b * B.y
+            V.y = A.e * B.x + A.f * B.y
             return V
         else:
             other = other.copy()
@@ -326,7 +326,7 @@ class Matrix3(object):
 
     def translate(self, x, y):
         self *= Matrix3.new_translate(x, y)
-        return self 
+        return self
 
     def rotate(self, angle):
         self *= Matrix3.new_rotate(angle)
@@ -398,7 +398,7 @@ class Geometry(object):
 
 def _intersect_point2_circle(P, C):
     return abs(P - C.c) <= C.r
-    
+
 def _intersect_line2_line2(A, B):
     d = B.v.y * A.v.x - B.v.x * A.v.y
     if d == 0:
@@ -452,7 +452,7 @@ def _connect_point2_line2(P, L):
          (P.y - L.p.y) * L.v.y) / d
     if not L._u_in(u):
         u = max(min(u, 1.0), 0.0)
-    return LineSegment2(P, 
+    return LineSegment2(P,
                         Point2(L.p.x + u * L.v.x,
                                L.p.y + u * L.v.y))
 
@@ -519,7 +519,7 @@ class Point2(Vector2, Geometry):
 
     def _connect_point2(self, other):
         return LineSegment2(other, self)
-    
+
     def _connect_line2(self, other):
         c = _connect_point2_line2(self, other)
         if c:
@@ -557,7 +557,7 @@ class Line2(Geometry):
                 raise AttributeError, '%r' % (args,)
         else:
             raise AttributeError, '%r' % (args,)
-        
+
         if not self.v:
             raise AttributeError, 'Line has zero-length vector'
 
@@ -571,7 +571,7 @@ class Line2(Geometry):
             (self.p.x, self.p.y, self.v.x, self.v.y)
 
     p1 = property(lambda self: self.p)
-    p2 = property(lambda self: Point2(self.p.x + self.v.x, 
+    p2 = property(lambda self: Point2(self.p.x + self.v.x,
                                       self.p.y + self.v.y))
 
     def _apply_transform(self, t):
