@@ -54,8 +54,7 @@ class Canvas(graphics.Area):
             
             self.tweener.killTweensOf(particle)
             
-            
-            self.tweener.addTween(particle, **dict(x=new_x, y=new_y, tweenType = Easing.Elastic.easeOut, tweenTime=0.5))
+            self.animate(particle, dict(x=float(new_x), y=float(new_y)), duration = 0.3, easing = Easing.Expo.easeOut)
         
         self.mouse_moving = True
 
@@ -68,10 +67,10 @@ class Canvas(graphics.Area):
         if self.mouse_moving == False:
             # retract tail when the movement has stopped
             for particle in reversed(self.tail):
-                if particle.follow:
+                if particle.follow and round(particle.follow.x, 2) != round(particle.x, 2) and round(particle.follow.y, 2) != round(particle.y, 2) :
                     new_x, new_y = particle.follow.x, particle.follow.y
-                    [self.tweener.removeTween(tween) for tween in self.tweener.getTweensAffectingObject(particle)]
-                    self.tweener.addTween(particle, **dict(x=new_x, y=new_y, tweenType = Easing.Elastic.easeOut, tweenTime=0.5))
+                    self.tweener.killTweensOf(particle)
+                    self.animate(particle, dict(x=new_x, y=new_y), duration = 0.3, easing = Easing.Expo.easeOut, instant = False)
 
         self.mouse_moving = False    
         self.redraw_canvas() # constant redraw (maintaining the requested frame rate)
