@@ -58,7 +58,7 @@ class Area(gtk.DrawingArea):
         "button-press": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "button-release": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
-        "mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+        "mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
     }
 
     def __init__(self):
@@ -273,13 +273,15 @@ class Area(gtk.DrawingArea):
         y = event.y
         state = event.state
 
+        click = False
         drag_distance = 5
         if self.mouse_drag and (self.mouse_drag[0] - x) ** 2 + (self.mouse_drag[1] - y) ** 2 < drag_distance ** 2:
             #if the drag is less than the drag distance, then we have a click
-            self.emit("mouse-click", (x,y))
+            click =  True
         self.mouse_drag = None
 
         if not self.mouse_regions:
+            self.emit("mouse-click", (x,y), [])
             return
 
         mouse_regions = []
@@ -289,6 +291,9 @@ class Area(gtk.DrawingArea):
 
         if mouse_regions:
             self.emit("button-release", mouse_regions)
+
+        self.emit("mouse-click", (x,y), mouse_regions)
+
 
 
 """ simple example """
