@@ -186,6 +186,14 @@ class Vector2(object):
 
     def heading(self):
         return math.atan2(self.y, self.x)
+        
+    def angle(self, other):
+        """finds angle between this and the other vector"""
+        dot = self.normalized().dot(other.normalized())
+        if abs(dot) > 1:
+            return math.pi * 2
+        
+        return math.acos(dot)
 
 # a b c
 # e f g
