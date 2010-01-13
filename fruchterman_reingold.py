@@ -94,6 +94,7 @@ class Canvas(graphics.Area):
 
             self.init_calculations()
 
+
         # first draw
         self.context.set_line_width(0.5)
         if self.iteration < self.max_iterations:
@@ -118,9 +119,6 @@ class Canvas(graphics.Area):
             for node in self.nodes:
                 if not node.fixed:
                     self.repulsion(node)
-
-            for node in self.nodes:
-                if not node.fixed:
                     self.gravitate(node)
 
             for edge in self.edges:
