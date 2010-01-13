@@ -90,7 +90,9 @@ class Canvas(graphics.Area):
     def delauney(self):
         segments = []
         centres = []
-        for a, b, c in itertools.combinations(self.nodes, 3):
+        combos = list(itertools.combinations(self.nodes, 3))
+        print "combinations: ", len(combos)
+        for a, b, c in combos:
             centre = self.triangle_circumcenter(a, b, c)
             centres.append(centre)
             
