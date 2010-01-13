@@ -32,6 +32,8 @@ class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
         self.nodes = []
+        self.centres = []
+        self.segments = []
 
         self.connect("mouse-move", self.on_mouse_move)
         self.connect("button-press", self.on_mouse_button_press)
@@ -39,26 +41,37 @@ class Canvas(graphics.Area):
 
         self.mouse_node = None
         self.prev_mouse_node = None
+        self.draw_circles = False
         
 
     def on_expose(self):
-        centres, segments = self.delauney()
-        for node, node2 in segments:
-            self.context.move_to(node.x, node.y)
-            self.context.line_to(node2.x, node2.y)
-        self.context.stroke()
-
-        """        
-        self.set_color("#f00")
-        for node in centres:
-            self.draw_rect(node[0]-3, node[1]-3, 6, 6, 2)
-        self.context.fill()
-        """        
-
+        self.context.set_line_width(0.5)
+        if not self.centres:  #reset when adding nodes
+            self.centres, self.segments = self.delauney()
+            
         self.set_color("#999")
         for i, node in enumerate(self.nodes):
             self.draw_node(node)
             self.register_mouse_region(node.x - 5, node.y - 5, node.x + 5, node.y + 5, i)
+            
+            
+        self.set_color("#333")
+        for node, node2 in self.segments:
+            self.context.move_to(node.x, node.y)
+            self.context.line_to(node2.x, node2.y)
+        self.context.stroke()
+
+        if self.draw_circles:
+            for node, radius in self.centres:
+                self.set_color("#f00", 0.3)
+                self.context.arc(node[0], node[1], radius, 0, 2.0 * math.pi)
+                self.context.fill_preserve()
+                self.context.stroke()
+
+                self.set_color("#a00")
+                self.draw_rect(node[0]-1, node[1]-1, 2, 2)
+                self.context.stroke()
+
 
 
     def triangle_circumcenter(self, a, b, c):
@@ -94,7 +107,6 @@ class Canvas(graphics.Area):
         print "combinations: ", len(combos)
         for a, b, c in combos:
             centre = self.triangle_circumcenter(a, b, c)
-            centres.append(centre)
             
             distance2 = (Vector2(a.x, a.y) - centre).magnitude_squared()
 
@@ -109,6 +121,9 @@ class Canvas(graphics.Area):
             
             if not smaller_found:
                 segments.extend(list(itertools.combinations([a,b,c], 2)))
+                
+                if 0 < centre.x < self.width and 0 < centre.y < self.height:
+                    centres.append((centre, math.sqrt(distance2)))
 
         for segment in segments:
             order = sorted(segment, key = lambda node: node.x+node.y)
@@ -116,7 +131,7 @@ class Canvas(graphics.Area):
 
         segments = set(segments)
 
-        return centres, segments
+        return set(centres), segments
 
 
     def draw_node(self, node):
@@ -133,6 +148,7 @@ class Canvas(graphics.Area):
     def on_mouse_click(self, area, coords, areas):
         if not areas:
             self.nodes.append(Node(*coords))
+            self.centres = []
             self.redraw_canvas()
 
 
@@ -142,6 +158,7 @@ class Canvas(graphics.Area):
                 # dragging around
                 self.nodes[self.mouse_node].x = coords[0]
                 self.nodes[self.mouse_node].y = coords[1]
+                self.centres = []
                 self.redraw_canvas()
             else:
                 self.mouse_node = None
@@ -152,23 +169,55 @@ class BasicWindow:
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
+
+        vbox = gtk.VBox()
+        window.add(vbox)
+        
+        box = gtk.HBox()
+        box.set_border_width(10)
+        box.pack_start(gtk.Label("Add some points and observe Delauney triangulation"))
+        vbox.pack_start(box, False)
+
         self.canvas = Canvas()
+        vbox.pack_start(self.canvas)
 
-        box = gtk.VBox()
-        box.pack_start(self.canvas)
+        box = gtk.HBox(False, 4)
+        box.set_border_width(10)
 
-        button = gtk.Button("Redo")
+        vbox.pack_start(box, False)
+
+        button = gtk.Button("Generate points in centers")
+        def on_click(*args):
+            for centre, radius in self.canvas.centres:
+                self.canvas.nodes.append(Node(*centre))
+            self.canvas.centres = []
+            self.canvas.redraw_canvas()
+
+        button.connect("clicked", on_click)
+        box.pack_end(button, False)
+        
+        button = gtk.Button("Clear")
         def on_click(*args):
             self.canvas.nodes = []
             self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
+            self.canvas.centres = []
+            self.canvas.redraw_canvas()
+
+        button.connect("clicked", on_click)
+        box.pack_end(button, False)
+
+
+
+
+        button = gtk.CheckButton("show circumcenter")
+        def on_click(button):
+            self.canvas.draw_circles = button.get_active()
             self.canvas.redraw_canvas()
 
         button.connect("clicked", on_click)
         box.pack_start(button, False)
 
 
-
-        window.add(box)
         window.show_all()
 
 
