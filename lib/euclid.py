@@ -189,11 +189,10 @@ class Vector2(object):
         
     def angle(self, other):
         """finds angle between this and the other vector"""
-        dot = self.normalized().dot(other.normalized())
-        if abs(dot) > 1:
-            return math.pi * 2
-        
-        return math.acos(dot)
+        if self == -other:  # same vector facing the opposite way will kill acos on float precision
+            return math.pi
+
+        return math.acos(self.normalized().dot(other.normalized()))
 
 # a b c
 # e f g
