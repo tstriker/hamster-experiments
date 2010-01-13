@@ -43,36 +43,6 @@ class Canvas(graphics.Area):
         
 
     def on_expose(self):
-
-        # voronoi diagram
-        """
-        segments = list(self.voronoi())
-        for node, node2 in segments:
-            self.context.move_to(node.x, node.y)
-            self.context.line_to(node2.x, node2.y)
-        self.context.stroke()
-        """
-
-
-        # delauney diagram
-        """
-        centres, segments = self.delauney()
-        for node, node2 in segments:
-            self.context.move_to(node.x, node.y)
-            self.context.line_to(node2.x, node2.y)
-        self.context.stroke()
-        """
-
-        """
-        self.set_color("#f00")
-        for node in centres:
-            self.draw_rect(node[0]-3, node[1]-3, 6, 6, 2)
-
-        self.context.fill()
-        self.context.stroke()
-        """
-
-
         # convex hull
         self.set_color("#bbb")
         for node, node2 in self.convex_hull():
@@ -90,24 +60,24 @@ class Canvas(graphics.Area):
     
     def convex_hull(self):
         """self brewn lame algorithm to find hull, following dr mike's math.
-           Basically we find the leftmost edge and from there go looking
+           Basically we find the topmost edge and from there go looking
            for line that would form the smallest angle
         """
         
         if len(self.nodes) < 2: return []
         
-        # grab the leftmost node (the one with the least X)
-        leftmost = sorted(self.nodes, key=lambda node:node.x)[0]
+        # grab the topmost node (the one with the least y)
+        topmost = sorted(self.nodes, key=lambda node:node.y)[0]
         
         segments = []
         # initially the current line is looking upwards
-        current_line = Point2(leftmost.x, leftmost.y) - Point2(leftmost.x, leftmost.y - 1)
-        current_node = leftmost
+        current_line = Point2(topmost.x, topmost.y) - Point2(topmost.x, topmost.y - 1)
+        current_node = topmost
         smallest = None
 
         node_list = list(self.nodes)
 
-        while current_node and smallest != leftmost:
+        while current_node and smallest != topmost:
             # calculate angles between current line
             angles = [(node, current_line.angle(current_node - Point2(node.x, node.y))) for node in node_list if node != current_node]
             
