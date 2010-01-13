@@ -100,7 +100,8 @@ class Canvas(graphics.Area):
                     break
             
             if not smaller_found:
-                for a1,b1 in itertools.combinations([a,b,c], 2):
+                order = sorted([a,b,c], key = lambda node: node.x+node.y)
+                for a1,b1 in itertools.combinations(order, 2):
                     centres.setdefault((a1,b1), []).append(centre)
 
         
@@ -116,6 +117,7 @@ class Canvas(graphics.Area):
                 if len(centres[key]) > 2:
                     res.append((centres[key][-1], centres[key][0]))
 
+        res = set(res)
 
         return res
 
