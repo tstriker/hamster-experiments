@@ -3,7 +3,10 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
- * Flocking 2 - based on flocking and added the letuce clustering (or something)
+ Flocking 2 - based on flocking and added the bin-latice spatial clustering
+ with all the optimizations we are still way behind the processing version.
+ Help me fixing the slow parts!
+ 
  * An implementation of Craig Reynold's Boids program to simulate
  * the flocking behavior of birds. Each boid steers itself based on
  * rules of avoidance, alignment, and coherence.
@@ -23,10 +26,15 @@ from random import random
 from lib.euclid import Vector2, Point2
 from lib.proximity import LQProximityStore
 
+
 class Boid(object):
     __slots__ = ['acceleration', 'velocity', 'location', 'max_speed', 'max_force']
-
-    radius = 3 # boid radius
+    radius = 2 # boid radius
+    
+    # distances are squared to avoid roots (slower)
+    neighbour_distance = float(50**2)
+    desired_separation = float(25**2)
+    braking_distance = float(100**2)
 
     def __init__(self, location, max_speed, max_force):
         self.acceleration = Vector2()
@@ -38,63 +46,31 @@ class Boid(object):
 
     def run(self, flock_boids):
         self.flock(flock_boids)
-        self.update()
 
-    def draw(self, area):
-        area.context.save()
-        area.context.translate(self.location.x, self.location.y)
-
-        theta = self.velocity.heading() + math.pi / 2
-        area.context.rotate(theta)
-
-        area.context.move_to(0, -self.radius*2)
-        area.context.line_to(-self.radius, self.radius*2)
-        area.context.line_to(self.radius, self.radius*2)
-        area.context.line_to(0, -self.radius*2)
-
-        area.context.restore()
-
-        #area.set_color("#FF0000")
-        #area.context.move_to(self.location.x, self.location.y)
-        #area.context.line_to(self.location.x + self.velocity.x * 20, self.location.y + self.velocity.y * 20)
-        #area.context.stroke()
-
-
+        self.velocity += self.acceleration
+        self.velocity.limit(self.max_speed)
+        self.location += self.velocity
 
     def flock(self, boids):
         if not boids:
             return
 
         # We accumulate a new acceleration each time based on three rules
-        separation = self.separate(boids)
-        alignment = self.align(boids)
-        cohesion = self.cohesion(boids)
+        # and weight them
+        separation = self.separate(boids) * 2
+        alignment = self.align(boids) * 1
+        cohesion = self.cohesion(boids) * 1
 
-        # Arbitrarily weight these forces
-        separation = separation * 2
-        alignment = alignment * 1
-        cohesion = cohesion * 1
+        # The sum is the wanted acceleration 
+        self.acceleration = separation + alignment + cohesion
 
-        # Add the force vectors to acceleration
-        self.acceleration += separation
-        self.acceleration += alignment
-        self.acceleration += cohesion
-
-    def update(self):
-        self.velocity += self.acceleration
-        self.velocity.limit(self.max_speed)
-
-        self.location += self.velocity
-        # Reset accelertion to 0 each cycle
-        self.acceleration *= 0
 
     def separate(self, boids):
-        desired_separation = 25 * 25.0
         sum = Vector2()
         in_zone = 0.0
 
         for boid, d in boids:
-            if 0 < d < desired_separation:
+            if 0 < d < self.desired_separation:
                 diff = self.location - boid.location
                 diff.normalize()
                 diff = diff / math.sqrt(d)  # Weight by distance
@@ -107,12 +83,11 @@ class Boid(object):
         return sum
 
     def align(self, boids):
-        neighbour_distance = 50.0 * 50.0
         sum = Vector2()
         in_zone = 0.0
 
-        for boid,d in boids:
-            if 0 < d < neighbour_distance:
+        for boid, d in boids:
+            if 0 < d < self.neighbour_distance:
                 sum += boid.velocity
                 in_zone += 1
 
@@ -126,41 +101,46 @@ class Boid(object):
         """ For the average location (i.e. center) of all nearby boids,
             calculate steering vector towards that location"""
 
-        neighbour_distance = 50.0 * 50.0
         sum = Vector2()
-        in_zone = 0.0
+        in_zone = 0
 
         for boid, d in boids:
-            if 0 < d < neighbour_distance:
-                sum += boid.location
+            if 0 < d < self.neighbour_distance:
+                sum = sum + boid.location
                 in_zone +=1
 
         if in_zone:
-            sum = sum / in_zone
-            return self.steer(sum)
+            sum = sum / float(in_zone)
+            return self.steer(sum, True)
 
         return sum
 
+    def seek(target):
+        self.acceleration += self.steer(target, False)
 
-    def steer(self, target):
-        steer = Vector2()
-
+    def arrive(target):
+        self.acceleration += self.steer(target, True)
+ 
+    def steer(self, target, slow_down):
         desired = target - self.location # A vector pointing from the location to the target
-
+        
         d = desired.magnitude_squared()
-
-        if d > 0:
+        if d > 0:  # this means that we have a target
             desired.normalize()
-
+            
+            
             # Two options for desired vector magnitude (1 -- based on distance, 2 -- maxspeed)
-            desired *= self.max_speed
+            if  slow_down and d > self.braking_distance:
+                desired *= self.max_speed * d / self.braking_distance # This damping is somewhat arbitrary
+            else:
+                desired *= self.max_speed
 
             steer = desired - self.velocity # Steering = Desired minus Velocity
             steer.limit(self.max_force) # Limit to maximum steering force
+            return steer
         else:
-            steer = Vector2()
+            return Vector2()
 
-        return steer
 
 
 class Canvas(graphics.Area):
@@ -170,15 +150,42 @@ class Canvas(graphics.Area):
 
         self.connect("mouse-click", self.on_mouse_click)
 
-        self.proximity_radius = 50
+        # we should redo the boxes when window gets resized
+        self.proximity_radius = 10
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), self.proximity_radius)
 
         self.flock = []
-
-        self.distances = 0
-
+        
         self.frame = 0
 
+
+    def on_expose(self):
+        if len(self.flock) < 80:
+            for i in range(2):
+                self.flock.append(Boid(Vector2(self.width / 2, self.height / 2), 2.0, 0.05))
+        
+        # main loop (i should rename this to something more obvious)
+        self.context.set_line_width(0.8)
+        self.set_color("#666")
+
+        for boid in self.flock:
+            neighbours = []
+            if self.frame % 2 == 0: #recalculate direction every second frame
+                neighbours = self.proximities.find_neighbours(boid, 40)
+
+            boid.run(neighbours)
+            self.wrap(boid)
+            self.proximities.update_position(boid)
+            
+            self.draw_boid(boid)
+
+
+        self.frame +=1
+
+        self.context.stroke()
+
+        self.redraw_canvas()
+        
 
     def wrap(self, boid):
         "wraps boid around the edges (teleportation)"
@@ -194,41 +201,27 @@ class Canvas(graphics.Area):
         if boid.location.y > self.height + boid.radius:
             boid.location.y = -boid.radius
 
-    def on_mouse_click(self, widget, coords):
+
+    def draw_boid(self, boid):
+        self.context.save()
+        self.context.translate(boid.location.x, boid.location.y)
+
+        theta = boid.velocity.heading() + math.pi / 2
+        self.context.rotate(theta)
+
+        self.context.move_to(0, -boid.radius*2)
+        self.context.line_to(-boid.radius, boid.radius*2)
+        self.context.line_to(boid.radius, boid.radius*2)
+        self.context.line_to(0, -boid.radius*2)
+
+        self.context.restore()
+
+
+    def on_mouse_click(self, widget, coords, areas):
         self.flock.append(Boid(Vector2(*coords), 2.0, 0.05))
 
-    def on_expose(self):
-        self.context.set_line_width(1)
-
-        if len(self.flock) < 80:
-            self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
 
 
-        self.set_color("#AA00FF")
-
-        for boid in self.flock:
-            neighbours = []
-            if self.frame % 2 == 0:
-                neighbours = self.proximities.find_neighbours(boid, 50)
-
-            #for boid2,d in neighbours:
-            #    self.context.move_to(boid.location.x, boid.location.y)
-            #    self.context.line_to(boid2.location.x, boid2.location.y)
-
-            boid.run(neighbours)
-            self.wrap(boid)
-
-
-            boid.draw(self)
-
-
-            self.proximities.update_position(boid)
-
-        self.frame +=1
-
-        self.context.stroke()
-
-        self.redraw_canvas()
 
 class BasicWindow:
     def __init__(self):
