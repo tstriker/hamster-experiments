@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
+""" guilloches, following.  observe how detail grows and your cpu melts.
+    move mouse horizontally and vertically to change parameters
+    http://ministryoftype.co.uk/words/article/guilloches/
+"""
 
 import gtk
 from lib import graphics
@@ -12,12 +16,21 @@ import math
 class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
+        self.connect("mouse-move", self.on_mouse_move)
+
+        self.theta_step = 0.01
+        self.R = 50 # big steps
+        self.r = 0.08 # little steps
+        self.p = 25 # size of the ring
+
+    def on_mouse_move(self, area, coords, mouse_areas):
+        self.R = coords[0] / float(self.width) * 50
+        self.r = coords[1] / float(self.height) * 0.08
+
 
 
     def on_expose(self):
-        R = 50
-        r = 0.08
-        p = 55
+        R, r, p = self.R, self.r, self.p
 
         theta = 0
 
@@ -26,7 +39,7 @@ class Canvas(graphics.Area):
 
         first = True
         while theta < 2 * math.pi:
-            theta += 0.0001
+            theta += self.theta_step
             x = (R + r) * math.cos(theta) + (r + p) * math.cos((R+r)/r * theta)
             y = (R + r) * math.sin(theta) + (r + p) * math.sin((R+r)/r * theta)
 
@@ -39,6 +52,9 @@ class Canvas(graphics.Area):
             self.context.line_to(x, y)
 
         self.context.stroke()
+
+        self.theta_step = self.theta_step -0.0000003
+        self.redraw_canvas()
 
 
 
