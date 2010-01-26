@@ -30,40 +30,127 @@ class Canvas(graphics.Area):
         self.redraw_canvas()
 
 
-    def draw_tile(self, x, y, size, top_left = True):
+    def stroke_tile(self, x, y, size, orient):
         # draws a tile, there are just two orientations
         arc_radius = size / 2
         x2, y2 = x + size, y + size
 
         # i got lost here with all the numbers, drawing a rectangle around will help
-        if top_left:
+        if orient == 1:
             self.context.move_to(x + arc_radius, y)
             self.context.arc(x, y, arc_radius, 0, math.pi / 2);
 
             self.context.move_to(x2 - arc_radius, y2)
             self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
-        else:
+        elif orient == 2:
             self.context.move_to(x2, y + arc_radius)
             self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
 
             self.context.move_to(x, y2 - arc_radius)
             self.context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
 
+    def fill_tile(self, x, y, size, orient):
+        # draws a tile, there are just two orientations
+        arc_radius = size / 2
+        x2, y2 = x + size, y + size
+
+        # i got lost here with all the numbers, drawing a rectangle around will help
+        front, back = "#666", "#aaa"
+        if orient > 2:
+            front, back = back, front
+
+        self.fill_area(x, y, size, size, back)
+        self.set_color(front)
+
+        if orient % 2 == 1:
+            self.context.move_to(x, y)
+            self.context.line_to(x + arc_radius, y)
+            self.context.arc(x, y, arc_radius, 0, math.pi / 2);
+            self.context.close_path()
+
+            self.context.move_to(x2, y2)
+            self.context.line_to(x2 - arc_radius, y2)
+            self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
+            self.context.close_path()
+            self.context.fill()
+        else:
+            self.context.move_to(x2, y)
+            self.context.line_to(x2, y + arc_radius)
+            self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
+            self.context.close_path()
+
+            self.context.move_to(x, y2)
+            self.context.line_to(x, y2 - arc_radius)
+            self.context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
+            self.context.close_path()
+
+            self.context.fill()
 
 
     def on_expose(self):
+        if not self.height: return
+        
+        self.set_color("#000")
+        self.context.set_line_width(1)
+
+        self.four_tile_matching()
+        return
+
+        self.fill_tile(50, 50, 50, 1)
+        self.fill_tile(100, 100, 50, 2)
+        self.fill_tile(150, 150, 50, 3)
+        self.fill_tile(200, 200, 50, 4)
+
+        return
+
+        self.four_tile_matching()
+
+        #self.inverse_fill()
+        #self.line_fill()  # line fill is much faster but has bugs in it
+
+
+    def two_tile_random(self):
         self.set_color("#000")
         self.context.set_line_width(1)
 
         for y in range(0, self.height, self.tile_size):
             for x in range(0, self.width, self.tile_size):
-                self.draw_tile(x, y, self.tile_size, randint(-1, 1) > 0)
+                self.draw_tile(x, y, self.tile_size, randint(1, 2))
 
-        self.context.stroke()
-        self.context.fill()
+    def four_tile_matching(self):
+        self.set_color("#000")
+        self.context.set_line_width(1)
+        tiles = {}
 
-        self.inverse_fill()
-        #self.line_fill()  # line fill is much faster but has bugs in it
+        tile_size = self.width / float(self.height / self.tile_size)
+
+        x, y = 0, 0
+
+        while y * self.tile_size < self.height + self.tile_size:
+            while x * self.tile_size < self.width + self.tile_size:
+                top_tile = tiles.get((x,y-1))
+                left_tile = tiles.get((x-1,y))
+
+                match_found = False
+                while not match_found:
+                    tile = randint(1,4)
+                    match_found = self.horizontal_match(left_tile, tile) and self.vertical_match(top_tile, tile)
+
+                tiles[(x,y)] = tile
+                self.fill_tile(x * self.tile_size, y * self.tile_size, self.tile_size, tile)
+
+                x += 1
+            x = 0
+            y += 1
+
+
+
+
+    def horizontal_match(self, a, b):
+        return a is None or b is None or (a != b and set((a,b)) != set((1,4)) and set((a, b)) != set((2,3)))
+
+    def vertical_match(self, a, b):
+        return a is None or b is None or (a != b and set((a,b)) != set((2,3)) and set((a, b)) != set((1, 4)))
 
 
     def inverse_fill(self):
