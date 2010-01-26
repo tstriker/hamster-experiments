@@ -2,14 +2,9 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 """
-    Truchet pasta tiling (http://mathworld.wolfram.com/TruchetTiling.html)
-    Most entertaining.
-    Basically there are two types of tiles - "/" and "\" and we just randomly
-    generate the whole thing
-
-    What's extra here, is the flood fill http://en.wikipedia.org/wiki/Flood_fill
-    For that we first draw with cairo and then analyse on pixel level via
-    gtk.gdk.Image.
+    Draws initial canvas to play flood filling on (based on truchet.py).
+    Then on mouse click performs queue-based flood fill.
+    We are combining cairo with gdk.Image here to operate on pixel level (yay!)
 """
 
 import gtk
@@ -38,7 +33,7 @@ class Canvas(graphics.Area):
         colormap = self.image.get_colormap()
         color1 = colormap.alloc_color(self.colors.gdk("#ff0000"))
 
-        self.bucket_fill(self.image, x, y, color1.pixel)
+        self.flood_fill(self.image, x, y, color1.pixel)
         self.redraw_canvas()
 
 
@@ -84,7 +79,7 @@ class Canvas(graphics.Area):
                 self.stroke_tile(x, y, self.tile_size, random.choice([1, 2]))
         self.context.stroke()
 
-    def bucket_fill(self, image, x, y, new_color, old_color = None):
+    def flood_fill(self, image, x, y, new_color, old_color = None):
         """whoa, a queue based 4-direction bucket fill
            linescan could improve things
         """
