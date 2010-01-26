@@ -53,7 +53,6 @@ class Canvas(graphics.Area):
     def fill_tile(self, x, y, size, orient):
         # draws a tile, there are just two orientations
         arc_radius = size / 2
-        x2, y2 = x + size, y + size
 
         front, back = "#666", "#aaa"
         if orient > 2:
@@ -62,35 +61,33 @@ class Canvas(graphics.Area):
         self.fill_area(x, y, size, size, back)
         self.set_color(front)
 
-        if orient % 2 == 1: # 1, 3
-            self.context.move_to(x, y)
-            self.context.line_to(x + arc_radius, y)
-            self.context.arc(x, y, arc_radius, 0, math.pi / 2);
-            self.context.close_path()
 
-            self.context.move_to(x2, y2)
-            self.context.line_to(x2 - arc_radius, y2)
-            self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
-            self.context.close_path()
-            self.context.fill()
-        else: # 2, 4
-            self.context.move_to(x2, y)
-            self.context.line_to(x2, y + arc_radius)
-            self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
-            self.context.close_path()
+        self.context.save()
 
-            self.context.move_to(x, y2)
-            self.context.line_to(x, y2 - arc_radius)
-            self.context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
-            self.context.close_path()
+        self.context.translate(x, y)
+        if orient % 2 == 0: # tiles 2 and 4 are flipped 1 and 3
+            self.context.rotate(math.pi / 2)
+            self.context.translate(0, -size)
 
-            self.context.fill()
+        self.context.move_to(0, 0)
+        self.context.line_to(arc_radius, 0)
+        self.context.arc(0, 0, arc_radius, 0, math.pi / 2);
+        self.context.close_path()
+
+        self.context.move_to(size, size)
+        self.context.line_to(size - arc_radius, size)
+        self.context.arc(size, size, arc_radius, math.pi, math.pi + math.pi / 2);
+        self.context.close_path()
+
+        self.context.fill()
+        self.context.restore()
 
 
     def on_expose(self):
         """here happens all the drawing"""
         if not self.height: return
         self.checker_fill()
+        #self.fill_tile(100, 100, 100, 1)
 
 
     def two_tile_random(self):
