@@ -27,6 +27,7 @@ class Canvas(graphics.Area):
 
     def on_mouse_move(self, area, coords, mouse_areas):
         self.tile_size = int(coords[0] / float(self.width) * 200 + 5) # x changes size of tile from 20 to 200(+20)
+        self.tile_size = min([max(self.tile_size, 10), self.width, self.height])
         self.redraw_canvas()
 
 
@@ -89,7 +90,7 @@ class Canvas(graphics.Area):
 
     def on_expose(self):
         if not self.height: return
-        
+
         self.set_color("#000")
         self.context.set_line_width(1)
 
@@ -126,6 +127,9 @@ class Canvas(graphics.Area):
 
         x, y = 0, 0
 
+        def tile_match(a, b):
+            return a is None or b is None or (a != b and set((a,b)) != set((1,4)) and set((a, b)) != set((2,3)))
+
         while y * self.tile_size < self.height + self.tile_size:
             while x * self.tile_size < self.width + self.tile_size:
                 top_tile = tiles.get((x,y-1))
@@ -134,7 +138,8 @@ class Canvas(graphics.Area):
                 match_found = False
                 while not match_found:
                     tile = randint(1,4)
-                    match_found = self.horizontal_match(left_tile, tile) and self.vertical_match(top_tile, tile)
+                    match_found = (left_tile is None or tile_match(left_tile, tile)) and \
+                                  (top_tile is None or tile_match(top_tile, tile))
 
                 tiles[(x,y)] = tile
                 self.fill_tile(x * self.tile_size, y * self.tile_size, self.tile_size, tile)
@@ -145,12 +150,6 @@ class Canvas(graphics.Area):
 
 
 
-
-    def horizontal_match(self, a, b):
-        return a is None or b is None or (a != b and set((a,b)) != set((1,4)) and set((a, b)) != set((2,3)))
-
-    def vertical_match(self, a, b):
-        return a is None or b is None or (a != b and set((a,b)) != set((2,3)) and set((a, b)) != set((1, 4)))
 
 
     def inverse_fill(self):
