@@ -36,7 +36,7 @@ class Canvas(graphics.Area):
         arc_radius = size / 2
         x2, y2 = x + size, y + size
 
-        # i got lost here with all the numbers, drawing a rectangle around will help
+        # i got lost here with all the Pi's
         if orient == 1:
             self.context.move_to(x + arc_radius, y)
             self.context.arc(x, y, arc_radius, 0, math.pi / 2);
@@ -55,7 +55,6 @@ class Canvas(graphics.Area):
         arc_radius = size / 2
         x2, y2 = x + size, y + size
 
-        # i got lost here with all the numbers, drawing a rectangle around will help
         front, back = "#666", "#aaa"
         if orient > 2:
             front, back = back, front
@@ -63,7 +62,7 @@ class Canvas(graphics.Area):
         self.fill_area(x, y, size, size, back)
         self.set_color(front)
 
-        if orient % 2 == 1:
+        if orient % 2 == 1: # 1, 3
             self.context.move_to(x, y)
             self.context.line_to(x + arc_radius, y)
             self.context.arc(x, y, arc_radius, 0, math.pi / 2);
@@ -74,7 +73,7 @@ class Canvas(graphics.Area):
             self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
             self.context.close_path()
             self.context.fill()
-        else:
+        else: # 2, 4
             self.context.move_to(x2, y)
             self.context.line_to(x2, y + arc_radius)
             self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
@@ -89,28 +88,14 @@ class Canvas(graphics.Area):
 
 
     def on_expose(self):
+        """here happens all the drawing"""
         if not self.height: return
-
-        self.set_color("#000")
-        self.context.set_line_width(1)
-
         self.four_tile_matching()
-        return
-
-        self.fill_tile(50, 50, 50, 1)
-        self.fill_tile(100, 100, 50, 2)
-        self.fill_tile(150, 150, 50, 3)
-        self.fill_tile(200, 200, 50, 4)
-
-        return
-
-        self.four_tile_matching()
-
-        #self.inverse_fill()
-        #self.line_fill()  # line fill is much faster but has bugs in it
 
 
     def two_tile_random(self):
+        """stroke area with non-filed truchet (since non filed, all match and
+           there are just two types"""
         self.set_color("#000")
         self.context.set_line_width(1)
 
@@ -118,18 +103,18 @@ class Canvas(graphics.Area):
             for x in range(0, self.width, self.tile_size):
                 self.draw_tile(x, y, self.tile_size, randint(1, 2))
 
+
     def four_tile_matching(self):
-        self.set_color("#000")
-        self.context.set_line_width(1)
+        """fill area with 4-type matching tiles, where the other two have same
+           shapes as first two, but colors are inverted"""
+
         tiles = {}
 
-        tile_size = self.width / float(self.height / self.tile_size)
-
-        x, y = 0, 0
-
         def tile_match(a, b):
+            """the indexes are arbitrary and based on how i drew the tiles"""
             return a is None or b is None or (a != b and set((a,b)) != set((1,4)) and set((a, b)) != set((2,3)))
 
+        x, y = 0, 0
         while y * self.tile_size < self.height + self.tile_size:
             while x * self.tile_size < self.width + self.tile_size:
                 top_tile = tiles.get((x,y-1))
@@ -195,48 +180,6 @@ class Canvas(graphics.Area):
                 else:
                     prev_col_color = current_color
 
-
-        self.window.draw_image(self.get_style().black_gc, image, 0, 0, 0, 0, -1, -1)
-
-
-    def line_fill(self):
-        """at the end i realized that we care only about lines"""
-        image = self.window.get_image(0, 0, self.width, self.height)
-        x, xd = 0, 1
-        y = 0
-
-        colormap = image.get_colormap()
-        color1 = colormap.alloc_color(255*260,255*240,255*240)
-        background = image.get_pixel(self.tile_size / 2, self.tile_size / 2)
-
-        colors = [color1.pixel, 9684419, background]
-        i = 0
-        paint_color = colors[0]
-        prev_match = -1
-
-
-        while y < self.height:
-            current_color = image.get_pixel(x, y)
-
-            current_match = -1
-            if current_color in colors:
-                current_match = colors.index(current_color)
-
-                if current_color == colors[2]:
-                    image.put_pixel(x, y, paint_color)
-            else:
-                if prev_match > -1:
-                    paint_color = colors[1 - colors.index(paint_color)] #variate between back and front
-
-            x += xd
-            if x >= self.width-1 or x < 0:
-                x = min(max(x, 0), self.width) #limit to bounds and turn around
-                xd = -xd
-                y+=1
-                if prev_match == -1:
-                    paint_color = colors[1 - colors.index(paint_color)] #variate between back and front
-
-            prev_match = current_match
 
         self.window.draw_image(self.get_style().black_gc, image, 0, 0, 0, 0, -1, -1)
 
