@@ -26,34 +26,34 @@ class Canvas(graphics.Area):
         self.points = 2000
         self.zoom = 1
 
+        self.x, self.y = 0,0
+
+        self.image = None
+
     def on_mouse_move(self, area, coords, mouse_areas):
-        self.points = int(coords[1] / float(self.height) * 20000)
+        self.points = int(coords[1] / float(self.height) * 30000) + 10000
         self.zoom = abs((coords[0] / float(self.width)) * 2 - 1)
+        self.image = None
+        self.x, self.y = 0,0
         self.redraw_canvas()
 
-
-
     def on_expose(self):
+        if not self.image:
+            self.image = self.window.get_image(0, 0, self.width, self.height)
 
-        #new_x = a0 + (a1 * x) + (a2 * x * x) + (a3 * x * y) + (a4 * y) + (a5 * y * y)
-        #new_y = b0 + (b1 * x) + (b2 * x * x) + (b3 * x * y) + (b4 * y) + (b5 * y * y)
+        colormap = self.image.get_colormap()
+        color1 = colormap.alloc_color(self.colors.gdk("#000000")).pixel
 
-        x, y = 0,0
-        self.set_color((0.5,0.5,0.5))
-        self.context.set_antialias(cairo.ANTIALIAS_NONE)
-        for i in range(self.points):
-            x = math.sin(self.a * y) - math.cos(self.b * x)
-            y = math.sin(self.c * x) - math.cos(self.d * y)
+        for i in range(1000):
+            self.x = math.sin(self.a * self.y) - math.cos(self.b * self.x)
+            self.y = math.sin(self.c * self.x) - math.cos(self.d * self.y)
 
+            self.image.put_pixel(int(self.x * self.width * self.zoom + self.width / 2),
+                                 int(self.y * self.height * self.zoom + self.height / 2),
+                                 color1)
 
-            self.draw_rect(int(x * self.width * self.zoom + self.width / 2),
-                           int(y * self.height * self.zoom + self.height / 2),
-                           1, 1)
-
-        self.context.fill()
-
-        #pixbuf = gtk.gdk.Pixbuf(gtk.gdk.colormap_get_system(), False, 8, self.width, self.height)
-        #self.image = pixbuf.get_from_drawable(self)
+        self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+        self.redraw_canvas()
 
 class BasicWindow:
     def __init__(self):
