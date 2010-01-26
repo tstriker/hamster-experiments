@@ -15,7 +15,7 @@
 import gtk
 from lib import graphics
 import math
-from random import randint
+import random
 
 
 class Canvas(graphics.Area):
@@ -90,7 +90,7 @@ class Canvas(graphics.Area):
     def on_expose(self):
         """here happens all the drawing"""
         if not self.height: return
-        self.four_tile_matching()
+        self.checker_fill()
 
 
     def two_tile_random(self):
@@ -104,37 +104,17 @@ class Canvas(graphics.Area):
                 self.draw_tile(x, y, self.tile_size, randint(1, 2))
 
 
-    def four_tile_matching(self):
+    def checker_fill(self):
         """fill area with 4-type matching tiles, where the other two have same
            shapes as first two, but colors are inverted"""
 
-        tiles = {}
-
-        def tile_match(a, b):
-            """the indexes are arbitrary and based on how i drew the tiles"""
-            return a is None or b is None or (a != b and set((a,b)) != set((1,4)) and set((a, b)) != set((2,3)))
-
-        x, y = 0, 0
-        while y * self.tile_size < self.height + self.tile_size:
-            while x * self.tile_size < self.width + self.tile_size:
-                top_tile = tiles.get((x,y-1))
-                left_tile = tiles.get((x-1,y))
-
-                match_found = False
-                while not match_found:
-                    tile = randint(1,4)
-                    match_found = (left_tile is None or tile_match(left_tile, tile)) and \
-                                  (top_tile is None or tile_match(top_tile, tile))
-
-                tiles[(x,y)] = tile
+        for y in range(0, self.height / self.tile_size + 1):
+            for x in range(0, self.width / self.tile_size + 1):
+                if (x + y) % 2:
+                    tile = random.choice([1, 4])
+                else:
+                    tile = random.choice([2, 3])
                 self.fill_tile(x * self.tile_size, y * self.tile_size, self.tile_size, tile)
-
-                x += 1
-            x = 0
-            y += 1
-
-
-
 
 
     def inverse_fill(self):
