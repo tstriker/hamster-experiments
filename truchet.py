@@ -22,7 +22,7 @@ class Canvas(graphics.Area):
     def __init__(self):
         graphics.Area.__init__(self)
         self.connect("mouse-move", self.on_mouse_move)
-        self.tile_size = 20
+        self.tile_size = 40
 
 
     def on_mouse_move(self, area, coords, mouse_areas):
@@ -266,7 +266,7 @@ class Canvas(graphics.Area):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(200, 200)
+        window.set_size_request(500, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         canvas = Canvas()
