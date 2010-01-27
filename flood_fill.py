@@ -63,10 +63,10 @@ class Canvas(graphics.Area):
 
         if not self.image:
             self.two_tile_random()
-        else:
-            self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+            self.image = self.window.get_image(0, 0, self.width, self.height)
 
-        self.image = self.window.get_image(0, 0, self.width, self.height)
+        self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+
 
 
     def two_tile_random(self):
