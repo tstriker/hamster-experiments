@@ -11,6 +11,7 @@ import gtk
 from lib import graphics
 import math
 import random
+import datetime as dt
 
 
 class Canvas(graphics.Area):
@@ -79,29 +80,58 @@ class Canvas(graphics.Area):
                 self.stroke_tile(x, y, self.tile_size, random.choice([1, 2]))
         self.context.stroke()
 
+    @staticmethod
+    def paint_check(color1, color2):
+        return color1 != color2 and abs(color1 - color2) < 3000000
+
+
     def flood_fill(self, image, x, y, new_color, old_color = None):
-        """whoa, a queue based 4-direction bucket fill
-           linescan could improve things
+        """from starting point finds left and right bounds, paint them all
+           and adds any point above and below the line that is in the old color
+           to the queue
         """
         x, y = int(x), int(y)
         old_color = old_color or image.get_pixel(x, y)
 
-        queue = [(x,y)]
+        queue = [(x, y)]
 
-        operations = 0
+        pixels, longest_queue = 0, 0
+        paint_check = self.paint_check
+
+
+        t = dt.datetime.now()
         while queue:
+            longest_queue = max(longest_queue, len(queue))
             x, y = queue.pop(0)
-            if image.get_pixel(x, y) == new_color:
-                operations += 1
+            if image.get_pixel(x, y) != old_color:
+                continue
 
-            current_color = image.get_pixel(x, y)
-            if current_color!= new_color and abs(current_color - old_color) < 3000000:
+            west, east = x,x  #up and down
+
+            # find bounds
+            while west > 0 and paint_check(image.get_pixel(west - 1, y), new_color):
+                west -= 1
+
+            while east < self.width - 1 and paint_check(image.get_pixel(east + 1, y), new_color):
+                east += 1
+
+            for x in range(west, east):
+                pixels +=1
                 image.put_pixel(x, y, new_color)
-                if x-1 > 0 and image.get_pixel(x-1, y) != new_color: queue.append((x - 1, y))
-                if x+1 < self.width and image.get_pixel(x+1, y) != new_color: queue.append((x + 1, y))
-                if y-1 > 0 and image.get_pixel(x, y-1) != new_color: queue.append((x, y - 1))
-                if y+1 < self.height and image.get_pixel(x, y+1) != new_color: queue.append((x, y + 1))
-        print operations, "operations on fill"
+                if y > 0 and paint_check(image.get_pixel(x, y - 1), new_color):
+                    queue.append((x, y - 1))
+
+                if y < self.height - 1 and paint_check(image.get_pixel(x, y + 1), new_color):
+                    queue.append((x, y + 1))
+
+
+        delta = dt.datetime.now() - t
+        delta_ms = delta.seconds * 1000000 + delta.microseconds
+        print "%d pixels in %.2f (%.2f/s). Longest queue: %d" % \
+                                          (pixels,
+                                           delta_ms / 1000000.0,
+                                           float(pixels) / delta_ms * 1000000.0,
+                                           longest_queue)
 
 
 class BasicWindow:
