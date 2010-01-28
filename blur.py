@@ -2,16 +2,17 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 """
- Blur from processing, only 4 times slower or something in the lines.
- The slowness comes from several aspects. One is that gdk.Image operates with
- color indexes instead of rgb values and so we need to go forth and back and.
-
  * Blur.
  *
  * Bluring half of an image by processing it through a
  * low-pass filter.
 
  Ported from processing (http://processing.org)
+ --
+ Blur from processing, only million times slower or something in the lines.
+ Right now slowness primarily is in getting pixel and determining it's color.
+ The get_pixels_array of gtk.Pixbuf does not make things faster either as
+ one has to unpack structures, which again is tad expensive.
 """
 
 import gtk
@@ -19,6 +20,7 @@ from lib import graphics
 import math
 import random
 import datetime as dt
+import collections
 
 
 class Canvas(graphics.Area):
@@ -98,22 +100,26 @@ class Canvas(graphics.Area):
 
         # we will need all the colors anyway, so let's grab them once
         pixels = (image.get_pixel(x, y) for x in range(0, self.width) for y in range (0, self.height))
-        pixel_colors = [colormap.query_color(pixel) for pixel in pixels]
 
-        import collections
+        pixel_colors, known_colors = {}, {}
+        for i, pixel in enumerate(pixels):
+            try:
+                pixel_colors[i / height, i % height] = known_colors[pixel]
+            except:
+                known_colors[pixel] = colormap.query_color(pixel)
+                pixel_colors[i / height, i % height] = known_colors[pixel]
+
         by_color = collections.defaultdict(collections.deque)
-
-
         for y in range(1, self.height - 1):
             for x in range(1, self.width - 1):
                 kernel_sum = 0
 
                 for ky in kernel_range:
                     for kx in kernel_range:
-                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx)*height+y + ky].red_float
+                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx), y + ky].red_float
 
                 kernel_sum = int(kernel_sum * 65535) + 1
-                if kernel_sum != int(pixel_colors[x * height + y].red_float * 65535):
+                if kernel_sum != int(pixel_colors[x, y].red_float * 65535):
                     by_color[kernel_sum].append(x * height + y)
 
 
