@@ -3,6 +3,8 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 """
  Blur from processing, only 4 times slower or something in the lines.
+ The slowness comes from several aspects. One is that gdk.Image operates with
+ color indexes instead of rgb values and so we need to go forth and back and.
 
  * Blur.
  *
@@ -25,16 +27,18 @@ class Canvas(graphics.Area):
         self.tile_size = 30
         self.image = None
 
+        self.colormap = {}
+
 
     def on_expose(self):
         """here happens all the drawing"""
         if not self.height: return
 
-        if not self.image:
-            self.two_tile_random()
-            self.image = self.window.get_image(0, 0, self.width, self.height)
+        self.two_tile_random()
+        self.image = self.window.get_image(0, 0, self.width, self.height)
+        self.blur()
 
-        self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+        self.redraw_canvas()
 
 
     def stroke_tile(self, x, y, size, orient):
@@ -74,34 +78,31 @@ class Canvas(graphics.Area):
         t = dt.datetime.now()
 
         image = self.image
+        colormap = self.image.get_colormap()
 
-        blur_image = gtk.gdk.Image(gtk.gdk.IMAGE_FASTEST, self.get_visual(), self.width, self.height)
+        blur_pixmap = gtk.gdk.Pixmap(self.window, self.width, self.height)
+        blur_pixmap.draw_image(self.get_style().black_gc, image, 0, 0, 0, 0, self.width, self.height)
 
-        blur_colormap = gtk.gdk.Colormap(self.get_visual(), True)
-        blur_image.set_colormap(blur_colormap)
 
         v = 1.0 / 9.0
         kernel = ((v, v, v),
                   (v, v, v),
                   (v, v, v))
 
-
-
-        colormap = self.image.get_colormap()
-        #color1 = colormap.alloc_color(self.colors.gdk("#ff0000"))
         kernel_range = range(-1, 2)
 
-
-        # we will need all the colors anyway, so let's grab the once
+        # we will need all the colors anyway, so let's grab them once
         pixel_colors = {}
         for y in range(0, self.height):
             for x in range(0, self.width):
                 pixel_colors[(x, y)] = colormap.query_color(image.get_pixel(x, y))
 
 
-        allocated_colors = [blur_colormap.alloc_color(i, i, i).pixel for i in xrange(65535)]
-
         height = self.height
+
+        import collections
+        by_color = collections.defaultdict(collections.deque)
+
 
         for y in range(1, self.height - 1):
             for x in range(1, self.width - 1):
@@ -111,23 +112,27 @@ class Canvas(graphics.Area):
                     for kx in kernel_range:
                         kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx, y + ky)].red_float
 
-                kernel_sum = int(kernel_sum * 65535)
-
-                blur_image.put_pixel(x, y, blur_colormap.alloc_color(kernel_sum,
-                                                                     kernel_sum,
-                                                                     kernel_sum).pixel)
-
-        self.image = blur_image
+                kernel_sum = int(kernel_sum * 65535) + 1
+                if kernel_sum != int(pixel_colors[(x, y)].red_float * 65535):
+                    by_color[kernel_sum].append(x * height + y)
 
 
-        print dt.datetime.now() - t
+        gc = blur_pixmap.new_gc()
+        for color in by_color:
+            #print color
+            gc.set_foreground(colormap.alloc_color(color, color, color))
+            blur_pixmap.draw_points(gc, [(i / height, i % height) for i in by_color[color]])
 
-        self.redraw_canvas()
+
+        self.window.draw_drawable(self.get_style().black_gc, blur_pixmap, 0, 0, 0, 0, -1, -1)
+
+        print "%d x %d," %(self.width, self.height), dt.datetime.now() - t
+
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(500, 500)
+        window.set_size_request(200, 200)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         canvas = Canvas()
