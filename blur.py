@@ -32,12 +32,10 @@ class Canvas(graphics.Area):
 
         if not self.image:
             self.two_tile_random()
-
             self.image = self.window.get_image(0, 0, self.width, self.height)
-        else:
-            self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
 
-        self.image = self.window.get_image(0, 0, self.width, self.height)
+        self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+
 
     def stroke_tile(self, x, y, size, orient):
         # draws a tile, there are just two orientations
@@ -72,17 +70,13 @@ class Canvas(graphics.Area):
 
 
 
-    @staticmethod
-    def paint_check(color1, color2):
-        return color1 != color2 and abs(color1 - color2) < 3000000
-
-
-
-
     def blur(self):
+        t = dt.datetime.now()
+
         image = self.image
 
         blur_image = gtk.gdk.Image(gtk.gdk.IMAGE_FASTEST, self.get_visual(), self.width, self.height)
+
         blur_colormap = gtk.gdk.Colormap(self.get_visual(), True)
         blur_image.set_colormap(blur_colormap)
 
@@ -97,30 +91,31 @@ class Canvas(graphics.Area):
         #color1 = colormap.alloc_color(self.colors.gdk("#ff0000"))
         kernel_range = range(-1, 2)
 
-        pixel_colors = []
-        for i in range(self.width * self.height):
-            pixel_colors.append(0)
+
+        # we will need all the colors anyway, so let's grab the once
+        pixel_colors = {}
+        for y in range(0, self.height):
+            for x in range(0, self.width):
+                pixel_colors[(x, y)] = colormap.query_color(image.get_pixel(x, y))
 
 
-        t = dt.datetime.now()
+        allocated_colors = [blur_colormap.alloc_color(i, i, i).pixel for i in xrange(65535)]
+
         height = self.height
+
         for y in range(1, self.height - 1):
             for x in range(1, self.width - 1):
                 kernel_sum = 0
 
                 for ky in kernel_range:
                     for kx in kernel_range:
-                        color = pixel_colors[(x + kx) * height + y + ky]
-                        if not color:
-                            color = colormap.query_color(image.get_pixel(x + kx, y + ky)).red_float
-                            pixel_colors[(x + kx) * height + y + ky] = color
+                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx, y + ky)].red_float
 
-                        kernel_sum += kernel[ky + 1][kx + 1] * color
+                kernel_sum = int(kernel_sum * 65535)
 
-                new_color = blur_colormap.alloc_color(int(kernel_sum * 65535),
-                                                 int(kernel_sum * 65535),
-                                                 int(kernel_sum * 65535))
-                blur_image.put_pixel(x, y, new_color.pixel)
+                blur_image.put_pixel(x, y, blur_colormap.alloc_color(kernel_sum,
+                                                                     kernel_sum,
+                                                                     kernel_sum).pixel)
 
         self.image = blur_image
 
@@ -132,7 +127,7 @@ class Canvas(graphics.Area):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(300, 300)
+        window.set_size_request(500, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         canvas = Canvas()
