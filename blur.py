@@ -91,14 +91,14 @@ class Canvas(graphics.Area):
 
         kernel_range = range(-1, 2)
 
-        # we will need all the colors anyway, so let's grab them once
-        pixel_colors = {}
-        for y in range(0, self.height):
-            for x in range(0, self.width):
-                pixel_colors[(x, y)] = colormap.query_color(image.get_pixel(x, y))
 
 
         height = self.height
+
+
+        # we will need all the colors anyway, so let's grab them once
+        pixels = (image.get_pixel(x, y) for x in range(0, self.width) for y in range (0, self.height))
+        pixel_colors = [colormap.query_color(pixel) for pixel in pixels]
 
         import collections
         by_color = collections.defaultdict(collections.deque)
@@ -110,10 +110,10 @@ class Canvas(graphics.Area):
 
                 for ky in kernel_range:
                     for kx in kernel_range:
-                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx, y + ky)].red_float
+                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx)*height+y + ky].red_float
 
                 kernel_sum = int(kernel_sum * 65535) + 1
-                if kernel_sum != int(pixel_colors[(x, y)].red_float * 65535):
+                if kernel_sum != int(pixel_colors[x * height + y].red_float * 65535):
                     by_color[kernel_sum].append(x * height + y)
 
 
