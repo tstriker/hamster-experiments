@@ -12,6 +12,7 @@ from lib import graphics
 import math
 import random
 import datetime as dt
+import collections
 
 
 class Canvas(graphics.Area):
@@ -93,7 +94,8 @@ class Canvas(graphics.Area):
         x, y = int(x), int(y)
         old_color = old_color or image.get_pixel(x, y)
 
-        queue = [(x, y)]
+        queue = collections.deque()
+        queue.append((x, y))
 
         pixels, longest_queue = 0, 0
         paint_check = self.paint_check
@@ -102,7 +104,7 @@ class Canvas(graphics.Area):
         t = dt.datetime.now()
         while queue:
             longest_queue = max(longest_queue, len(queue))
-            x, y = queue.pop(0)
+            x, y = queue.popleft()
             if image.get_pixel(x, y) != old_color:
                 continue
 
