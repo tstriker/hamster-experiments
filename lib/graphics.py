@@ -125,6 +125,8 @@ class Area(gtk.DrawingArea):
 
         time_since_last_frame = (dt.datetime.now() - self.last_frame_time).microseconds / 1000000.0
         self.tweener.update(time_since_last_frame)
+        self.__drawing_queued = self.tweener.hasTweens()
+
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
         self.last_frame_time = dt.datetime.now()
@@ -229,9 +231,6 @@ class Area(gtk.DrawingArea):
 
         self.mouse_regions = [] #reset since these can move in each redraw
         self.on_expose()
-
-        self.__drawing_queued = self.tweener.hasTweens()
-
 
 
     """ mouse events """
