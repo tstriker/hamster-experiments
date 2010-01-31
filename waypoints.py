@@ -34,24 +34,72 @@ class Boid(object):
     # distances are squared to avoid roots (slower)
     neighbour_distance = float(50**2)
     desired_separation = float(25**2)
-    awareness = 50
-    awareness_square = float(awareness * awareness)
+    awareness = 100
+    awareness_squared = float(awareness * awareness)
 
 
     def __init__(self, location):
         self.acceleration = Vector2()
+        self.brake = Vector2()
         self.velocity = Vector2(random() * 2 - 1, random() * 2 - 1)
-        self.location = location;
+        self.location = location
         self.max_speed = 2.0
-        self.max_force = 0.05
-        self.max_steering_force = 0.005
+        self.max_force = 0.003
+        self.max_steering_force = 0.08
+        self.positions = []
 
         self.target_waypoint = None
+
+    def run(self, flock_boids, waypoints):
+        if not self.target_waypoint:
+            self.target_waypoint = waypoints[0]
+
+        self.arrive(self.target_waypoint)
+        if flock_boids:
+            self.acceleration += self.separate(flock_boids) * 2
+
+        self.velocity += self.acceleration
+
+        self.brake = -self.velocity * (self.velocity.angle(self.target_waypoint - self.location) / math.pi * 2) * 0.5
+        self.brake.limit(self.max_steering_force)
+
+        self.velocity += self.brake
+
+        # break if we are going wrong way
+
+
+
+        self.velocity.limit(self.max_speed)
+
+
+        self.location += self.velocity
+
+        if (self.location - self.target_waypoint).magnitude_squared() < self.awareness_squared:
+            print "check", waypoints.index(self.target_waypoint)
+            next = waypoints.index(self.target_waypoint) + 1
+            if next >= len(waypoints):
+                next = 0
+
+            self.target_waypoint = waypoints[next]
+
+        if not self.positions or int(self.location.x) != int(self.positions[-1].x) and int(self.location.y) != int(self.positions[-1].y):
+            self.positions.append(Vector2(self.location.x, self.location.y))
 
 
     def draw(self, context):
         context.save()
+
         context.translate(self.location.x, self.location.y)
+
+
+        context.move_to(0, 0)
+        context.line_to(self.brake.x * 50, self.brake.y * 50)
+        context.stroke()
+
+
+        context.move_to(0, 0)
+        context.line_to(self.acceleration.x * 50, self.acceleration.y * 50)
+        context.stroke()
 
         #draw boid triangle
         theta = self.velocity.heading() + math.pi / 2
@@ -65,28 +113,10 @@ class Boid(object):
         context.line_to(self.radius, self.radius * 2)
         context.line_to(0, -self.radius*2)
 
+
+
         context.restore()
 
-
-    def run(self, flock_boids, waypoints):
-        if not self.target_waypoint:
-            self.target_waypoint = waypoints[0]
-
-        self.seek(self.target_waypoint)
-        if flock_boids:
-            self.acceleration += self.separate(flock_boids) * 2
-
-        self.velocity += self.acceleration
-        self.velocity.limit(self.max_speed)
-        self.location += self.velocity
-
-        if (self.location - self.target_waypoint).magnitude_squared() < 20 * 20:
-            print "check"
-            next = waypoints.index(self.target_waypoint) + 1
-            if next >= len(waypoints):
-                next = 0
-
-            self.target_waypoint = waypoints[next]
 
 
     def separate(self, boids):
@@ -122,8 +152,9 @@ class Boid(object):
 
 
             # Two options for desired vector magnitude (1 -- based on distance, 2 -- maxspeed)
-            if  slow_down and d > self.braking_distance:
-                desired *= self.max_speed * d / self.braking_distance # This damping is somewhat arbitrary
+            if  slow_down and d < self.awareness_squared:
+                print math.sqrt(d) / self.awareness
+                desired *= self.max_speed * (math.sqrt(d) / self.awareness) # This damping is somewhat arbitrary
             else:
                 desired *= self.max_speed
 
@@ -192,7 +223,19 @@ class Canvas(graphics.Area):
                              boid.awareness,
                              -math.pi, math.pi)
             self.context.fill()
+
+
+            """ debug path
+            self.set_color("#00ff00")
+            for position1, position2 in zip(boid.positions, boid.positions[1:]):
+                self.context.move_to(position1.x, position1.y)
+                self.context.line_to(position2.x, position2.y)
+            self.context.stroke()
+            """
+
+
             self.set_color("#666")
+
             boid.draw(self.context)
             self.context.stroke()
 
