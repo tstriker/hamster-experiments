@@ -236,9 +236,13 @@ class Canvas(graphics.Area):
 
 
         self.boids = [Boid(Vector2(120,10)),
-                      Boid(Vector2(150,10))]
-        self.boids[0].target(self.waypoints[-1])
-        self.boids[1].target(self.waypoints[0])
+                      Boid(Vector2(150,10)),
+                      Boid(Vector2(160,200)),
+                      Boid(Vector2(350,100)),
+                      Boid(Vector2(150,10))
+                      ]
+        for i, boid in enumerate(self.boids):
+            boid.target(self.waypoints[i])
 
         self.mouse_node = None
 
@@ -250,7 +254,7 @@ class Canvas(graphics.Area):
 
     def on_mouse_click(self, area, coords, areas):
         if not areas:
-            self.waypoints.append(Vector2(*coords))
+            self.waypoints.append(Waypoint(*coords))
             self.redraw_canvas()
 
 
