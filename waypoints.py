@@ -17,7 +17,7 @@
 
 import gtk
 
-from lib import graphics
+from lib import graphics, pytweener
 from lib.pytweener import Easing
 
 import math
@@ -80,10 +80,37 @@ class BucketWaypoint(Waypoint):
             boid.target(self.next)
 
 
+class GrowWaypoint(Waypoint):
+    """waypoint that will queue our friends until required number
+       arrives and then let them go"""
+    def __init__(self, x, y, scale):
+        Waypoint.__init__(self, x, y)
+        self.scale = scale
+        self.boid_scales = {}
+
+
+
+    def see_you(self, boid):
+        # boid calls waypoint when he sees it
+        # normally we just tell it to go on
+        distance = (self.location - boid.location).magnitude_squared()
+        if distance < 400:
+            self.move_on(boid)
+            del self.boid_scales[boid]
+        else: #start braking
+            boid.radius = (self.scale * 400 / distance) + (self.boid_scales.setdefault(boid, boid.radius) * (1 - 400 / distance))   #at 400 full scale has been achieved
+
+
+    def move_on(self, boid):
+        if boid.data and "reverse" in boid.data:
+            boid.target(self.previous)
+        else:
+            boid.target(self.next)
+
+
+
 
 class Boid(object):
-    radius = 3 # boid radius
-
     # distances are squared to avoid roots (slower)
     separation = 15.0 # separation from other objects
     awareness = 30.0  # the sense field
@@ -92,6 +119,7 @@ class Boid(object):
 
 
     def __init__(self, location):
+        self.radius = 3
         self.acceleration = Vector2()
         self.brake = Vector2()
         self.velocity = Vector2(random() * 2 - 1, random() * 2 - 1)
@@ -219,11 +247,11 @@ class Canvas(graphics.Area):
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), box_size)
 
         self.waypoints = []
-        self.waypoints = [Waypoint(200, 200),
-                          BucketWaypoint(150, 300, 3),
-                          Waypoint(300, 300),
-                          BucketWaypoint(100, 400, 2),
-                          Waypoint(500, 100)]
+        self.waypoints = [Waypoint(100, 100),
+                          BucketWaypoint(500, 100, 3),
+                          GrowWaypoint(300, 200, 8),
+                          GrowWaypoint(100, 500, 3),
+                          Waypoint(500, 500)]
 
         # link them together
         for curr, next in zip(self.waypoints, self.waypoints[1:]):
@@ -281,14 +309,16 @@ class Canvas(graphics.Area):
             self.proximities.update_position(boid)
 
             # the growing antennae circle
+            """
             self.set_color("#ddd", 0.3)
             self.context.arc(boid.location.x,
                              boid.location.y,
                              boid.radio,
                              -math.pi, math.pi)
             self.context.fill()
+            """
 
-            #awareness circle
+            # obstacle awareness circle
             """
             self.set_color("#aaa", 0.5)
             self.context.arc(boid.location.x,
@@ -312,9 +342,11 @@ class Canvas(graphics.Area):
             boid.draw(self.context)
 
             # line between boid and it's target
+            """
             self.context.move_to(boid.location.x, boid.location.y)
             self.context.line_to(boid.target_waypoint.location.x,
                                  boid.target_waypoint.location.y)
+            """
 
             self.context.stroke()
 
@@ -338,7 +370,7 @@ class Canvas(graphics.Area):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 400)
+        window.set_size_request(600, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         canvas = Canvas()
