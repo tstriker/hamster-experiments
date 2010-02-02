@@ -38,6 +38,52 @@ class Waypoint(object):
         else:
             boid.target(self.next)
 
+    def move_on(self, boid):
+        boid.visible = True #moves are always visible
+        if boid.data and "reverse" in boid.data:
+            boid.target(self.previous)
+        else:
+            boid.target(self.next)
+
+    def update(self):
+        pass
+
+
+class QueueingWaypoint(Waypoint):
+    """waypoint that eats boids and then releases them after a set period"""
+    def __init__(self, x, y, frames):
+        Waypoint.__init__(self, x, y)
+        self.frames = frames
+        self.current_frame = 0
+        self.boids = []
+        self.boid_scales = {}
+
+    def see_you(self, boid):
+        distance = (self.location - boid.location).magnitude_squared()
+        if boid not in self.boids and distance < 400:
+            if not self.boids:
+                self.current_frame = 0
+
+            self.boids.append(boid)
+            boid.visible = False
+
+
+        for boid in self.boids:
+            boid.velocity *= 0
+
+
+    def update(self):
+        self.current_frame +=1
+        if self.current_frame == self.frames:
+            self.current_frame = 0
+            if self.boids:
+                boid = self.boids.pop(0)
+                boid.location = Vector2(self.location.x, self.location.y)
+                self.move_on(boid)
+
+
+
+
 class BucketWaypoint(Waypoint):
     """waypoint that will queue our friends until required number
        arrives and then let them go"""
@@ -52,7 +98,6 @@ class BucketWaypoint(Waypoint):
         # boid calls waypoint when he sees it
         # normally we just tell it to go on
         if boid not in self.boids and (self.location - boid.location).magnitude_squared() < 400:
-            print "got one"
             self.boids.append(boid)
         else: #start braking
             boid.velocity *= 0.9
@@ -70,14 +115,7 @@ class BucketWaypoint(Waypoint):
             current_angle += angle_step
             boid.location.x = self.location.x + math.cos(self.rotation_angle + current_angle) * 20
             boid.location.y = self.location.y + math.sin(self.rotation_angle + current_angle) * 20
-            boid.velocity = (self.location - boid.location) * 0.01
-
-
-    def move_on(self, boid):
-        if boid.data and "reverse" in boid.data:
-            boid.target(self.previous)
-        else:
-            boid.target(self.next)
+            boid.velocity = (self.location - boid.location).cross() * 0.01
 
 
 class GrowWaypoint(Waypoint):
@@ -101,11 +139,6 @@ class GrowWaypoint(Waypoint):
             boid.radius = (self.scale * 400 / distance) + (self.boid_scales.setdefault(boid, boid.radius) * (1 - 400 / distance))   #at 400 full scale has been achieved
 
 
-    def move_on(self, boid):
-        if boid.data and "reverse" in boid.data:
-            boid.target(self.previous)
-        else:
-            boid.target(self.next)
 
 
 
@@ -119,6 +152,7 @@ class Boid(object):
 
 
     def __init__(self, location):
+        self.visible = True
         self.radius = 3
         self.acceleration = Vector2()
         self.brake = Vector2()
@@ -163,6 +197,9 @@ class Boid(object):
 
 
     def draw(self, context):
+        if not self.visible:
+            return
+
         context.save()
 
         context.translate(self.location.x, self.location.y)
@@ -192,6 +229,9 @@ class Boid(object):
         in_zone = 0.0
 
         for boid, d in boids:
+            if not boid.visible:
+                continue
+
             if 0 < d < self.separation_squared:
                 diff = self.location - boid.location
                 diff.normalize()
@@ -247,8 +287,8 @@ class Canvas(graphics.Area):
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), box_size)
 
         self.waypoints = []
-        self.waypoints = [Waypoint(100, 100),
-                          BucketWaypoint(500, 100, 3),
+        self.waypoints = [QueueingWaypoint(100, 100, 70),
+                          BucketWaypoint(500, 100, 5),
                           GrowWaypoint(300, 200, 8),
                           GrowWaypoint(100, 500, 3),
                           Waypoint(500, 500)]
@@ -270,7 +310,7 @@ class Canvas(graphics.Area):
                       Boid(Vector2(150,10))
                       ]
         for i, boid in enumerate(self.boids):
-            boid.target(self.waypoints[i])
+            boid.target(self.waypoints[0])
 
         self.mouse_node = None
 
@@ -300,6 +340,9 @@ class Canvas(graphics.Area):
     def on_expose(self):
         # main loop (i should rename this to something more obvious)
         self.context.set_line_width(0.8)
+
+        for waypoint in self.waypoints:
+            waypoint.update()
 
         for boid in self.boids:
             neighbours = self.proximities.find_neighbours(boid, 40)
