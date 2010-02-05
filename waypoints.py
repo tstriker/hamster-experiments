@@ -21,6 +21,7 @@ from lib.proximity import LQProximityStore
 class Waypoint(object):
     def __init__(self, x, y):
         self.location = Vector2(x, y)
+        self.debug = False
 
     def see_you(self, boid):
         # boid calls waypoint when he sees it
@@ -91,7 +92,7 @@ class BucketWaypoint(Waypoint):
         self.boids = []
         self.boids_out = []
         self.rotation_angle = 0
-        self.radius = 60
+        self.radius = 80
         self.incremental_angle = False
 
 
@@ -147,8 +148,8 @@ class BucketWaypoint(Waypoint):
 
             if closest_point:
                 target = boid.seek(closest_point)
-                if target.magnitude_squared() < 1:
-                    boid.flight_angle = (self.location - boid.location).cross().heading()
+                #if target.magnitude_squared() < 1:
+                #    boid.flight_angle = (self.location - boid.location).cross().heading()
 
                 boid.acceleration *= 8
                 points.remove(closest_point) # taken
@@ -160,12 +161,17 @@ class BucketWaypoint(Waypoint):
         if self.boids_out:
             for boid in self.boids_out:
                 self.move_on(boid)
-                boid.acceleration = -(self.location - boid.location) * 10
-                boid.flight_angle = None
+                boid.acceleration = -(self.location - boid.location) * 2
+                boid.flight_angle = 0
 
             self.boids_out = []
 
-        self.incoming = 0 #reset incoming as it will be updated again in next iter
+
+class RotatingBucketWaypoint(BucketWaypoint):
+    def update(self, context):
+        BucketWaypoint.update(self, context)
+        for boid in self.boids:
+            boid.flight_angle += 0.2
 
 
 
@@ -519,9 +525,12 @@ class Canvas(graphics.Area):
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), box_size)
 
         self.waypoints = []
-        self.waypoints = [QueueingWaypoint(200, 100, 30),
-                          BucketWaypoint(200, 400, 10),
-                          BucketWaypoint(200, 400, 10),
+        self.waypoints = [QueueingWaypoint(100, 100, 70),
+                          BucketWaypoint(500, 100, 10),
+                          GrowWaypoint(500, 500, 10),
+                          QueueingWaypoint(300, 500, 70),
+                          BucketWaypoint(100, 500, 10),
+                          GrowWaypoint(100, 300, 3),
                           ]
 
         # link them together
@@ -534,7 +543,7 @@ class Canvas(graphics.Area):
 
 
 
-        self.boids = [Boid(Vector2(100,100), 2.0) for i in range(20)]
+        self.boids = [Boid(Vector2(100,100), 2.0) for i in range(15)]
 
         for i, boid in enumerate(self.boids):
             boid.target(self.waypoints[0])
@@ -544,11 +553,6 @@ class Canvas(graphics.Area):
         # some debug variables
         self.debug_radius = False
         self.debug_awareness = False
-
-
-
-
-
 
 
 
