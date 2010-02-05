@@ -101,7 +101,7 @@ class Area(gtk.DrawingArea):
         self.last_frame_time = None
         self.__drawing_queued = False
 
-        self.mouse_drag = (None, None)
+        self.mouse_drag = None
 
         self.colors = Colors() # handier this way
 
