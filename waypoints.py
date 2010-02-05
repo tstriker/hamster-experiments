@@ -89,28 +89,37 @@ class BucketWaypoint(Waypoint):
         Waypoint.__init__(self, x, y)
         self.bucket_size = bucket_size
         self.boids = []
+        self.boids_out = []
         self.rotation_angle = 0
-        self.radius = 80
+        self.radius = 60
+        self.incremental_angle = False
+
 
 
     def see_you(self, boid):
         # boid calls waypoint when he sees it
         # normally we just tell it to go on
         if boid not in self.boids:
-            self.rotation_angle = (boid.location - self.location).heading()
-            self.boids.append(boid)
+            if (boid.location - self.location).magnitude_squared() < self.radius * self.radius:
+                if self.incremental_angle:
+                    self.rotation_angle = (boid.location - self.location).heading()
+                self.boids.append(boid)
 
 
     def update(self, context):
         if len(self.boids) == self.bucket_size:
-            for boid in self.boids:
-                self.move_on(boid)
-
+            self.boids_out = list(self.boids)
             self.boids = []
 
 
         self.rotation_angle += 0.02
-        angle_step = math.pi * 2 / (self.bucket_size - 1)
+
+        if self.incremental_angle:
+            nodes = len(self.boids) or 1
+        else:
+            nodes = self.bucket_size - 1
+
+        angle_step = math.pi * 2 / nodes
         current_angle = 0
 
         i = 0
@@ -121,9 +130,6 @@ class BucketWaypoint(Waypoint):
             y = self.location.y + math.sin(self.rotation_angle + i) * self.radius
 
             points.append(Vector2(x,y))
-
-            #context.move_to(self.location.x, self.location.y)
-            #context.line_to(x, y)
             i += angle_step
 
 
@@ -140,16 +146,24 @@ class BucketWaypoint(Waypoint):
                     distance = point_distance
 
             if closest_point:
-                #context.move_to(boid.location.x, boid.location.y)
-                #context.line_to(closest_point.x, closest_point.y)
+                target = boid.seek(closest_point)
+                if target.magnitude_squared() < 1:
+                    boid.flight_angle = (self.location - boid.location).cross().heading()
 
-                boid.seek(closest_point)
-                boid.acceleration *= 4
+                boid.acceleration *= 8
                 points.remove(closest_point) # taken
             else:
                 boid.velocity *= .9
 
         context.stroke()
+
+        if self.boids_out:
+            for boid in self.boids_out:
+                self.move_on(boid)
+                boid.acceleration = -(self.location - boid.location) * 10
+                boid.flight_angle = None
+
+            self.boids_out = []
 
         self.incoming = 0 #reset incoming as it will be updated again in next iter
 
@@ -274,6 +288,7 @@ class Boid(object):
         self.max_force = 0.03
         self.positions = []
         self.message = None # a message that waypoint has set perhaps
+        self.flight_angle = 0
 
         self.data = {}
         self.virus = None
@@ -328,7 +343,10 @@ class Boid(object):
         context.stroke()
 
         #draw boid triangle
-        theta = self.velocity.heading() + math.pi / 2
+        if self.flight_angle:
+            theta = self.flight_angle
+        else:
+            theta = self.velocity.heading() + math.pi / 2
         context.rotate(theta)
 
         context.move_to(0, -self.radius*2)
@@ -365,7 +383,10 @@ class Boid(object):
 
 
     def seek(self, target):
-        self.acceleration += self.steer(target, False)
+        steer_vector = self.steer(target, False)
+        self.acceleration += steer_vector
+        return steer_vector
+
 
     def arrive(self, target):
         self.acceleration += self.steer(target, True)
@@ -498,8 +519,9 @@ class Canvas(graphics.Area):
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), box_size)
 
         self.waypoints = []
-        self.waypoints = [QueueingWaypoint(200, 100, 150),
-                          BucketWaypoint(200, 400, 11),
+        self.waypoints = [QueueingWaypoint(200, 100, 30),
+                          BucketWaypoint(200, 400, 10),
+                          BucketWaypoint(200, 400, 10),
                           ]
 
         # link them together
@@ -512,7 +534,7 @@ class Canvas(graphics.Area):
 
 
 
-        self.boids = [Boid(Vector2(100,100), 2.0) for i in range(10)]
+        self.boids = [Boid(Vector2(100,100), 2.0) for i in range(20)]
 
         for i, boid in enumerate(self.boids):
             boid.target(self.waypoints[0])
