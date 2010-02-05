@@ -39,7 +39,7 @@ class Waypoint(object):
 
         boid.velocity *= 4
 
-    def update(self):
+    def update(self, context):
         pass
 
     def get_next(self, boid):
@@ -71,7 +71,7 @@ class QueueingWaypoint(Waypoint):
             boid.velocity *= 0
 
 
-    def update(self):
+    def update(self, context):
         self.current_frame +=1
         if self.current_frame == self.frames:
             self.current_frame = 0
@@ -90,18 +90,18 @@ class BucketWaypoint(Waypoint):
         self.bucket_size = bucket_size
         self.boids = []
         self.rotation_angle = 0
-        self.radius = 40
+        self.radius = 80
 
 
     def see_you(self, boid):
         # boid calls waypoint when he sees it
         # normally we just tell it to go on
-        if boid not in self.boids and (self.location - boid.location).magnitude_squared() < 400:
+        if boid not in self.boids:
+            self.rotation_angle = (boid.location - self.location).heading()
             self.boids.append(boid)
-        else: #start braking
-            boid.velocity *= 0.95
 
-    def update(self):
+
+    def update(self, context):
         if len(self.boids) == self.bucket_size:
             for boid in self.boids:
                 self.move_on(boid)
@@ -112,11 +112,47 @@ class BucketWaypoint(Waypoint):
         self.rotation_angle += 0.02
         angle_step = math.pi * 2 / (self.bucket_size - 1)
         current_angle = 0
+
+        i = 0
+
+        points = []
+        while i < (math.pi * 2):
+            x = self.location.x + math.cos(self.rotation_angle + i) * self.radius
+            y = self.location.y + math.sin(self.rotation_angle + i) * self.radius
+
+            points.append(Vector2(x,y))
+
+            #context.move_to(self.location.x, self.location.y)
+            #context.line_to(x, y)
+            i += angle_step
+
+
+
+        context.stroke()
+
         for boid in self.boids:
-            current_angle += angle_step
-            boid.location.x = self.location.x + math.cos(self.rotation_angle + current_angle) * self.radius
-            boid.location.y = self.location.y + math.sin(self.rotation_angle + current_angle) * self.radius
-            boid.velocity = (self.location - boid.location).cross() * 0.01
+            distance = None
+            closest_point = None
+            for point in points:
+                point_distance = (boid.location - point).magnitude_squared()
+                if not distance or point_distance < distance:
+                    closest_point = point
+                    distance = point_distance
+
+            if closest_point:
+                #context.move_to(boid.location.x, boid.location.y)
+                #context.line_to(closest_point.x, closest_point.y)
+
+                boid.seek(closest_point)
+                boid.acceleration *= 4
+                points.remove(closest_point) # taken
+            else:
+                boid.velocity *= .9
+
+        context.stroke()
+
+        self.incoming = 0 #reset incoming as it will be updated again in next iter
+
 
 
 class CarouselWaypoint(Waypoint):
@@ -145,7 +181,7 @@ class CarouselWaypoint(Waypoint):
                 self.boid_revolutions[boid] = 0
 
 
-    def update(self):
+    def update(self, context):
         poplist = []
         for boid in self.boids:
             if self.boid_revolutions[boid] > self.revolutions:
@@ -203,9 +239,18 @@ class ShakyWaypoint(Waypoint):
 
     @staticmethod
     def virus(boid, data):
-        seizure = random.random() > 0.4
-        if seizure:
-            boid.radius = data.setdefault('radius', boid.radius) * (random.random() * 4)
+        frame = data.setdefault('frame', 0)
+        frame += 1
+
+        if frame > 20:
+            seizure = random.random() > 0.4
+            if seizure:
+                boid.radius = data.setdefault('radius', boid.radius) * (random.random() * 4)
+        if frame > 25:
+            frame = 0
+
+        data['frame'] = frame
+
 
     def see_you(self, boid):
 
@@ -375,7 +420,7 @@ class Canvas(graphics.Area):
         self.context.set_line_width(0.8)
 
         for waypoint in self.waypoints:
-            waypoint.update()
+            waypoint.update(self.context)
 
 
         for boid in self.boids:
@@ -453,11 +498,8 @@ class Canvas(graphics.Area):
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), box_size)
 
         self.waypoints = []
-        self.waypoints = [QueueingWaypoint(100, 100, 40),
-                          ShakyWaypoint(400, 200),
-                          CarouselWaypoint(500, 500, 30),
-                          GrowWaypoint(200, 400, 8),
-                          GrowWaypoint(200, 300, 3),
+        self.waypoints = [QueueingWaypoint(200, 100, 150),
+                          BucketWaypoint(200, 400, 11),
                           ]
 
         # link them together
