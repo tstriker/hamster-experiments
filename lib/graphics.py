@@ -522,50 +522,32 @@ class Scene(gtk.DrawingArea):
 
 
 """ simple example """
-class SampleArea(Scene):
+class SampleScene(Scene):
     def __init__(self):
-        Area.__init__(self)
-        self.rect_x, self.rect_y = 100, -100
-        self.rect_width, self.rect_height = 90, 90
+        Scene.__init__(self)
 
-        self.text_y = -100
+        self.rectangle = Rectangle(90, 90, 10, "#666", "#ff00ff") # one of the primitives
+        self.rectangle.interactive = True           # interactive means that the sprite will get mouse events
+        self.rectangle.draggable = True             # draggable enables automatic dragging, which can be handy sometimes
+        self.rectangle.x, self.rectangle.y = 50, 50 #
+        self.add_child(self.rectangle)
 
+        self.label = Label("Hello world", 30, "#000")
+        self.label.x, self.label.y = 10, -100 # setting y to -100 so it will fall "from the sky"
 
-    def on_expose(self):
-        # on expose is called when we are ready to draw
-
-        # fill_area is just a shortcut function
-        # feel free to use self.context. move_to, line_to and others
-        self.font_size = 32
-        self.layout.set_text("Hello, World!")
-
-        self.draw_rect(round(self.rect_x),
-                       round(self.rect_y),
-                       self.rect_width,
-                       self.rect_height,
-                       10)
-
-        self.set_color("#ff00ff")
-        self.context.fill()
-
-        self.context.move_to((self.width - self.layout.get_pixel_size()[0]) / 2,
-                             self.text_y)
-
-        self.set_color("#333")
-        self.context.show_layout(self.layout)
+        self.add_child(self.label)
 
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("Graphics Module")
+        window.set_title("Project Hamster Graphics Module")
         window.set_size_request(300, 300)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
-        self.graphic = SampleArea()
-
+        self.scene = SampleScene()
         box = gtk.VBox()
-        box.pack_start(self.graphic)
+        box.pack_start(self.scene)
 
         button = gtk.Button("Hello")
         button.connect("clicked", self.on_go_clicked)
@@ -576,28 +558,31 @@ class BasicWindow:
         window.show_all()
 
         # drop the hello on init
-        self.graphic.animate(self.graphic,
-                            dict(text_y = 120),
-                            duration = 0.7,
-                            easing = Easing.Bounce.easeOut)
+        self.scene.animate(self.scene.label,
+                           dict(y = 120),
+                           duration = 0.7,
+                           easing = Easing.Bounce.easeOut)
 
 
     def on_go_clicked(self, widget):
+        """ when button clicked, we just throw the scene's rectangle
+            object to some other random place, using tweens for smoother animation"""
         import random
 
         # set x and y to random position within the drawing area
-        x = round(min(random.random() * self.graphic.width,
-                      self.graphic.width - self.graphic.rect_width))
-        y = round(min(random.random() * self.graphic.height,
-                      self.graphic.height - self.graphic.rect_height))
+        x = round(min(random.random() * self.scene.width,
+                      self.scene.width - 90))
+        y = round(min(random.random() * self.scene.height,
+                      self.scene.height - 90))
 
         # here we call the animate function with parameters we would like to change
         # the easing functions outside graphics module can be accessed via
         # graphics.Easing
-        self.graphic.animate(self.graphic,
-                             dict(rect_x = x, rect_y = y),
-                             duration = 0.8,
-                             easing = Easing.Elastic.easeOut)
+        self.scene.tweener.killTweensOf(self.scene.rectangle)
+        self.scene.animate(self.scene.rectangle,
+                           dict(x = x, y = y),
+                           duration = 0.8,
+                           easing = Easing.Expo.easeOut)
 
 
 if __name__ == "__main__":
