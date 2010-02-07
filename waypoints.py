@@ -174,63 +174,6 @@ class RotatingBucketWaypoint(BucketWaypoint):
             boid.flight_angle += 0.2
 
 
-
-class CarouselWaypoint(Waypoint):
-    """waypoint that will queue our friends until required number
-       arrives and then let them go"""
-    def __init__(self, x, y, radius):
-        Waypoint.__init__(self, x, y)
-        self.boids = []
-        self.rotation_angle = 0
-        self.radius = radius
-
-        self.boid_angles = {}
-        self.boid_revolutions = {}
-
-        self.speed = 1
-        self.revolutions = 0.1
-
-
-    def see_you(self, boid):
-        if boid not in self.boids:
-            if (self.location - boid.location).magnitude_squared() < self.radius * self.radius:
-                if not self.boids:
-                    self.rotation_angle = (boid.location - self.location).heading()
-                self.boids.append(boid)
-                self.boid_angles[boid] = (boid.location - self.location).heading()
-                self.boid_revolutions[boid] = 0
-
-
-    def update(self, context):
-        poplist = []
-        for boid in self.boids:
-            if self.boid_revolutions[boid] > self.revolutions:
-                angle = self.boid_angles[boid] % (math.pi * 2)
-                if math.pi -0.1 < abs((self.location - self.get_next(boid).location).heading() - angle) < math.pi:
-                    self.move_on(boid)
-                    poplist.append(boid)
-
-        for boid in poplist:
-            self.boids.remove(boid)
-
-
-        if self.boids:
-            step = self.speed / 50.0
-            for boid in self.boids:
-                self.boid_angles[boid] += step
-                self.boid_revolutions[boid] += step / math.pi / 2
-                boid.location.x = self.location.x + math.cos(self.boid_angles[boid]) * self.radius
-                boid.location.y = self.location.y + math.sin(self.boid_angles[boid]) * self.radius
-                boid.velocity = (boid.location - self.location) * 0.01
-
-
-
-        self.rotation_angle += 0.05 #* math.sqrt(len(self.boids) / float(self.bucket_size))
-        self.incoming = 0
-
-
-
-
 class GrowWaypoint(Waypoint):
     """waypoint that will queue our friends until required number
        arrives and then let them go"""
