@@ -10,59 +10,49 @@ from lib.pytweener import Easing
 from random import randint
 
 
-class EasingBox(object):
+class EasingBox(graphics.Rectangle):
     def __init__(self, name, x, y, easing_method):
+        graphics.Rectangle.__init__(self, 40, 40, 3, fill_color = "#aaa")
         self.name = name
         self.x = x
         self.y = y
         self.easing_method = easing_method
-
         self.left_side = True
+        self.interactive = True
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
         self.boxes = []
-
-        def get_next_y():
-            y = y + 30
-            return y
 
         classes = Easing()
         for i, easing_class in enumerate(dir(Easing)):
             if easing_class.startswith("__") == False:
                 the_class = classes.__getattribute__(easing_class)
 
-                self.boxes.append(EasingBox(easing_class, 90, i * 49 + 30, the_class))
+                label = graphics.Label(easing_class, color = "#333")
+                label.x, label.y = 10, i * 49 + 40
+                self.add_child(label)
+
+                box = EasingBox(easing_class, 90, i * 49 + 30, the_class)
+                self.add_child(box)
+                self.boxes.append(box)
+
+                label = graphics.Label(easing_class, color = "#333")
+                label.x, label.y = 350, i * 49 + 40
+                self.add_child(label)
 
 
-        self.connect("button-release", self.on_mouse_click)
+        self.connect("on-click", self.on_click)
 
-    def draw_boxes(self):
-        for i, box in enumerate(self.boxes):
-            self.set_color("#333333")
-            self.layout.set_text("%s out" % box.name)
-            self.context.move_to(20, box.y + 10)
-            self.context.show_layout(self.layout)
 
-            self.draw_rect(box.x, box.y, 30, 30, 5)
-            self.set_color("#aaaaaa")
-            self.context.fill()
-
-            self.set_color("#333333")
-            self.layout.set_text("%s in" % box.name)
-            self.context.move_to(350, box.y + 10)
-            self.context.show_layout(self.layout)
-
-            self.register_mouse_region(box.x, box.y, box.x + 30, box.y + 30, i)
-
-    def on_mouse_click(self, area, regions):
-        if not regions:
+    def on_click(self, area, event, targets):
+        if not targets:
             return
 
-        clicked = self.boxes[regions[0]]
+        clicked = targets[0]
         easing = clicked.easing_method()
 
         if clicked.left_side:
@@ -72,8 +62,6 @@ class Canvas(graphics.Area):
 
         clicked.left_side = not clicked.left_side
 
-    def on_expose(self):
-        self.draw_boxes()
 
 
 class BasicWindow:
@@ -95,4 +83,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

@@ -42,10 +42,21 @@ class Node(object):
         self.vy = 0
         self.fixed = False #to pin down
 
+class DisplayNode(graphics.Circle):
+    def __init__(self, x, y, real_node):
+        graphics.Circle.__init__(self, 5, fill_color = "#999")
+        self.x = x
+        self.y = y
+        self.real_node = real_node
+        self.pivot_x = 5
+        self.pivot_y = 5
+        self.interactive = True
+        self.draggable = True
 
-class Canvas(graphics.Area):
+
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.nodes = []
         self.edges = []
 
@@ -55,11 +66,13 @@ class Canvas(graphics.Area):
         self.max_iterations = 300
         self.iteration = 0
         self.force_constant = 0
-        self.connect("mouse-move", self.on_mouse_move)
-        self.connect("button-press", self.on_mouse_button_press)
+        self.connect("on-drag", self.on_drag)
+        self.connect("on-mouse-up", self.on_mouse_up)
+
+        self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-finish-frame", self.on_finish_frame)
 
         self.mouse_node = None
-        self.prev_mouse_node = None
 
     def init_calculations(self):
         self.iteration = 0
@@ -70,17 +83,23 @@ class Canvas(graphics.Area):
         self.temperature = self.temperature * (1.0 - self.iteration / float(self.max_iterations))
 
 
-    def on_expose(self):
+    def on_finish_frame(self, scene, context):
+        context.fill()
+
+    def on_enter_frame(self, scene, context):
         if not self.nodes:
             for i in range(randint(3, 50)):
                 x, y = self.width / 2, self.height / 2
                 scale_w = ALPHA * x;
                 scale_h = ALPHA * y
 
-                self.nodes.append(Node(x + (random() - 0.5) * 2 * scale_w,
-                                       y + (random() - 0.5) * 2 * scale_h))
+                node = Node(x + (random() - 0.5) * 2 * scale_w,
+                                       y + (random() - 0.5) * 2 * scale_h)
+                self.nodes.append(node)
 
-            self.node_buffer = deepcopy(self.nodes) # copy
+                display_node = DisplayNode(node.x, node.y, node)
+                self.add_child(display_node)
+
 
             node_count = len(self.nodes) - 1
 
@@ -90,28 +109,22 @@ class Canvas(graphics.Area):
                 to_index = randint(0, node_count)
 
                 self.edges.append((self.nodes[from_index], self.nodes[to_index]))
-                self.edge_buffer.append((self.node_buffer[from_index], self.node_buffer[to_index]))
+                self.edge_buffer.append((self.sprites[from_index], self.sprites[to_index]))
 
             self.init_calculations()
 
 
         # first draw
-        self.context.set_line_width(0.5)
+        context.set_line_width(0.5)
         if self.iteration < self.max_iterations:
-            self.set_color("#aaaaaa")
+            context.set_source_rgb(*self.colors.parse("#aaa"))
         else:
-            self.set_color("#999999")
-
-        for i, node in enumerate(self.node_buffer):
-            self.draw_node(node)
-            self.register_mouse_region(node.x - 5, node.y - 5, node.x + 5, node.y + 5, i)
-            self.context.fill()
+            context.set_source_rgb(*self.colors.parse("#666"))
 
         for edge in self.edge_buffer:
-            self.context.move_to(edge[0].x, edge[0].y)
-            self.context.line_to(edge[1].x, edge[1].y)
-
-        self.context.stroke()
+            context.move_to(edge[0].x, edge[0].y)
+            context.line_to(edge[1].x, edge[1].y)
+        context.stroke()
 
 
         # then recalculate positions
@@ -132,7 +145,7 @@ class Canvas(graphics.Area):
 
             # update image every x iterations
             if self.iteration % 10 == 0 or self.iteration == self.max_iterations:
-                for i, node in enumerate(self.node_buffer):
+                for i, node in enumerate(self.sprites):
                     self.tweener.killTweensOf(node)
                     self.animate(node, dict(x = self.nodes[i].x,
                                             y = self.nodes[i].y),
@@ -143,9 +156,6 @@ class Canvas(graphics.Area):
             self.iteration +=1
             self.redraw_canvas()
 
-
-    def draw_node(self, node):
-        self.context.arc(node.x, node.y, 5, 0, 2.0 * math.pi)
 
 
     def repulsion(self, node):
@@ -212,29 +222,19 @@ class Canvas(graphics.Area):
 
 
     # just for kicks - mouse events
-    def on_mouse_button_press(self, area, over_regions):
-        if self.prev_mouse_node is not None:
-            self.nodes[self.prev_mouse_node].fixed = False
-        if over_regions:
-            self.mouse_node = over_regions[0]
-        else:
-            self.mouse_node = None
+    def on_drag(self, scene, target, coords):
+        self.mouse_node = idx = self.sprites.index(target)
+        # dragging around
+        self.nodes[idx].fixed = True
+        self.nodes[idx].x = coords[0]
+        self.nodes[idx].y = coords[1]
+        self.init_calculations()
+        self.redraw_canvas()
 
-    def on_mouse_move(self, area, coords, state):
-        if self.mouse_node is not None:  #checking for none as there is the node zero
-            if gtk.gdk.BUTTON1_MASK & state:
-                # dragging around
-                self.nodes[self.mouse_node].fixed = True
-                self.nodes[self.mouse_node].x = self.node_buffer[self.mouse_node].x = coords[0]
-                self.nodes[self.mouse_node].y = self.node_buffer[self.mouse_node].y = coords[1]
-                self.init_calculations()
-                self.redraw_canvas()
-            else:
-                # release the node
-                if self.mouse_node:
-                    self.prev_mouse_node = self.mouse_node
-
-                self.mouse_node = None
+    def on_mouse_up(self, scene):
+        if self.mouse_node:
+            self.nodes[self.mouse_node].fixed = False
+        self.mouse_node = None
 
 class BasicWindow:
     def __init__(self):
@@ -249,13 +249,12 @@ class BasicWindow:
 
         button = gtk.Button("Redo")
         def on_click(*args):
+            self.canvas.clear()
             self.canvas.nodes = []
-            self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
+            self.canvas.mouse_node = None
             self.canvas.redraw_canvas()
-
         button.connect("clicked", on_click)
         box.pack_start(button, False)
-
 
 
         window.add(box)
@@ -265,4 +264,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

@@ -23,58 +23,54 @@ import datetime as dt
 import collections
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.tile_size = 30
         self.image = None
 
         self.colormap = {}
+        self.connect("on-enter-frame", self.on_enter_frame)
 
 
-    def on_expose(self):
-        """here happens all the drawing"""
-        if not self.height: return
-
-        self.two_tile_random()
+    def on_enter_frame(self, scene, context):
+        self.two_tile_random(context)
         self.image = self.window.get_image(0, 0, self.width, self.height)
         self.blur()
 
         self.redraw_canvas()
 
 
-    def stroke_tile(self, x, y, size, orient):
+    def two_tile_random(self, context):
+        """stroke area with non-filed truchet (since non filed, all match and
+           there are just two types"""
+        context.set_source_rgb(0,0,0)
+        context.set_line_width(1)
+
+        for y in range(0, self.height, self.tile_size):
+            for x in range(0, self.width, self.tile_size):
+                self.stroke_tile(context, x, y, self.tile_size, random.choice([1, 2]))
+        context.stroke()
+
+
+    def stroke_tile(self, context, x, y, size, orient):
         # draws a tile, there are just two orientations
         arc_radius = size / 2
         x2, y2 = x + size, y + size
 
         # i got lost here with all the Pi's
         if orient == 1:
-            self.context.move_to(x + arc_radius, y)
-            self.context.arc(x, y, arc_radius, 0, math.pi / 2);
+            context.move_to(x + arc_radius, y)
+            context.arc(x, y, arc_radius, 0, math.pi / 2);
 
-            self.context.move_to(x2 - arc_radius, y2)
-            self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
+            context.move_to(x2 - arc_radius, y2)
+            context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
         elif orient == 2:
-            self.context.move_to(x2, y + arc_radius)
-            self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
+            context.move_to(x2, y + arc_radius)
+            context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
 
-            self.context.move_to(x, y2 - arc_radius)
-            self.context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
-
-    def two_tile_random(self):
-        """stroke area with non-filed truchet (since non filed, all match and
-           there are just two types"""
-        self.set_color("#000")
-        self.context.set_line_width(1)
-
-        for y in range(0, self.height, self.tile_size):
-            for x in range(0, self.width, self.tile_size):
-                self.stroke_tile(x, y, self.tile_size, random.choice([1, 2]))
-        self.context.stroke()
-
-
-
+            context.move_to(x, y2 - arc_radius)
+            context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
 
     def blur(self):
         t = dt.datetime.now()
@@ -146,13 +142,6 @@ class BasicWindow:
         box = gtk.VBox()
         box.pack_start(canvas)
 
-        button = gtk.Button("Blur")
-
-        def on_blur_clicked(*args):
-            canvas.blur()
-
-        button.connect("clicked", on_blur_clicked)
-        box.pack_start(button, False)
 
 
 

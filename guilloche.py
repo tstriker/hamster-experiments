@@ -13,29 +13,29 @@ from lib.pytweener import Easing
 import math
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
-        self.connect("mouse-move", self.on_mouse_move)
+        graphics.Scene.__init__(self)
 
         self.theta_step = 0.01
         self.R = 50 # big steps
         self.r = 0.08 # little steps
         self.p = 25 # size of the ring
+        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_mouse_move(self, area, coords, mouse_areas):
-        self.R = coords[0] / float(self.width) * 50
-        self.r = coords[1] / float(self.height) * 0.08
+    def on_mouse_move(self, area, event):
+        self.R = event.x / float(self.width) * 50
+        self.r = event.y / float(self.height) * 0.08
 
 
-
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         R, r, p = self.R, self.r, self.p
 
         theta = 0
 
-        self.set_color("#000")
-        self.context.set_line_width(0.2)
+        context.set_source_rgb(*self.colors.parse("#000"))
+        context.set_line_width(0.2)
 
         first = True
         while theta < 2 * math.pi:
@@ -46,12 +46,12 @@ class Canvas(graphics.Area):
             x = x * 4 + self.width / 2
             y = y * 4 + self.height / 2
             if first:
-                self.context.move_to(x, y)
+                context.move_to(x, y)
                 first = False
 
-            self.context.line_to(x, y)
+            context.line_to(x, y)
 
-        self.context.stroke()
+        context.stroke()
 
         self.theta_step = self.theta_step -0.0000003
         self.redraw_canvas()

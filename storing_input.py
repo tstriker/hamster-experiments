@@ -24,33 +24,35 @@ class Segment(object):
         self.color = color
         self.width = width
 
-    def draw(self, area):
-        area.set_color(self.color, 0.5)
+    def draw(self, scene, context):
+        color = scene.colors.parse(self.color)
+        context.set_source_rgba(color[0], color[1], color[2], 0.5)
 
-        area.draw_rect(self.x - self.width / 2.0, self.y - self.width / 2.0, self.width, self.width, 3)
-        area.context.fill()
+        context.rectangle(self.x - self.width / 2.0, self.y - self.width / 2.0, self.width, self.width)
+        context.fill()
 
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.segments = []
         self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
 
-    def on_mouse_move(self, widget, coords, state):
-        x, y = coords
+    def on_mouse_move(self, widget, event):
+        x, y = event.x, event.y
 
         segment = Segment(x, y, "#666666", 50)
         self.tweener.addTween(segment, tweenType = Easing.Cubic.easeOut, tweenTime=1.5, width = 0)
         self.segments.insert(0, segment)
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         # on expose is called when we are ready to draw
         for i, segment in reversed(list(enumerate(self.segments))):
             if segment.width:
-                segment.draw(self)
+                segment.draw(self, context)
             else:
                 del self.segments[i]
 
@@ -76,4 +78,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

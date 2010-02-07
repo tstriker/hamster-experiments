@@ -18,25 +18,25 @@ from lib.pytweener import Easing
 
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
-        self.connect("mouse-move", self.on_mouse_move)
         self.mouse_moving = False
 
         self.coords = []
         self.x, self.y = 0, 0
         self.radius = 30
+        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
 
-    def on_mouse_move(self, area, coords, state):
+    def on_mouse_move(self, area, event):
         # oh i know this should not be performed using tweeners, but hey - a demo!
-        x, y = coords
-        self.coords.insert(0, (x, y))
+        self.coords.insert(0, (event.x, event.y))
         self.coords = self.coords[:10]  # limit trail length
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         for i, coords in enumerate(reversed(self.coords)):
             x, y = coords
 
@@ -45,10 +45,10 @@ class Canvas(graphics.Area):
             else:
                 alpha = float(i+1) / len(self.coords) / 2
 
-            self.set_color("#666", alpha)
-            self.draw_rect(x - self.radius, y - self.radius,
-                           self.radius * 2, self.radius * 2, self.radius / 5)
-            self.context.fill()
+            context.set_source_rgba(0.6, 0.6, 0.6, alpha)
+            context.rectangle(x - self.radius, y - self.radius,
+                              self.radius * 2, self.radius * 2)
+            context.fill()
 
         if len(self.coords) > 1:
             self.coords.pop(-1)

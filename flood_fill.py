@@ -15,22 +15,17 @@ import datetime as dt
 import collections
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
-        self.connect("mouse-move", self.on_mouse_move)
-        self.connect("mouse-click", self.on_mouse_click)
+        graphics.Scene.__init__(self)
         self.tile_size = 60
         self.image = None
 
+        self.connect("on-click", self.on_mouse_click)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_mouse_move(self, area, coords, mouse_areas):
-        #self.tile_size = int(coords[0] / float(self.width) * 200 + 5) # x changes size of tile from 20 to 200(+20)
-        #self.tile_size = min([max(self.tile_size, 10), self.width, self.height])
-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN))
-
-    def on_mouse_click(self, area, coords, mouse_areas):
-        x, y = coords
+    def on_mouse_click(self, area, event, mouse_areas):
+        x, y = event.x, event.y
 
         colormap = self.image.get_colormap()
         color1 = colormap.alloc_color(self.colors.gdk("#ff0000"))
@@ -39,47 +34,48 @@ class Canvas(graphics.Area):
         self.redraw_canvas()
 
 
-    def stroke_tile(self, x, y, size, orient):
+    def stroke_tile(self, context, x, y, size, orient):
         # draws a tile, there are just two orientations
         arc_radius = size / 2
         x2, y2 = x + size, y + size
 
         # i got lost here with all the Pi's
         if orient == 1:
-            self.context.move_to(x + arc_radius, y)
-            self.context.arc(x, y, arc_radius, 0, math.pi / 2);
+            context.move_to(x + arc_radius, y)
+            context.arc(x, y, arc_radius, 0, math.pi / 2);
 
-            self.context.move_to(x2 - arc_radius, y2)
-            self.context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
+            context.move_to(x2 - arc_radius, y2)
+            context.arc(x2, y2, arc_radius, math.pi, math.pi + math.pi / 2);
         elif orient == 2:
-            self.context.move_to(x2, y + arc_radius)
-            self.context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
+            context.move_to(x2, y + arc_radius)
+            context.arc(x2, y, arc_radius, math.pi - math.pi / 2, math.pi);
 
-            self.context.move_to(x, y2 - arc_radius)
-            self.context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
+            context.move_to(x, y2 - arc_radius)
+            context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
+        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN))
         """here happens all the drawing"""
         if not self.height: return
 
         if not self.image:
-            self.two_tile_random()
+            self.two_tile_random(context)
             self.image = self.window.get_image(0, 0, self.width, self.height)
 
         self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
 
 
 
-    def two_tile_random(self):
+    def two_tile_random(self, context):
         """stroke area with non-filed truchet (since non filed, all match and
            there are just two types"""
-        self.set_color("#000")
-        self.context.set_line_width(1)
+        context.set_source_rgb(0,0,0)
+        context.set_line_width(1)
 
         for y in range(0, self.height, self.tile_size):
             for x in range(0, self.width, self.tile_size):
-                self.stroke_tile(x, y, self.tile_size, random.choice([1, 2]))
-        self.context.stroke()
+                self.stroke_tile(context, x, y, self.tile_size, random.choice([1, 2]))
+        context.stroke()
 
     @staticmethod
     def paint_check(color1, color2):

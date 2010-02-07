@@ -20,23 +20,20 @@ from lib import graphics
 PARTS = 40
 SEGMENT_LENGTH = 20
 
-class Segment(object):
+class Segment(graphics.Sprite):
     def __init__(self, x, y, color):
+        graphics.Sprite.__init__(self, interactive = False)
         self.x = x
         self.y = y
         self.angle = 1
         self.color = color
 
-    def draw(self, area):
-        area.draw_rect(self.x - 5, self.y - 5, 10, 10, 3)
+        self.graphics.rectangle(0, 0, 10, 10, 3)
+        self.graphics.move_to(5, 5)
+        self.graphics.line_to(SEGMENT_LENGTH, 5)
 
-        area.set_color(self.color)
-        area.context.fill()
+        self.pivot_x, self.pivot_y = 5, 5  #center will be in the middle of the rectangle
 
-        area.context.move_to(self.x, self.y)
-        area.context.line_to(self.x + math.cos(self.angle) * SEGMENT_LENGTH,
-                             self.y + math.sin(self.angle) * SEGMENT_LENGTH)
-        area.context.stroke()
 
     def drag(self, x, y):
         # moves segment towards x, y, keeping the original angle and preset length
@@ -47,11 +44,12 @@ class Segment(object):
 
         self.x = x - math.cos(self.angle) * SEGMENT_LENGTH
         self.y = y - math.sin(self.angle) * SEGMENT_LENGTH
+        self.rotation = self.angle
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
 
         self.segments = []
@@ -65,14 +63,14 @@ class Canvas(graphics.Area):
             if self.segments:
                 segment.drag(self.segments[-1].x, self.segments[-1].y)
             self.segments.append(segment)
-
-
+            self.add_child(segment)
 
         self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-finish-frame", self.on_finish_frame)
 
 
-    def on_mouse_move(self, widget, coords, state):
-        x, y = coords
+    def on_mouse_move(self, scene, event):
+        x, y = event.x, event.y
 
         self.segments[0].drag(x, y)
         for prev, segment in zip(self.segments, self.segments[1:]):
@@ -80,10 +78,10 @@ class Canvas(graphics.Area):
 
         self.redraw_canvas()
 
-    def on_expose(self):
-        # on expose is called when we are ready to draw
-        for segment in self.segments:
-            segment.draw(self)
+    def on_finish_frame(self, scene, context):
+        context.set_source_rgb(*self.colors.parse("#666"))
+        context.fill_preserve()
+        context.stroke()
 
 
 class BasicWindow:
@@ -105,4 +103,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

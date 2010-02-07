@@ -25,10 +25,14 @@ GRAVITY = 0.03;
 FRICTION = -0.9;
 
 
-class Ball(object):
+class Ball(graphics.Circle):
     def __init__(self, x, y, radius, color):
+        graphics.Circle.__init__(self, radius, fill_color = color)
         self.x = x
         self.y = y
+        self.pivot_x, self.pivot_y = radius, radius # mass is in the centre
+        self.pivot_y = radius
+
         self.radius = radius
 
         # just for kicks add mass, so bigger balls would not bounce as easy as little ones
@@ -38,11 +42,6 @@ class Ball(object):
         # velocity
         self.vx = 0
         self.vy = 0
-
-    def draw(self, area):
-        area.set_color(self.color, 0.8)
-        area.context.arc(self.x, self.y, self.radius, 0, 2.0 * math.pi)
-        area.context.fill()
 
     def move(self, area_dimensions):
         width, height = area_dimensions
@@ -94,27 +93,30 @@ class Ball(object):
                 ball.vy += ay * mass_ratio
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.balls = []
         self.window_pos = None
 
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         if not self.balls:
             for i in range(15):
                 radius = randint(10, 30)
-                self.balls.append(Ball(randint(radius, self.width - radius),
-                                       randint(radius, self.height - radius),
-                                       radius,
-                                       "#aaaaaa"))
+                ball = Ball(randint(radius, self.width - radius),
+                                    randint(radius, self.height - radius),
+                                    radius,
+                                    "#aaaaaa")
+                self.balls.append(ball)
+                self.add_child(ball)
 
         # on expose is called when we are ready to draw
         for ball in self.balls:
             ball.move((self.width, self.height))
             ball.colide(self.balls)
-            ball.draw(self)
+
 
         window_pos = self.get_toplevel().get_position()
         if self.window_pos and window_pos != self.window_pos:
@@ -147,4 +149,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

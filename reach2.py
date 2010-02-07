@@ -18,53 +18,39 @@ from lib import graphics
 
 SEGMENT_LENGTH = 25
 
-class Segment(object):
-    def __init__(self, x, y, color, width):
+class Segment(graphics.Sprite):
+    def __init__(self, x, y, width):
+        graphics.Sprite.__init__(self)
         self.x = x
         self.y = y
-        self.angle = 1
-        self.color = color
-        self.width = width
 
-    def draw(self, area):
-        area.set_color(self.color)
+        self.graphics.move_to(0, 0)
+        self.graphics.line_to(SEGMENT_LENGTH, 0)
 
-        area.draw_rect(self.x - 5, self.y - 5, 10, 10, 3)
-        area.context.fill()
-
-        area.context.set_line_width(self.width)
-        area.context.move_to(self.x, self.y)
-        area.context.line_to(self.x + math.cos(self.angle) * SEGMENT_LENGTH,
-                             self.y + math.sin(self.angle) * SEGMENT_LENGTH)
-        area.context.stroke()
-
-    def drag(self, x, y):
-        # moves segment towards x, y, keeping the original angle and preset length
-        dx = x - self.x
-        dy = y - self.y
-
-        self.angle = math.atan2(dy, dx)
-
-        self.x = x - math.cos(self.angle) * SEGMENT_LENGTH
-        self.y = y - math.sin(self.angle) * SEGMENT_LENGTH
+        self.graphics.set_color("#999")
+        self.graphics.set_line_style(width = width)
+        self.graphics.stroke()
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
 
         self.segments = []
 
         parts = 20
         for i in range(parts):
-            self.segments.append(Segment(0, 0, "#666666", i))
+            segment = Segment(0, 0, i)
+            self.segments.append(segment)
+            self.add_child(segment)
 
         self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
 
-    def on_mouse_move(self, area, coords, state):
-        x, y = coords
+    def on_mouse_move(self, scene, event):
+        x, y = event.x, event.y
 
         def get_angle(segment, x, y):
             dx = x - segment.x
@@ -75,6 +61,7 @@ class Canvas(graphics.Area):
         for segment in self.segments:
             angle = get_angle(segment, x, y)
             segment.angle = angle
+            segment.rotation = angle
 
             x = x - math.cos(angle) * SEGMENT_LENGTH
             y = y - math.sin(angle) * SEGMENT_LENGTH
@@ -88,12 +75,9 @@ class Canvas(graphics.Area):
 
         self.redraw_canvas()
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         self.segments[-1].y = self.height
 
-        # on expose is called when we are ready to draw
-        for segment in self.segments:
-            segment.draw(self)
 
 
 class BasicWindow:
@@ -115,4 +99,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

@@ -25,6 +25,7 @@ import pango, cairo
 import pytweener
 from pytweener import Easing
 import colorsys
+from collections import deque
 
 class Colors(object):
     aluminium = [(238, 238, 236), (211, 215, 207), (186, 189, 182),
@@ -64,51 +65,299 @@ class Colors(object):
         return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
 
 
-class Area(gtk.DrawingArea):
-    """Abstraction on top of DrawingArea to work specifically with cairo"""
+
+class Graphics(object):
+    """graphics class accepts instructions, and when draw is called with
+       the context, it performs them"""
+    def __init__(self):
+        self._instructions = deque()
+        self.colors = Colors()
+        self.extents = (0,0,0,0)
+
+    def clear(self): self._instructions = deque()
+
+    def _stroke(self, context): context.stroke()
+    def stroke(self): self._add_instruction(self._stroke,)
+
+    def _fill(self, context): context.fill()
+    def fill(self): self._add_instruction(self._fill,)
+
+    def _stroke_preserve(self, context): context.stroke_preserve()
+    def stroke_preserve(self): self._add_instruction(self._stroke_preserve,)
+
+    def _fill_preserve(self, context): context.fill_preserve()
+    def fill_preserve(self): self._add_instruction(self._fill_preserve,)
+
+    def move_to(self, x, y): self._add_instruction(lambda context, x, y: context.move_to(x, y), x, y)
+    def line_to(self, x, y): self._add_instruction(lambda context, x, y: context.line_to(x, y), x, y)
+    def curve_to(self, x, y, x2, y2, x3, y3):
+        self._add_instruction(lambda context, x, y, x2, y2, x3, y3: context.curve_to(x, y, x2, y2, x3, y3), x, y, x2, y2, x3, y3)
+    def close_path(self): self._add_instruction(lambda context: context.close_path(),)
+
+    def set_line_style(self, width = None):
+        if width is not None:
+            self._add_instruction(lambda context, width: context.set_line_width(width), width)
+
+    def set_color(self, color, a = 1):
+        color = self.colors.parse(color) #parse whatever we have there into a normalized triplet
+        if len(color) == 4 and a is None:
+            a = color[3]
+        r,g,b = color[:3]
+
+        if a:
+            self._add_instruction(lambda context, r, g, b, a: context.set_source_rgba(r,g,b,a), r, g, b, a)
+        else:
+            self._add_instruction(lambda context, r, g, b: context.set_source_rgb(r,g,b), r, g, b)
+
+    def arc(self, x, y, radius, start_angle, end_angle):
+        self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc(x, y, radius, start_angle, end_angle),
+                                              x, y, radius, start_angle, end_angle)
+
+    def _rounded_rectangle(self, context, x, y, x2, y2, corner_radius):
+        half_corner = corner_radius / 2
+
+        context.move_to(x + corner_radius, y)
+        context.line_to(x2 - corner_radius, y)
+        context.curve_to(x2 - half_corner, y, x2, y + half_corner, x2, y + corner_radius)
+        context.line_to(x2, y2 - corner_radius)
+        context.curve_to(x2, y2 - half_corner, x2 - half_corner, y2, x2 - corner_radius,y2)
+        context.line_to(x + corner_radius, y2)
+        context.curve_to(x + half_corner, y2, x, y2 - half_corner, x, y2 - corner_radius)
+        context.line_to(x, y + corner_radius)
+        context.curve_to(x, y + half_corner, x + half_corner, y, x + corner_radius,y)
+
+    def rectangle(self, x, y, w, h, corner_radius = 0):
+        if corner_radius <=0:
+            self._add_instruction(lambda context, x, y, w, h: context.rectangle(x, y, w, h), x, y, w, h)
+            return
+
+        # make sure that w + h are larger than 2 * corner_radius
+        corner_radius = min(corner_radius, min(w, h) / 2)
+        x2, y2 = x + w, y + h
+        self._add_instruction(self._rounded_rectangle, x, y, x2, y2, corner_radius)
+
+    def fill_area(self, x, y, w, h, color, opacity = 1):
+        self.set_color(color, opacity)
+        self.rectangle(x, y, w, h)
+        self.fill()
+
+    def show_text(self, text, font_desc):
+        def do_layout(context, text, font_desc):
+            layout = context.create_layout()
+            layout.set_font_description(font_desc)
+            layout.set_text(text)
+            context.move_to(0, 0)
+            context.show_layout(layout)
+        self._add_instruction(do_layout, text, font_desc)
+
+    def draw(self, context, with_extents = False):
+        self.extents = [0,0,0,0]
+        for instruction, args in self._instructions:
+            if with_extents and instruction in (self._stroke, self._fill,
+                                                self._stroke_preserve,
+                                                self._fill_preserve):
+                # before stroking get extents, for that we have to do something
+                # bad to the current transformations matrix
+                context.save()
+                context.identity_matrix()
+                matrix = context.get_matrix()
+                self.extents = context.stroke_extents()
+                context.restore()
+
+            instruction(context, *args)
+
+
+    def _add_instruction(self, function, *params):
+        self._instructions.append((function, params))
+
+
+
+class Sprite(gtk.Object):
+    __gsignals__ = {
+        "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+    }
+    def __init__(self, interactive = True):
+        gtk.Widget.__init__(self)
+        self.graphics = Graphics()
+        self.x, self.y = 0, 0
+        self.rotation = 0
+        self.pivot_x, self.pivot_y = 0, 0 # the anchor and rotation point
+        self.interactive = interactive
+        self.draggable = False
+
+        self.child_sprites = []
+        self.parent = None
+
+    def _draw(self, context):
+        context.save()
+
+        if self.x or self.y:
+            context.translate(self.x, self.y)
+
+        if self.rotation:
+            context.rotate(self.rotation)
+
+        context.translate(-self.pivot_x, -self.pivot_y)
+        self.graphics.draw(context, self.interactive)
+
+        for sprite in self.child_sprites:
+            sprite._draw(context)
+
+        context.restore()
+
+    def add_child(self, sprite):
+        self.child_sprites.append(sprite)
+        sprite.parent = self
+
+    def _on_click(self, button_state):
+        self.emit("on-mouse-click", button_state)
+
+    def _on_mouse_over(self):
+        # scene will call us when there is mouse
+        self.emit("on-mouse-over")
+
+    def _on_mouse_out(self):
+        # scene will call us when there is mouse
+        self.emit("on-mouse-out")
+
+    def _on_drag(self, x, y):
+        # scene will call us when there is mouse
+        self.emit("on-drag", (x, y))
+
+
+"""a few primitives"""
+class Label(Sprite):
+    def __init__(self, text = "", size = 10, color = None):
+        Sprite.__init__(self, interactive = False)
+        self.text = text
+        self.color = color
+
+        self.font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
+        self.font_desc.set_size(size * pango.SCALE)
+        self._draw_label()
+
+    def _draw_label(self):
+        if self.color:
+            self.graphics.set_color(self.color)
+        self.graphics.show_text(self.text, self.font_desc)
+        self.graphics.stroke()
+
+
+class Primitive(Sprite):
+    def __init__(self, stroke_color = None, fill_color = None):
+        Sprite.__init__(self, interactive = False)
+        self.stroke_color = stroke_color
+        self.fill_color = fill_color
+
+
+    def _color(self):
+        if self.fill_color:
+            self.graphics.set_color(self.fill_color)
+            if self.stroke_color:
+                self.graphics.fill_preserve()
+            else:
+                self.graphics.fill()
+
+        if self.stroke_color:
+            self.graphics.set_color(self.stroke_color)
+            self.graphics.stroke()
+
+    def _draw_primitive(self):
+        raise UnimplementedException
+
+    def set_color(self, stroke_color = None, fill_color = None):
+        if stroke_color is not None: self.stroke_color = stroke_color
+        if fill_color is not None: self.fill_color = fill_color
+        self.graphics.clear()
+        self._draw_primitive()
+
+
+
+
+class Rectangle(Primitive):
+    def __init__(self, w, h, corner_radius, stroke_color = None, fill_color = None):
+        Primitive.__init__(self, stroke_color, fill_color)
+        self.width, self.height, self.corner_radius = w, h, corner_radius
+        self._draw_primitive()
+
+    def _draw_primitive(self):
+        self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
+        self._color()
+
+
+class Polygon(Primitive):
+    def __init__(self, points, stroke_color = None, fill_color = None):
+        Primitive.__init__(self, stroke_color, fill_color)
+        self.points = points
+        self._draw_primitive()
+
+    def _draw_primitive(self):
+        if not self.points: return
+
+        self.graphics.move_to(*self.points[0])
+        for point in self.points:
+            self.graphics.line_to(*point)
+        self.graphics.close_path()
+        self._color()
+
+class Circle(Primitive):
+    def __init__(self, radius, stroke_color = None, fill_color = None):
+        Primitive.__init__(self, stroke_color, fill_color)
+        self.radius = radius
+        self._draw_primitive()
+
+    def _draw_primitive(self):
+        self.graphics.move_to(0,0)
+        self.graphics.arc(self.radius, self.radius, self.radius, 0, math.pi * 2)
+        self._color()
+
+
+
+""" the main place where all the action is going on"""
+class Scene(gtk.DrawingArea):
     __gsignals__ = {
         "expose-event": "override",
         "configure_event": "override",
-        "mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
-        "button-press": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
-        "button-release": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
-        "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
-        "mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+        "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+        "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
 
-    def __init__(self):
+    def __init__(self, interactive = True):
         gtk.DrawingArea.__init__(self)
-        self.set_events(gtk.gdk.EXPOSURE_MASK
-                        | gtk.gdk.LEAVE_NOTIFY_MASK
-                        | gtk.gdk.BUTTON_PRESS_MASK
-                        | gtk.gdk.BUTTON_RELEASE_MASK
-                        | gtk.gdk.POINTER_MOTION_MASK
-                        | gtk.gdk.POINTER_MOTION_HINT_MASK)
-        self.connect("button_press_event", self.__on_button_press)
-        self.connect("button_release_event", self.__on_button_release)
-        self.connect("motion_notify_event", self.__on_mouse_move)
-        self.connect("leave_notify_event", self.__on_mouse_out)
+        if interactive:
+            self.set_events(gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+            self.connect("motion_notify_event", self.__on_mouse_move)
+            self.connect("button_press_event", self.__on_button_press)
+            self.connect("button_release_event", self.__on_button_release)
 
-        self.font_size = 8
-        self.mouse_regions = [] #regions of drawing that respond to hovering/clicking
-
-        self.context, self.layout = None, None
+        self.sprites = []
+        self.framerate = 80
         self.width, self.height = None, None
-        self.__prev_mouse_regions = None
 
         self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
-        self.framerate = 80
         self.last_frame_time = None
         self.__drawing_queued = False
 
-        self.mouse_drag = None
+        self._mouse_sprites = set()
+        self._mouse_drag = None
+        self._drag_sprite = None
+        self._drag_x, self._drag_y = None, None
+        self._button_press_time = None # to distinguish between click and drag
+        self.colors = Colors()
 
-        self.colors = Colors() # handier this way
 
-    def on_expose(self):
-        """ on_expose event is where you hook in all your drawing
-            canvas has been initialized for you """
-        raise NotImplementedError
+    def add_child(self, sprite):
+        self.sprites.append(sprite)
+
+    def clear(self):
+        self.sprites = []
 
     def redraw_canvas(self):
         """Redraw canvas. Triggers also to do all animations"""
@@ -121,7 +370,6 @@ class Area(gtk.DrawingArea):
     def __interpolate(self):
         if not self.window: #will wait until window comes
             return True
-
 
         time_since_last_frame = (dt.datetime.now() - self.last_frame_time).microseconds / 1000000.0
         self.tweener.update(time_since_last_frame)
@@ -143,177 +391,138 @@ class Area(gtk.DrawingArea):
             self.redraw_canvas()
 
 
-    """ drawing on canvas bits """
-    def draw_rect(self, x, y, w, h, corner_radius = 0):
-        if corner_radius <=0:
-            self.context.rectangle(x, y, w, h)
-            return
-
-        # make sure that w + h are larger than 2 * corner_radius
-        corner_radius = min(corner_radius, min(w, h) / 2)
-
-        x2, y2 = x + w, y + h
-
-        half_corner = corner_radius / 2
-
-        self.context.move_to(x + corner_radius, y);
-        self.context.line_to(x2 - corner_radius, y);
-        # top-right
-        self.context.curve_to(x2 - half_corner, y,
-                              x2, y + half_corner,
-                              x2, y + corner_radius)
-
-        self.context.line_to(x2, y2 - corner_radius);
-        # bottom-right
-        self.context.curve_to(x2, y2 - half_corner,
-                              x2 - half_corner, y+h,
-                              x2 - corner_radius,y+h)
-
-        self.context.line_to(x + corner_radius, y2);
-        # bottom-left
-        self.context.curve_to(x + half_corner, y2,
-                              x, y2 - half_corner,
-                              x,y2 - corner_radius)
-
-        self.context.line_to(x, y + corner_radius);
-        # top-left
-        self.context.curve_to(x, y + half_corner,
-                              x + half_corner, y,
-                              x + corner_radius,y)
-
-
-    def rectangle(self, x, y, w, h, color = None, opacity = 0):
-        if color:
-            self.set_color(color, opacity)
-        self.context.rectangle(x, y, w, h)
-
-    def fill_area(self, x, y, w, h, color, opacity = 0):
-        self.rectangle(x, y, w, h, color, opacity)
-        self.context.fill()
-
-    def set_text(self, text):
-        # sets text and returns width and height of the layout
-        self.layout.set_text(text)
-        return self.layout.get_pixel_size()
-
-    def set_color(self, color, opacity = None):
-        color = self.colors.parse(color) #parse whatever we have there into a normalized triplet
-
-        if opacity:
-            self.context.set_source_rgba(color[0], color[1], color[2], opacity)
-        elif len(color) == 3:
-            self.context.set_source_rgb(*color)
-        else:
-            self.context.set_source_rgba(*color)
-
-
-    def register_mouse_region(self, x1, y1, x2, y2, region_name):
-        self.mouse_regions.append((x1, y1, x2, y2, region_name))
-
     """ exposure events """
     def do_configure_event(self, event):
         (self.width, self.height) = self.window.get_size()
 
     def do_expose_event(self, event):
         self.width, self.height = self.window.get_size()
-        self.context = self.window.cairo_create()
+        context = self.window.cairo_create()
 
-        self.context.rectangle(event.area.x, event.area.y,
-                               event.area.width, event.area.height)
-        self.context.clip()
+        context.rectangle(event.area.x, event.area.y,
+                          event.area.width, event.area.height)
+        context.clip()
 
-        self.layout = self.context.create_layout()
-        default_font = pango.FontDescription(gtk.Style().font_desc.to_string())
-        default_font.set_size(self.font_size * pango.SCALE)
-        self.layout.set_font_description(default_font)
         alloc = self.get_allocation()  #x, y, width, height
         self.width, self.height = alloc.width, alloc.height
 
-        self.mouse_regions = [] #reset since these can move in each redraw
-        self.on_expose()
+        self.emit("on-enter-frame", context)
+        for sprite in self.sprites:
+            sprite._draw(context)
+        self.emit("on-finish-frame", context)
 
 
     """ mouse events """
+    def all_sprites(self, sprites = None):
+        """recursively flatten the tree and return all sprites"""
+        sprites = sprites or self.sprites
+        res = []
+        for sprite in sprites:
+            res.append(sprite)
+            if sprite.child_sprites:
+                res.extend(self.all_sprites(sprite.child_sprites))
+        return res
+
     def __on_mouse_move(self, area, event):
         if event.is_hint:
-            x, y, state = event.window.get_pointer()
+            mouse_x, mouse_y, state = event.window.get_pointer()
         else:
-            x = event.x
-            y = event.y
+            mouse_x = event.x
+            mouse_y = event.y
             state = event.state
 
-        self.emit("mouse-move", (x, y), state)
+        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
-        if not self.mouse_regions:
-            return
+        if self._drag_sprite and self._drag_sprite.draggable and gtk.gdk.BUTTON1_MASK & event.state:
+            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
 
-        mouse_regions = []
-        for region in self.mouse_regions:
-            if region[0] < x < region[2] and region[1] < y < region[3]:
-                mouse_regions.append(region[4])
+            # dragging around
+            drag = self._mouse_drag and (self._mouse_drag[0] - event.x) ** 2 + \
+                                        (self._mouse_drag[1] - event.y) ** 2 > 5 ** 2
+            if drag:
+                matrix = cairo.Matrix()
+                if self._drag_sprite.parent:
+                    # TODO - this currently works only until second level - take all parents into account
+                    matrix.rotate(self._drag_sprite.parent.rotation)
+                    matrix.invert()
 
-        if mouse_regions:
-            area.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-        else:
-            area.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
+                if not self._drag_x:
+                    x1,y1 = matrix.transform_point(self._mouse_drag[0], self._mouse_drag[1])
 
-        if mouse_regions != self.__prev_mouse_regions:
-            self.emit("mouse-over", mouse_regions)
+                    self._drag_x = self._drag_sprite.x - x1
+                    self._drag_y = self._drag_sprite.y - y1
 
-        self.__prev_mouse_regions = mouse_regions
+                mouse_x, mouse_y = matrix.transform_point(mouse_x, mouse_y)
+                new_x = mouse_x + self._drag_x
+                new_y = mouse_y + self._drag_y
 
-    def __on_mouse_out(self, area, event):
-        self.__prev_mouse_regions = None
-        self.emit("mouse-over", [])
 
+                self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
+                self._drag_sprite._on_drag(new_x, new_y)
+                self.emit("on-drag", self._drag_sprite, (new_x, new_y))
+                self.redraw_canvas()
+
+                return
+
+        #check if we have a mouse over
+        over = set()
+        for sprite in self.all_sprites():
+            x, y, x2, y2 = sprite.graphics.extents
+            if x < mouse_x < x2 and y < mouse_y < y2:
+                if sprite.draggable:
+                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
+                elif sprite.interactive:
+                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+
+                over.add(sprite)
+
+        for sprite in over - self._mouse_sprites: #new mouse overs
+            sprite._on_mouse_over()
+
+        for sprite in self._mouse_sprites - over: #gone mouse overs
+            sprite._on_mouse_out()
+
+        self._mouse_sprites = over
+        self.emit("mouse-move", event)
 
     def __on_button_press(self, area, event):
         x = event.x
         y = event.y
         state = event.state
-        self.mouse_drag = (x, y)
+        self._mouse_drag = (x, y)
 
-        if not self.mouse_regions:
-            return
-        mouse_regions = []
-        for region in self.mouse_regions:
-            if region[0] < x < region[2] and region[1] < y < region[3]:
-                mouse_regions.append(region[4])
-
-        if mouse_regions:
-            self.emit("button-press", mouse_regions)
-
+        over = None
+        for sprite in self.all_sprites():
+            if sprite.interactive:
+                x, y, x2, y2 = sprite.graphics.extents
+                if x < event.x < x2 and y < event.y < y2:
+                    over = sprite # last one will take precedence
+        self._drag_sprite = over
+        self._button_press_time = dt.datetime.now()
 
     def __on_button_release(self, area, event):
-        x = event.x
-        y = event.y
-        state = event.state
+        #if the drag is less than 5 pixles, then we have a click
+        click = self._button_press_time and (dt.datetime.now() - self._button_press_time) < dt.timedelta(milliseconds = 300)
+        self._button_press_time = None
+        self._mouse_drag = None
+        self._drag_x, self._drag_y = None, None
+        self._drag_sprite = None
 
-        click = False
-        drag_distance = 5
-        if self.mouse_drag and (self.mouse_drag[0] - x) ** 2 + (self.mouse_drag[1] - y) ** 2 < drag_distance ** 2:
-            #if the drag is less than the drag distance, then we have a click
-            click =  True
-        self.mouse_drag = None
+        if click:
+            targets = []
+            for sprite in self.all_sprites():
+                if sprite.interactive:
+                    x, y, x2, y2 = sprite.graphics.extents
+                    if x < event.x < x2 and y < event.y < y2:
+                        targets.append(sprite)
+                        sprite._on_click(event.state)
 
-        if not self.mouse_regions:
-            self.emit("mouse-click", (x,y), [])
-            return
-
-        mouse_regions = []
-        for region in self.mouse_regions:
-            if region[0] < x < region[2] and region[1] < y < region[3]:
-                mouse_regions.append(region[4])
-
-        if mouse_regions:
-            self.emit("button-release", mouse_regions)
-
-        self.emit("mouse-click", (x,y), mouse_regions)
-
+            self.emit("on-click", event, targets)
+        self.emit("on-mouse-up")
 
 
 """ simple example """
-class SampleArea(Area):
+class SampleArea(Scene):
     def __init__(self):
         Area.__init__(self)
         self.rect_x, self.rect_y = 100, -100

@@ -14,10 +14,9 @@ import math
 import cairo
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
-        self.connect("mouse-move", self.on_mouse_move)
+        graphics.Scene.__init__(self)
 
         self.a = 1.4191403
         self.b = -2.2841523
@@ -27,17 +26,19 @@ class Canvas(graphics.Area):
         self.zoom = 1
 
         self.x, self.y = 0,0
-
         self.image = None
 
-    def on_mouse_move(self, area, coords, mouse_areas):
-        self.points = int(coords[1] / float(self.height) * 30000) + 10000
-        self.zoom = abs((coords[0] / float(self.width)) * 2 - 1)
+        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
+
+    def on_mouse_move(self, area, event):
+        self.points = int(event.y / float(self.height) * 30000) + 10000
+        self.zoom = abs((event.x / float(self.width)) * 2 - 1)
         self.image = None
         self.x, self.y = 0,0
         self.redraw_canvas()
 
-    def on_expose(self):
+    def on_enter_frame(self, scene, context):
         if not self.image:
             self.image = self.window.get_image(0, 0, self.width, self.height)
 

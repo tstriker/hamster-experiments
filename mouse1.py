@@ -13,29 +13,31 @@ from lib.pytweener import Easing
 import math
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
-        self.connect("mouse-move", self.on_mouse_move)
         self.mouse_x, self.mouse_y = None, None
         self.max_width = 50
 
+        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
 
-    def on_mouse_move(self, area, coords, mouse_areas):
-        self.mouse_x, self.mouse_y = coords
+
+    def on_mouse_move(self, area, event):
+        self.mouse_x, self.mouse_y = event.x, event.y
         self.redraw_canvas()
 
 
-    def on_expose(self):
-        self.set_color("#444")
-        self.context.set_line_width(0.6)
+    def on_enter_frame(self, scene, context):
+        context.set_source_rgb(*self.colors.parse("#444"))
+        context.set_line_width(0.6)
 
         exes = range(1, self.width, self.max_width)
         whys = range(250, 350, 10)
 
-        for i,x in enumerate(exes):
+        for i, x in enumerate(exes):
             if self.mouse_x:
                 distance = abs(x - self.mouse_x)
                 rel_distance = 1 - distance / float(self.width)
@@ -52,14 +54,14 @@ class Canvas(graphics.Area):
 
                 width = max(abs(x - corrected_x), 10)
 
-                self.draw_rect(x, 100, width, 50, 5)
+                context.rectangle(x, 100, width, 50)
 
-                self.draw_rect(x, 150 + width * 2, 50, width * 2, 5)
+                context.rectangle(x, 150 + width * 2, 50, width * 2)
 
-        self.set_color("#444")
-        self.context.fill_preserve()
-        self.set_color("#fff")
-        self.context.stroke()
+        context.set_source_rgb(*self.colors.parse("#444"))
+        context.fill_preserve()
+        context.set_source_rgb(*self.colors.parse("#fff"))
+        context.stroke()
 
 
 

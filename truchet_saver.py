@@ -14,36 +14,24 @@ import math
 import random
 from lib.pytweener import Easing
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
-        #self.connect("mouse-move", self.on_mouse_move)
+        graphics.Scene.__init__(self)
         self.tile_size = 40
         self.tile_map = {}
         self.x, self.y = 0, 0
         self.dx, self.dy = -1, -1
         #self.framerate = 40
-        self.connect("configure-event", self.on_window_reconfigure)
-        self.connect("mouse-move", self.on_mouse_move)
         self.pattern = []
         self.pattern_tiles = 2
+        self.connect("configure-event", self.on_window_reconfigure)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
     def on_window_reconfigure(self, area, stuff):
         self.tile_map = {}
 
-    def on_mouse_move(self, area, coords, mouse_areas):
-        x, y = coords
-
-        #self.tile_size = min([max(int(100 * float(x) / self.width), 3), self.width * 2, self.height * 2])
-        self.redraw_canvas()
-
-
-    def on_expose(self):
-        """here happens all the drawing"""
-        if not self.height: return
-
+    def on_enter_frame(self, scene, context):
         tile_size = int(self.tile_size)
-
         pattern_tiles = self.pattern_tiles
         #we move, and then we change the tile
         if not self.pattern:
@@ -54,7 +42,7 @@ class Canvas(graphics.Area):
         # draw the tile that we will clone
         for y, row in enumerate(self.pattern):
             for x, col in enumerate(self.pattern[y]):
-                self.fill_tile(x * tile_size, y * tile_size, tile_size, self.pattern[y][x])
+                self.fill_tile(context, x * tile_size, y * tile_size, tile_size, self.pattern[y][x])
 
         # now get our pixmap
         tile_image = self.window.get_image(0, 0, min(pattern_size, self.width), min(pattern_size, self.height))
@@ -63,12 +51,8 @@ class Canvas(graphics.Area):
             for x in range(-pattern_size - int(abs(self.x)), self.width+pattern_size + int(abs(self.y)), pattern_size):
                 self.window.draw_image(self.get_style().black_gc, tile_image, 0, 0, int(x + self.x), int(y + self.y), -1, -1)
 
-
-
-
         self.x += self.dx
         self.y -= self.dy
-
 
         if self.x > pattern_size or self.x < -pattern_size or \
            self.y > pattern_size or self.y < -pattern_size:
@@ -112,7 +96,7 @@ class Canvas(graphics.Area):
         self.pattern = pattern
 
 
-    def fill_tile(self, x, y, size, orient):
+    def fill_tile(self, context, x, y, size, orient):
         # draws a tile, there are just two orientations
         arc_radius = size / 2
 
@@ -120,29 +104,31 @@ class Canvas(graphics.Area):
         if orient > 2:
             front, back = back, front
 
-        self.fill_area(x, y, size, size, back)
-        self.set_color(front)
+        context.set_source_rgb(*self.colors.parse(back))
+        context.rectangle(x, y, size, size)
+        context.fill()
+
+        context.set_source_rgb(*self.colors.parse(front))
 
 
-        self.context.save()
-
-        self.context.translate(x, y)
+        context.save()
+        context.translate(x, y)
         if orient % 2 == 0: # tiles 2 and 4 are flipped 1 and 3
-            self.context.rotate(math.pi / 2)
-            self.context.translate(0, -size)
+            context.rotate(math.pi / 2)
+            context.translate(0, -size)
 
-        self.context.move_to(0, 0)
-        self.context.line_to(arc_radius, 0)
-        self.context.arc(0, 0, arc_radius, 0, math.pi / 2);
-        self.context.close_path()
+        context.move_to(0, 0)
+        context.line_to(arc_radius, 0)
+        context.arc(0, 0, arc_radius, 0, math.pi / 2);
+        context.close_path()
 
-        self.context.move_to(size, size)
-        self.context.line_to(size - arc_radius, size)
-        self.context.arc(size, size, arc_radius, math.pi, math.pi + math.pi / 2);
-        self.context.close_path()
+        context.move_to(size, size)
+        context.line_to(size - arc_radius, size)
+        context.arc(size, size, arc_radius, math.pi, math.pi + math.pi / 2);
+        context.close_path()
 
-        self.context.fill()
-        self.context.restore()
+        context.fill()
+        context.restore()
 
 
 

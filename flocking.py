@@ -16,7 +16,6 @@
 import gtk
 
 from lib import graphics
-from lib.pytweener import Easing
 
 import math
 from random import random
@@ -34,11 +33,11 @@ class Boid(object):
         self.max_force = max_force
 
 
-    def run(self, flock_boids, area):
+    def run(self, flock_boids, context):
         self.flock(flock_boids)
         self.update()
         self.borders()
-        self.draw(area)
+        self.draw(context)
 
 
     def borders(self):
@@ -57,19 +56,19 @@ class Boid(object):
 
 
 
-    def draw(self, area):
-        area.context.save()
-        area.context.translate(self.location.x, self.location.y)
+    def draw(self, context):
+        context.save()
+        context.translate(self.location.x, self.location.y)
 
         theta = self.velocity.heading() + math.pi / 2
-        area.context.rotate(theta)
+        context.rotate(theta)
 
-        area.context.move_to(0, -self.radius*2)
-        area.context.line_to(-self.radius, self.radius*2)
-        area.context.line_to(self.radius, self.radius*2)
-        area.context.close_path()
+        context.move_to(0, -self.radius*2)
+        context.line_to(-self.radius, self.radius*2)
+        context.line_to(self.radius, self.radius*2)
+        context.close_path()
 
-        area.context.restore()
+        context.restore()
 
 
     def flock(self, boids):
@@ -181,23 +180,25 @@ class Boid(object):
         return steer
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.flock = []
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_expose(self):
-        self.context.set_line_width(0.5)
-        self.set_color("#AA00FF")
+    def on_enter_frame(self, scene, context):
+        context.set_line_width(0.5)
+        context.set_source_rgb(*self.colors.parse("#AA00FF"))
+
 
         if len(self.flock) < 40:
             self.flock.append(Boid(Vector2(100, 100), 2.0, 0.05))
 
         for boid in self.flock:
-            boid.run(self.flock, self)
+            boid.run(self.flock, context)
 
-        self.context.stroke()
-        self.context.fill()
+        context.stroke()
+        context.fill()
         self.redraw_canvas()
 
 
@@ -220,4 +221,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

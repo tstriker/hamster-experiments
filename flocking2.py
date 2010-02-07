@@ -6,7 +6,7 @@
  Flocking 2 - based on flocking and added the bin-latice spatial clustering
  with all the optimizations we are still way behind the processing version.
  Help me fixing the slow parts!
- 
+
  * An implementation of Craig Reynold's Boids program to simulate
  * the flocking behavior of birds. Each boid steers itself based on
  * rules of avoidance, alignment, and coherence.
@@ -18,7 +18,6 @@
 import gtk
 
 from lib import graphics
-from lib.pytweener import Easing
 
 import math
 from random import random
@@ -28,9 +27,8 @@ from lib.proximity import LQProximityStore
 
 
 class Boid(object):
-    __slots__ = ['acceleration', 'velocity', 'location', 'max_speed', 'max_force']
     radius = 2 # boid radius
-    
+
     # distances are squared to avoid roots (slower)
     neighbour_distance = float(50**2)
     desired_separation = float(25**2)
@@ -61,7 +59,7 @@ class Boid(object):
         alignment = self.align(boids) * 1
         cohesion = self.cohesion(boids) * 1
 
-        # The sum is the wanted acceleration 
+        # The sum is the wanted acceleration
         self.acceleration = separation + alignment + cohesion
 
 
@@ -120,15 +118,15 @@ class Boid(object):
 
     def arrive(target):
         self.acceleration += self.steer(target, True)
- 
+
     def steer(self, target, slow_down):
         desired = target - self.location # A vector pointing from the location to the target
-        
+
         d = desired.magnitude_squared()
         if d > 0:  # this means that we have a target
             desired.normalize()
-            
-            
+
+
             # Two options for desired vector magnitude (1 -- based on distance, 2 -- maxspeed)
             if  slow_down and d > self.braking_distance:
                 desired *= self.max_speed * d / self.braking_distance # This damping is somewhat arbitrary
@@ -143,30 +141,29 @@ class Boid(object):
 
 
 
-class Canvas(graphics.Area):
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
         self.segments = []
-
-        self.connect("mouse-click", self.on_mouse_click)
 
         # we should redo the boxes when window gets resized
         self.proximity_radius = 10
         self.proximities = LQProximityStore(Vector2(0,0), Vector2(600,400), self.proximity_radius)
-
         self.flock = []
-        
         self.frame = 0
 
+        self.connect("on-click", self.on_mouse_click)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_expose(self):
+
+    def on_enter_frame(self, scene, context):
         if len(self.flock) < 80:
             for i in range(2):
                 self.flock.append(Boid(Vector2(self.width / 2, self.height / 2), 2.0, 0.05))
-        
+
         # main loop (i should rename this to something more obvious)
-        self.context.set_line_width(0.8)
-        self.set_color("#666")
+        context.set_line_width(0.8)
+        context.set_source_rgb(*self.colors.parse("#666"))
 
         for boid in self.flock:
             neighbours = []
@@ -176,16 +173,16 @@ class Canvas(graphics.Area):
             boid.run(neighbours)
             self.wrap(boid)
             self.proximities.update_position(boid)
-            
-            self.draw_boid(boid)
+
+            self.draw_boid(context, boid)
 
 
         self.frame +=1
 
-        self.context.stroke()
+        context.stroke()
 
         self.redraw_canvas()
-        
+
 
     def wrap(self, boid):
         "wraps boid around the edges (teleportation)"
@@ -202,23 +199,23 @@ class Canvas(graphics.Area):
             boid.location.y = -boid.radius
 
 
-    def draw_boid(self, boid):
-        self.context.save()
-        self.context.translate(boid.location.x, boid.location.y)
+    def draw_boid(self, context, boid):
+        context.save()
+        context.translate(boid.location.x, boid.location.y)
 
         theta = boid.velocity.heading() + math.pi / 2
-        self.context.rotate(theta)
+        context.rotate(theta)
 
-        self.context.move_to(0, -boid.radius*2)
-        self.context.line_to(-boid.radius, boid.radius*2)
-        self.context.line_to(boid.radius, boid.radius*2)
-        self.context.line_to(0, -boid.radius*2)
+        context.move_to(0, -boid.radius*2)
+        context.line_to(-boid.radius, boid.radius*2)
+        context.line_to(boid.radius, boid.radius*2)
+        context.line_to(0, -boid.radius*2)
 
-        self.context.restore()
+        context.restore()
 
 
-    def on_mouse_click(self, widget, coords, areas):
-        self.flock.append(Boid(Vector2(*coords), 2.0, 0.05))
+    def on_mouse_click(self, widget, event, targets):
+        self.flock.append(Boid(Vector2(event.x, event.y), 2.0, 0.05))
 
 
 
@@ -242,4 +239,3 @@ class BasicWindow:
 if __name__ == "__main__":
     example = BasicWindow()
     gtk.main()
-

@@ -10,7 +10,6 @@
 import gtk
 
 from lib import graphics, pytweener
-from lib.pytweener import Easing
 
 import math
 import random
@@ -18,10 +17,25 @@ import random
 from lib.euclid import Vector2, Point2
 from lib.proximity import LQProximityStore
 
-class Waypoint(object):
+class Waypoint(graphics.Sprite):
     def __init__(self, x, y):
+        graphics.Sprite.__init__(self)
+        self.draggable = True
+
+        self.x, self.y = x, y
+        self.graphics.set_color("#999")
+        self.graphics.rectangle(-4, -4, 8, 8, 2)
+        self.graphics.fill()
+
+        self.connect("on-drag", self.on_drag)
+
         self.location = Vector2(x, y)
         self.debug = False
+
+    def on_drag(self, sprite, coords):
+        self.location.x = coords[0]
+        self.location.y = coords[1]
+
 
     def see_you(self, boid):
         # boid calls waypoint when he sees it
@@ -362,106 +376,10 @@ class Boid(object):
 
 
 
-class Canvas(graphics.Area):
-    # just for kicks - mouse events
-    def on_mouse_button_press(self, area, over_regions):
-        if over_regions:
-            self.mouse_node = over_regions[0]
-
-    def on_mouse_click(self, area, coords, areas):
-        if not areas:
-            self.waypoints.append(Waypoint(*coords))
-            self.redraw_canvas()
-
-
-    def on_mouse_move(self, area, coords, state):
-        if self.mouse_node is not None:  #checking for none as there is the node zero
-            if gtk.gdk.BUTTON1_MASK & state:
-                # dragging around
-                self.waypoints[self.mouse_node].location.x = coords[0]
-                self.waypoints[self.mouse_node].location.y = coords[1]
-                self.redraw_canvas()
-            else:
-                self.mouse_node = None
-
-
-    def on_expose(self):
-        # main loop (i should rename this to something more obvious)
-        self.context.set_line_width(0.8)
-
-        for waypoint in self.waypoints:
-            waypoint.update(self.context)
-
-
-        for boid in self.boids:
-            # the growing antennae circle
-            if self.debug_radius:
-                self.set_color("#ddd", 0.3)
-                self.context.arc(boid.location.x,
-                                 boid.location.y,
-                                 boid.radio,
-                                 -math.pi, math.pi)
-                self.context.fill()
-
-
-            # obstacle awareness circle
-            if self.debug_awareness:
-                self.set_color("#ddd", 0.5)
-                self.context.arc(boid.location.x,
-                                 boid.location.y,
-                                 boid.awareness,
-                                 -math.pi, math.pi)
-                self.context.fill()
-
-
-
-        for boid in self.boids:
-            neighbours = self.proximities.find_neighbours(boid, 40)
-
-            boid.run(neighbours)
-
-            self.proximities.update_position(boid)
-
-
-            # debug trail (if enabled)
-            self.set_color("#00ff00")
-            for position1, position2 in zip(boid.positions, boid.positions[1:]):
-                self.context.move_to(position1.x, position1.y)
-                self.context.line_to(position2.x, position2.y)
-            self.context.stroke()
-
-
-            # sir boid himself
-            self.set_color("#888")
-            boid.draw(self.context)
-
-            # line between boid and it's target
-            """
-            self.context.move_to(boid.location.x, boid.location.y)
-            self.context.line_to(boid.target_waypoint.location.x,
-                                 boid.target_waypoint.location.y)
-            """
-
-            self.context.fill_preserve()
-            self.context.stroke()
-
-
-        self.set_color("#999")
-        for i, waypoint in enumerate(self.waypoints):
-            self.draw_rect(waypoint.location.x - 4, waypoint.location.y - 4, 8, 8, 2)
-            self.register_mouse_region(waypoint.location.x - 4, waypoint.location.y - 4,
-                                       waypoint.location.x + 4, waypoint.location.y + 4, i)
-            self.context.fill()
-
-        self.redraw_canvas()
-
-
+class Canvas(graphics.Scene):
     def __init__(self):
-        graphics.Area.__init__(self)
+        graphics.Scene.__init__(self)
 
-        self.connect("mouse-move", self.on_mouse_move)
-        self.connect("button-press", self.on_mouse_button_press)
-        self.connect("mouse-click", self.on_mouse_click)
 
         # we should redo the boxes when window gets resized
         box_size = 10
@@ -475,6 +393,9 @@ class Canvas(graphics.Area):
                           BucketWaypoint(100, 500, 10),
                           GrowWaypoint(100, 300, 3),
                           ]
+
+        for waypoint in self.waypoints:
+            self.add_child(waypoint)
 
         # link them together
         for curr, next in zip(self.waypoints, self.waypoints[1:]):
@@ -496,6 +417,74 @@ class Canvas(graphics.Area):
         # some debug variables
         self.debug_radius = False
         self.debug_awareness = False
+
+        self.connect("on-enter-frame", self.on_enter_frame)
+
+
+
+
+    def on_enter_frame(self, scene, context):
+        # main loop (i should rename this to something more obvious)
+        context.set_line_width(0.8)
+
+        for waypoint in self.waypoints:
+            waypoint.update(context)
+
+
+        for boid in self.boids:
+            # the growing antennae circle
+            if self.debug_radius:
+                context.set_source_rgba(0.9,0.9,0.9, 0.3)
+                context.arc(boid.location.x,
+                            boid.location.y,
+                            boid.radio,
+                            -math.pi, math.pi)
+                context.fill()
+
+
+            # obstacle awareness circle
+            if self.debug_awareness:
+                context.set_source_rgba(0.9,0.9,0.9, 0.5)
+                context.arc(boid.location.x,
+                            boid.location.y,
+                            boid.awareness,
+                            -math.pi, math.pi)
+                context.fill()
+
+
+
+        for boid in self.boids:
+            neighbours = self.proximities.find_neighbours(boid, 40)
+
+            boid.run(neighbours)
+
+            self.proximities.update_position(boid)
+
+
+            # debug trail (if enabled)
+            context.set_source_rgb(0, 1.0, 0)
+            for position1, position2 in zip(boid.positions, boid.positions[1:]):
+                context.move_to(position1.x, position1.y)
+                context.line_to(position2.x, position2.y)
+            context.stroke()
+
+
+            # sir boid himself
+            context.set_source_rgb(0.7, 0.7, 0.7)
+            boid.draw(context)
+
+            # line between boid and it's target
+            """
+            context.move_to(boid.location.x, boid.location.y)
+            context.line_to(boid.target_waypoint.location.x,
+                                 boid.target_waypoint.location.y)
+            """
+
+            context.fill_preserve()
+            context.stroke()
+
+
+        self.redraw_canvas()
 
 
 
