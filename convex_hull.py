@@ -16,10 +16,7 @@ from lib.euclid import Point2
 
 class Node(graphics.Rectangle):
     def __init__(self, x, y):
-        graphics.Rectangle.__init__(self, 10, 10, 3, fill_color = "#999")
-        self.pivot_x, self.pivot_y = 5, 5
-        self.draggable = True
-        self.interactive = True
+        graphics.Rectangle.__init__(self, 10, 10, 3, pivot_x = 5, pivot_y = 5, interactive = True, draggable = True, fill = "#999")
         self.x = x
         self.y = y
 

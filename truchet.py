@@ -15,9 +15,7 @@ import random
 
 class Tile(graphics.Sprite):
     def __init__(self, x, y, size, orient):
-        graphics.Sprite.__init__(self, interactive = False)
-
-        self.x, self.y = x, y
+        graphics.Sprite.__init__(self, x, y, interactive = False)
 
         if orient % 2 == 0: # tiles 2 and 4 are flipped 1 and 3
             self.rotation = math.pi / 2

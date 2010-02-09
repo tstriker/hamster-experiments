@@ -11,9 +11,7 @@ from lib.pytweener import Easing
 
 class TailParticle(graphics.Sprite):
     def __init__(self, x, y, color, follow = None):
-        graphics.Sprite.__init__(self, interactive=False)
-        self.x = x
-        self.y = y
+        graphics.Sprite.__init__(self, x, y, interactive = False)
         self.follow = follow
 
         self.graphics.set_color(color)

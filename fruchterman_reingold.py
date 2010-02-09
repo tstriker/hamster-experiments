@@ -44,7 +44,7 @@ class Node(object):
 
 class DisplayNode(graphics.Circle):
     def __init__(self, x, y, real_node):
-        graphics.Circle.__init__(self, 5, fill_color = "#999")
+        graphics.Circle.__init__(self, 5, fill = "#999")
         self.x = x
         self.y = y
         self.real_node = real_node

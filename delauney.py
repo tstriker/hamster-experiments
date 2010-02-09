@@ -20,10 +20,9 @@ EPSILON = 0.00001
 
 class Node(graphics.Rectangle):
     def __init__(self, x, y):
-        graphics.Rectangle.__init__(self, 10, 10, 3, fill_color = "#999")
-        self.pivot_x, self.pivot_y = 5, 5
-        self.draggable = True
-        self.interactive = True
+        graphics.Rectangle.__init__(self, 10, 10, 3, fill = "#999",
+                                    pivot_x = 5, pivot_y = 5,
+                                    interactive = True, draggable = True)
         self.x = x
         self.y = y
 

@@ -12,7 +12,7 @@ from random import randint
 
 class EasingBox(graphics.Rectangle):
     def __init__(self, name, x, y, easing_method):
-        graphics.Rectangle.__init__(self, 40, 40, 3, fill_color = "#aaa")
+        graphics.Rectangle.__init__(self, 40, 40, 3, fill = "#aaa")
         self.name = name
         self.x = x
         self.y = y

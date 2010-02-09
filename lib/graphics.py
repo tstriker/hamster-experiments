@@ -73,6 +73,7 @@ class Graphics(object):
         self._instructions = deque()
         self.colors = Colors()
         self.extents = (0,0,0,0)
+        self.opacity = 1.0
 
     def clear(self): self._instructions = deque()
 
@@ -98,16 +99,19 @@ class Graphics(object):
         if width is not None:
             self._add_instruction(lambda context, width: context.set_line_width(width), width)
 
+    def _set_color(self, context, r, g, b, a):
+        a = a * self.opacity
+        if a >= 1:
+            context.set_source_rgb(r, g, b)
+        else:
+            context.set_source_rgba(r, g, b, a)
+
     def set_color(self, color, a = 1):
         color = self.colors.parse(color) #parse whatever we have there into a normalized triplet
         if len(color) == 4 and a is None:
             a = color[3]
         r,g,b = color[:3]
-
-        if a:
-            self._add_instruction(lambda context, r, g, b, a: context.set_source_rgba(r,g,b,a), r, g, b, a)
-        else:
-            self._add_instruction(lambda context, r, g, b: context.set_source_rgb(r,g,b), r, g, b)
+        self._add_instruction(self._set_color, r, g, b, a)
 
     def arc(self, x, y, radius, start_angle, end_angle):
         self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc(x, y, radius, start_angle, end_angle),
@@ -173,25 +177,37 @@ class Graphics(object):
 
 
 class Sprite(gtk.Object):
+    """Abstraction object. For drawing use the graphics property (sprite.graphics.)"""
     __gsignals__ = {
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
-    def __init__(self, interactive = True):
+    def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
         self.graphics = Graphics()
-        self.x, self.y = 0, 0
-        self.rotation = 0
-        self.pivot_x, self.pivot_y = 0, 0 # the anchor and rotation point
+        self.x, self.y = x, y
+        self.rotation = rotation
+        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point
         self.interactive = interactive
-        self.draggable = False
+        self.draggable = draggable
+        self.opacity = opacity
+        self.visible = visible
 
         self.child_sprites = []
         self.parent = None
 
-    def _draw(self, context):
+    def add_child(self, sprite):
+        """add another sprite to this one to inherit position, rotation and opacity"""
+        self.child_sprites.append(sprite)
+        sprite.parent = self
+
+    def _draw(self, context, opacity = 1):
+        if not self.visible:
+            self.graphics.extents = [0,0,0,0] #so we don't get accidental mouse events
+            return
+
         context.save()
 
         if self.x or self.y:
@@ -201,16 +217,16 @@ class Sprite(gtk.Object):
             context.rotate(self.rotation)
 
         context.translate(-self.pivot_x, -self.pivot_y)
-        self.graphics.draw(context, self.interactive)
+
+        self.graphics.opacity = self.opacity * opacity
+        self.graphics.draw(context, self.interactive or self.draggable)
 
         for sprite in self.child_sprites:
-            sprite._draw(context)
+            sprite._draw(context, self.opacity * opacity)
+
 
         context.restore()
 
-    def add_child(self, sprite):
-        self.child_sprites.append(sprite)
-        sprite.parent = self
 
     def _on_click(self, button_state):
         self.emit("on-mouse-click", button_state)
@@ -230,8 +246,8 @@ class Sprite(gtk.Object):
 
 """a few primitives"""
 class Label(Sprite):
-    def __init__(self, text = "", size = 10, color = None):
-        Sprite.__init__(self, interactive = False)
+    def __init__(self, text = "", size = 10, color = None, **kwargs):
+        Sprite.__init__(self, interactive = False, **kwargs)
         self.text = text
         self.color = color
 
@@ -247,10 +263,11 @@ class Label(Sprite):
 
 
 class Primitive(Sprite):
-    def __init__(self, stroke_color = None, fill_color = None):
-        Sprite.__init__(self, interactive = False)
-        self.stroke_color = stroke_color
-        self.fill_color = fill_color
+    def __init__(self, stroke = None, fill = None, **kwargs):
+        kwargs.setdefault("interactive", False)
+        Sprite.__init__(self, **kwargs)
+        self.stroke_color = stroke
+        self.fill_color = fill
 
 
     def _color(self):
@@ -268,9 +285,9 @@ class Primitive(Sprite):
     def _draw_primitive(self):
         raise UnimplementedException
 
-    def set_color(self, stroke_color = None, fill_color = None):
-        if stroke_color is not None: self.stroke_color = stroke_color
-        if fill_color is not None: self.fill_color = fill_color
+    def set_color(self, stroke = None, fill = None):
+        if stroke is not None: self.stroke_color = stroke
+        if fill is not None: self.fill_color = fill
         self.graphics.clear()
         self._draw_primitive()
 
@@ -278,8 +295,8 @@ class Primitive(Sprite):
 
 
 class Rectangle(Primitive):
-    def __init__(self, w, h, corner_radius, stroke_color = None, fill_color = None):
-        Primitive.__init__(self, stroke_color, fill_color)
+    def __init__(self, w, h, corner_radius = 0, **kwargs):
+        Primitive.__init__(self, **kwargs)
         self.width, self.height, self.corner_radius = w, h, corner_radius
         self._draw_primitive()
 
@@ -289,8 +306,8 @@ class Rectangle(Primitive):
 
 
 class Polygon(Primitive):
-    def __init__(self, points, stroke_color = None, fill_color = None):
-        Primitive.__init__(self, stroke_color, fill_color)
+    def __init__(self, points, **kwargs):
+        Primitive.__init__(self, **kwargs)
         self.points = points
         self._draw_primitive()
 
@@ -304,13 +321,13 @@ class Polygon(Primitive):
         self._color()
 
 class Circle(Primitive):
-    def __init__(self, radius, stroke_color = None, fill_color = None):
-        Primitive.__init__(self, stroke_color, fill_color)
+    def __init__(self, radius, **kwargs):
+        Primitive.__init__(self, **kwargs)
         self.radius = radius
         self._draw_primitive()
 
     def _draw_primitive(self):
-        self.graphics.move_to(0,0)
+        self.graphics.move_to(self.radius * 2, self.radius)
         self.graphics.arc(self.radius, self.radius, self.radius, 0, math.pi * 2)
         self._color()
 
@@ -526,14 +543,12 @@ class SampleScene(Scene):
     def __init__(self):
         Scene.__init__(self)
 
-        self.rectangle = Rectangle(90, 90, 10, "#666", "#ff00ff") # one of the primitives
-        self.rectangle.interactive = True           # interactive means that the sprite will get mouse events
-        self.rectangle.draggable = True             # draggable enables automatic dragging, which can be handy sometimes
-        self.rectangle.x, self.rectangle.y = 50, 50 #
+        self.rectangle = Rectangle(90, 90, 10, stroke = "#666", fill = "#ff00ff",
+                                   x = 50, y = 50,
+                                   interactive = True, draggable = True)
         self.add_child(self.rectangle)
 
-        self.label = Label("Hello world", 30, "#000")
-        self.label.x, self.label.y = 10, -100 # setting y to -100 so it will fall "from the sky"
+        self.label = Label("Hello world", 30, "#000", x = 10, y = -100) # setting y to -100 so it will fall "from the sky"
 
         self.add_child(self.label)
 

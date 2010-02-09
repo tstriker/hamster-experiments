@@ -20,9 +20,7 @@ SEGMENT_LENGTH = 25
 
 class Segment(graphics.Sprite):
     def __init__(self, x, y, width):
-        graphics.Sprite.__init__(self)
-        self.x = x
-        self.y = y
+        graphics.Sprite.__init__(self, x, y)
 
         self.graphics.move_to(0, 0)
         self.graphics.line_to(SEGMENT_LENGTH, 0)

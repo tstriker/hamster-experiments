@@ -22,9 +22,7 @@ SEGMENT_LENGTH = 20
 
 class Segment(graphics.Sprite):
     def __init__(self, x, y, color):
-        graphics.Sprite.__init__(self, interactive = False)
-        self.x = x
-        self.y = y
+        graphics.Sprite.__init__(self, x, y, interactive = False)
         self.angle = 1
         self.color = color
 
