@@ -403,6 +403,7 @@ class Scene(gtk.DrawingArea):
         self._drag_sprite = None
         self._drag_x, self._drag_y = None, None
         self._button_press_time = None # to distinguish between click and drag
+        self.mouse_x, self.mouse_y = None, None
 
         self._debug_bounds = False
 
@@ -461,8 +462,11 @@ class Scene(gtk.DrawingArea):
         self.width, self.height = alloc.width, alloc.height
 
         self.emit("on-enter-frame", context)
+
         for sprite in self.sprites:
             sprite._draw(context)
+
+        self.check_mouse(self.mouse_x, self.mouse_y)
 
 
         if self._debug_bounds:
@@ -498,6 +502,8 @@ class Scene(gtk.DrawingArea):
             mouse_y = event.y
             state = event.state
 
+        self.mouse_x, self.mouse_y = mouse_x, mouse_y
+
         self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
         if self._drag_sprite and self._drag_sprite.draggable and gtk.gdk.BUTTON1_MASK & event.state:
@@ -531,6 +537,13 @@ class Scene(gtk.DrawingArea):
 
                 return
 
+        self.check_mouse(event.x, event.y)
+        self.emit("mouse-move", event)
+
+
+    def check_mouse(self, mouse_x, mouse_y):
+        if mouse_x is None: return
+
         #check if we have a mouse over
         over = set()
         for sprite in self.all_sprites():
@@ -540,10 +553,13 @@ class Scene(gtk.DrawingArea):
                     if self._check_hit(sprite, mouse_x, mouse_y):
                         if sprite.draggable:
                             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
-                        elif sprite.interactive:
+                        else:
                             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
                         over.add(sprite)
+
+        if not over:
+            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
         for sprite in over - self._mouse_sprites: #new mouse overs
             sprite._on_mouse_over()
@@ -552,8 +568,6 @@ class Scene(gtk.DrawingArea):
             sprite._on_mouse_out()
 
         self._mouse_sprites = over
-        self.emit("mouse-move", event)
-
 
     def _check_hit(self, sprite, x, y):
         context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
