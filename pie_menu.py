@@ -33,11 +33,13 @@ class Sector(graphics.Shape):
         self.graphics.arc_negative(0, 0, self.outer_radius, 0, angle)
         self.graphics.close_path()
 
+        self.graphics.rectangle(150,-15,10,10)
+
 
 
 class Menu(graphics.Sprite):
-    def __init__(self):
-        graphics.Sprite.__init__(self, 300, 300, draggable = True)
+    def __init__(self, x, y):
+        graphics.Sprite.__init__(self, x, y, draggable = True)
 
         self.pivot_x = 10
         self.pivot_y = 10
@@ -46,7 +48,8 @@ class Menu(graphics.Sprite):
 
 
         self.menu = []
-        self.add_item()
+        for i in range(1):
+            self.add_item()
 
     def on_mouse_over(self, sprite):
         sprite.fill_color = "#ddd"
@@ -86,21 +89,26 @@ class Menu(graphics.Sprite):
 class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
+        #self._debug_bounds = True
 
         self.mouse_x, self.mouse_y = None, None
         self.max_width = 50
 
-        self.add_child(Menu())
+        self.menu = Menu(200, 200)
+        self.add_child(self.menu)
 
-        self.connect("on-enter-frame", lambda *args: self.redraw_canvas())
+        self.connect("on-enter-frame", self.on_enter_frame)
 
+    def on_enter_frame(self, scene, context):
+        self.menu.rotation += 0.002
+        self.redraw_canvas()
 
 
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(1000, 600)
+        window.set_size_request(400, 400)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         canvas = Canvas()
