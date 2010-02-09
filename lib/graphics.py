@@ -184,7 +184,13 @@ class Graphics(object):
                     context.save()
                     context.identity_matrix()
                     matrix = context.get_matrix()
-                    self.extents = context.path_extents()
+
+                    new_extents = context.path_extents()
+                    self.extents = self.extents or new_extents
+                    self.extents = (min(self.extents[0], new_extents[0]),
+                                    min(self.extents[1], new_extents[1]),
+                                    max(self.extents[2], new_extents[2]),
+                                    max(self.extents[3], new_extents[3]))
 
                     self.paths.append(context.copy_path_flat())
 
