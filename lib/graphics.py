@@ -72,10 +72,13 @@ class Graphics(object):
     def __init__(self):
         self._instructions = deque()
         self.colors = Colors()
-        self.extents = (0,0,0,0)
+        self.extents = None
         self.opacity = 1.0
+        self.paths = None
 
-    def clear(self): self._instructions = deque()
+    def clear(self):
+        self._instructions = deque()
+        self.paths = None
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
@@ -108,11 +111,10 @@ class Graphics(object):
             self._add_instruction(lambda context, width: context.set_line_width(width), width)
 
     def _set_color(self, context, r, g, b, a):
-        a = a * self.opacity
-        if a >= 1:
+        if a * self.opacity >= 1:
             context.set_source_rgb(r, g, b)
         else:
-            context.set_source_rgba(r, g, b, a)
+            context.set_source_rgba(r, g, b, a * self.opacity)
 
     def set_color(self, color, a = 1):
         color = self.colors.parse(color) #parse whatever we have there into a normalized triplet
@@ -166,23 +168,33 @@ class Graphics(object):
         self._add_instruction(do_layout, text, font_desc)
 
     def draw(self, context, with_extents = False):
-        self.extents = [0,0,0,0]
+        remember_path = self.paths is None
+        if remember_path:
+            self.paths = []
+            self.extents = None
+
         for instruction, args in self._instructions:
             if with_extents and instruction in (self._stroke, self._fill,
                                                 self._stroke_preserve,
                                                 self._fill_preserve):
+
                 # before stroking get extents, for that we have to do something
                 # bad to the current transformations matrix
-                context.save()
-                context.identity_matrix()
-                matrix = context.get_matrix()
-                self.extents = context.stroke_extents()
-                context.restore()
+                if remember_path:
+                    context.save()
+                    context.identity_matrix()
+                    matrix = context.get_matrix()
+                    self.extents = context.path_extents()
+
+                    self.paths.append(context.copy_path_flat())
+
+                    context.restore()
 
             instruction(context, *args)
 
 
     def _add_instruction(self, function, *params):
+        self.paths = None
         self._instructions.append((function, params))
 
 
@@ -197,17 +209,28 @@ class Sprite(gtk.Object):
     }
     def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
+        self.child_sprites = []
         self.graphics = Graphics()
-        self.x, self.y = x, y
-        self.rotation = rotation
-        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point
         self.interactive = interactive
         self.draggable = draggable
+        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point
         self.opacity = opacity
         self.visible = visible
-
-        self.child_sprites = []
         self.parent = None
+        self.x, self.y = x, y
+        self.rotation = rotation
+
+    def __setattr__(self, name, val):
+        self.__dict__[name] = val
+        if name in('x', 'y', 'opacity', 'rotation', 'visible', 'pivot_x', 'pivot_y'):
+            self.invalidate()
+
+    def invalidate(self):
+        self.graphics.extents = None
+        self.graphics.paths = None
+        for sprite in self.child_sprites:
+            sprite.invalidate()
+
 
     def add_child(self, sprite):
         """add another sprite to this one to inherit position, rotation and opacity"""
@@ -215,19 +238,13 @@ class Sprite(gtk.Object):
         sprite.parent = self
 
     def _draw(self, context, opacity = 1):
-        if not self.visible:
-            self.graphics.extents = [0,0,0,0] #so we don't get accidental mouse events
+        if self.visible is False:
             return
 
         context.save()
 
-        if self.x or self.y:
-            context.translate(self.x, self.y)
-
-        if self.rotation:
-            context.rotate(self.rotation)
-
-        context.translate(-self.pivot_x, -self.pivot_y)
+        context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
+        context.rotate(self.rotation)
 
         self.graphics.opacity = self.opacity * opacity
         self.graphics.draw(context, self.interactive or self.draggable)
@@ -237,7 +254,6 @@ class Sprite(gtk.Object):
 
 
         context.restore()
-
 
     def _on_click(self, button_state):
         self.emit("on-mouse-click", button_state)
@@ -378,6 +394,8 @@ class Scene(gtk.DrawingArea):
 
         self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
         self.last_frame_time = None
+        self.colors = Colors()
+
         self.__drawing_queued = False
 
         self._mouse_sprites = set()
@@ -385,7 +403,8 @@ class Scene(gtk.DrawingArea):
         self._drag_sprite = None
         self._drag_x, self._drag_y = None, None
         self._button_press_time = None # to distinguish between click and drag
-        self.colors = Colors()
+
+        self._debug_bounds = False
 
 
     def add_child(self, sprite):
@@ -444,6 +463,19 @@ class Scene(gtk.DrawingArea):
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
+
+
+        if self._debug_bounds:
+            context.set_line_width(1)
+            context.set_source_rgb(.2, .2, .5)
+            for sprite in self.all_sprites(self.sprites):
+                if sprite.graphics.extents:
+                    x,y,x2,y2 = sprite.graphics.extents
+                    context.rectangle(x, y, x2-x, y2-y)
+            context.stroke()
+
+
+
         self.emit("on-finish-frame", context)
 
 
@@ -502,14 +534,16 @@ class Scene(gtk.DrawingArea):
         #check if we have a mouse over
         over = set()
         for sprite in self.all_sprites():
-            x, y, x2, y2 = sprite.graphics.extents
-            if x < mouse_x < x2 and y < mouse_y < y2:
-                if sprite.draggable:
-                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
-                elif sprite.interactive:
-                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+            if sprite.graphics.extents:
+                x, y, x2, y2 = sprite.graphics.extents
+                if sprite.interactive and x < mouse_x < x2 and y < mouse_y < y2:
+                    if self._check_hit(sprite, mouse_x, mouse_y):
+                        if sprite.draggable:
+                            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
+                        elif sprite.interactive:
+                            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
-                over.add(sprite)
+                        over.add(sprite)
 
         for sprite in over - self._mouse_sprites: #new mouse overs
             sprite._on_mouse_over()
@@ -520,6 +554,13 @@ class Scene(gtk.DrawingArea):
         self._mouse_sprites = over
         self.emit("mouse-move", event)
 
+
+    def _check_hit(self, sprite, x, y):
+        context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
+        for path in sprite.graphics.paths:
+            context.append_path(path)
+        return context.in_fill(x, y)
+
     def __on_button_press(self, area, event):
         x = event.x
         y = event.y
@@ -528,9 +569,9 @@ class Scene(gtk.DrawingArea):
 
         over = None
         for sprite in self.all_sprites():
-            if sprite.interactive:
+            if sprite.graphics.extents and sprite.interactive:
                 x, y, x2, y2 = sprite.graphics.extents
-                if x < event.x < x2 and y < event.y < y2:
+                if sprite.interactive and x < event.x < x2 and y < event.y < y2 and self._check_hit(sprite, event.x, event.y):
                     over = sprite # last one will take precedence
         self._drag_sprite = over
         self._button_press_time = dt.datetime.now()
@@ -546,7 +587,7 @@ class Scene(gtk.DrawingArea):
         if click:
             targets = []
             for sprite in self.all_sprites():
-                if sprite.interactive:
+                if sprite.graphics.extents and sprite.interactive:
                     x, y, x2, y2 = sprite.graphics.extents
                     if x < event.x < x2 and y < event.y < y2:
                         targets.append(sprite)
