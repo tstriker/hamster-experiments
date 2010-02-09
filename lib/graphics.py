@@ -78,16 +78,24 @@ class Graphics(object):
     def clear(self): self._instructions = deque()
 
     def _stroke(self, context): context.stroke()
-    def stroke(self): self._add_instruction(self._stroke,)
+    def stroke(self, color = None, alpha = 1):
+        if color or alpha < 1:self.set_color(color, alpha)
+        self._add_instruction(self._stroke,)
 
     def _fill(self, context): context.fill()
-    def fill(self): self._add_instruction(self._fill,)
+    def fill(self, color = None, alpha = 1):
+        if color or alpha < 1:self.set_color(color, alpha)
+        self._add_instruction(self._fill,)
 
     def _stroke_preserve(self, context): context.stroke_preserve()
-    def stroke_preserve(self): self._add_instruction(self._stroke_preserve,)
+    def stroke_preserve(self, color = None, alpha = 1):
+        if color or alpha < 1:self.set_color(color, alpha)
+        self._add_instruction(self._stroke_preserve,)
 
     def _fill_preserve(self, context): context.fill_preserve()
-    def fill_preserve(self): self._add_instruction(self._fill_preserve,)
+    def fill_preserve(self, color = None, alpha = 1):
+        if color or alpha < 1:self.set_color(color, alpha)
+        self._add_instruction(self._fill_preserve,)
 
     def move_to(self, x, y): self._add_instruction(lambda context, x, y: context.move_to(x, y), x, y)
     def line_to(self, x, y): self._add_instruction(lambda context, x, y: context.line_to(x, y), x, y)
@@ -117,6 +125,10 @@ class Graphics(object):
         self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc(x, y, radius, start_angle, end_angle),
                                               x, y, radius, start_angle, end_angle)
 
+    def arc_negative(self, x, y, radius, start_angle, end_angle):
+        self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc_negative(x, y, radius, start_angle, end_angle),
+                                              x, y, radius, start_angle, end_angle)
+
     def _rounded_rectangle(self, context, x, y, x2, y2, corner_radius):
         half_corner = corner_radius / 2
 
@@ -141,9 +153,8 @@ class Graphics(object):
         self._add_instruction(self._rounded_rectangle, x, y, x2, y2, corner_radius)
 
     def fill_area(self, x, y, w, h, color, opacity = 1):
-        self.set_color(color, opacity)
         self.rectangle(x, y, w, h)
-        self.fill()
+        self.fill(color, opacity)
 
     def show_text(self, text, font_desc):
         def do_layout(context, text, font_desc):
@@ -244,7 +255,7 @@ class Sprite(gtk.Object):
         self.emit("on-drag", (x, y))
 
 
-"""a few primitives"""
+"""a few shapes"""
 class Label(Sprite):
     def __init__(self, text = "", size = 10, color = None, **kwargs):
         Sprite.__init__(self, interactive = False, **kwargs)
@@ -262,74 +273,81 @@ class Label(Sprite):
         self.graphics.stroke()
 
 
-class Primitive(Sprite):
+class Shape(Sprite):
+    """shape is a simple continuous shape that can have fill and stroke
+    """
+
     def __init__(self, stroke = None, fill = None, **kwargs):
         kwargs.setdefault("interactive", False)
         Sprite.__init__(self, **kwargs)
         self.stroke_color = stroke
         self.fill_color = fill
+        self.draw_shape()
+        self._color()
+        self._sprite_dirty = False # a dirty shape needs it's graphics regenerated, because params have changed
 
+    def __setattr__(self, name, val):
+        self.__dict__[name] = val
+        if name != '_sprite_dirty':
+            self._sprite_dirty = True
+
+
+    def _draw(self, *args, **kwargs):
+        if self._sprite_dirty:
+            self.graphics.clear()
+            self.draw_shape()
+            self._color()
+            self._sprite_dirty = False
+
+        Sprite._draw(self, *args,  **kwargs)
+
+
+    def draw_shape(self):
+        """implement this function in your subclassed object"""
+        raise UnimplementedException
 
     def _color(self):
         if self.fill_color:
-            self.graphics.set_color(self.fill_color)
             if self.stroke_color:
-                self.graphics.fill_preserve()
+                self.graphics.fill_preserve(self.fill_color)
             else:
-                self.graphics.fill()
+                self.graphics.fill(self.fill_color)
 
         if self.stroke_color:
-            self.graphics.set_color(self.stroke_color)
-            self.graphics.stroke()
-
-    def _draw_primitive(self):
-        raise UnimplementedException
-
-    def set_color(self, stroke = None, fill = None):
-        if stroke is not None: self.stroke_color = stroke
-        if fill is not None: self.fill_color = fill
-        self.graphics.clear()
-        self._draw_primitive()
+            self.graphics.stroke(self.stroke_color)
 
 
 
-
-class Rectangle(Primitive):
+class Rectangle(Shape):
     def __init__(self, w, h, corner_radius = 0, **kwargs):
-        Primitive.__init__(self, **kwargs)
         self.width, self.height, self.corner_radius = w, h, corner_radius
-        self._draw_primitive()
+        Shape.__init__(self, **kwargs)
 
-    def _draw_primitive(self):
+    def draw_shape(self):
         self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
-        self._color()
 
 
-class Polygon(Primitive):
+class Polygon(Shape):
     def __init__(self, points, **kwargs):
-        Primitive.__init__(self, **kwargs)
         self.points = points
-        self._draw_primitive()
+        Shape.__init__(self, **kwargs)
 
-    def _draw_primitive(self):
+    def draw_shape(self):
         if not self.points: return
 
         self.graphics.move_to(*self.points[0])
         for point in self.points:
             self.graphics.line_to(*point)
         self.graphics.close_path()
-        self._color()
 
-class Circle(Primitive):
+class Circle(Shape):
     def __init__(self, radius, **kwargs):
-        Primitive.__init__(self, **kwargs)
         self.radius = radius
-        self._draw_primitive()
+        Shape.__init__(self, **kwargs)
 
-    def _draw_primitive(self):
+    def draw_shape(self):
         self.graphics.move_to(self.radius * 2, self.radius)
         self.graphics.arc(self.radius, self.radius, self.radius, 0, math.pi * 2)
-        self._color()
 
 
 
