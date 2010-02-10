@@ -33,6 +33,7 @@ class Sector(graphics.Shape):
         self.graphics.arc_negative(0, 0, self.outer_radius, 0, angle)
         self.graphics.close_path()
 
+        self.graphics.move_to(150, -15)
         self.graphics.rectangle(150,-15,10,10)
 
 
@@ -41,14 +42,12 @@ class Menu(graphics.Sprite):
     def __init__(self, x, y):
         graphics.Sprite.__init__(self, x, y, draggable = True)
 
-        self.pivot_x = 10
-        self.pivot_y = 10
         self.graphics.arc(0, 0, 10, 0, math.pi * 2)
         self.graphics.fill("#aaa")
-
+        #self.graphics.set_line_style(width=1)
 
         self.menu = []
-        for i in range(1):
+        for i in range(20):
             self.add_item()
 
     def on_mouse_over(self, sprite):
@@ -61,7 +60,7 @@ class Menu(graphics.Sprite):
         self.add_item()
 
     def add_item(self):
-        item = Sector(25, 50, math.pi / 2, 0, stroke = "#aaa", interactive = True)
+        item = Sector(25, 50, math.pi / 2, 0, interactive = True, stroke = "#aaa")
         item.connect("on-mouse-over", self.on_mouse_over)
         item.connect("on-mouse-out", self.on_mouse_out)
         item.connect("on-mouse-click", self.on_click)
@@ -89,20 +88,26 @@ class Menu(graphics.Sprite):
 class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
-        #self._debug_bounds = True
-
-        self.mouse_x, self.mouse_y = None, None
         self.max_width = 50
-
         self.menu = Menu(200, 200)
         self.add_child(self.menu)
+        #self._debug_bounds = True
 
+        # on all mouse actions we redraw canvas
+        self.connect("on-mouse-over", lambda *args: self.redraw_canvas())
+        self.connect("on-mouse-out", lambda *args: self.redraw_canvas())
+        self.connect("on-click", lambda *args: self.redraw_canvas())
+
+        # uncomment for continuous redraw
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-finish-frame", self.on_finish_frame)
+        #self.framerate = 30
 
     def on_enter_frame(self, scene, context):
         self.menu.rotation += 0.002
-        self.redraw_canvas()
 
+    def on_finish_frame(self, scene, context):
+        self.redraw_canvas()
 
 
 class BasicWindow:
