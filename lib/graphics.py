@@ -75,12 +75,15 @@ class Graphics(object):
         self.extents = None
         self.opacity = 1.0
         self.paths = None
-        self.stroke_paths = None
+        self.instructions = None
+        self.extra_instructions = None
+        self.last_matrix = None
 
     def clear(self):
         self._instructions = deque()
+        self.extra_instructions = None
         self.paths = None
-        self.stroke_paths = None
+        self.instructions = None
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
@@ -102,16 +105,26 @@ class Graphics(object):
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill_preserve,)
 
-    def new_path(self): self._add_instruction(lambda context: context.new_path(),)
-    def paint(self): self._add_instruction(lambda context: context.paint(),)
-    def set_source_surface(self, image, x = 0, y = 0):
-        self._add_instruction(lambda context, image, x, y: context.set_source_surface(image, x, y), image, x, y)
+    def _new_path(self, context): context.new_path()
+    def new_path(self): self._add_instruction(self._new_path,)
 
-    def move_to(self, x, y): self._add_instruction(lambda context, x, y: context.move_to(x, y), x, y)
-    def line_to(self, x, y): self._add_instruction(lambda context, x, y: context.line_to(x, y), x, y)
-    def curve_to(self, x, y, x2, y2, x3, y3):
-        self._add_instruction(lambda context, x, y, x2, y2, x3, y3: context.curve_to(x, y, x2, y2, x3, y3), x, y, x2, y2, x3, y3)
-    def close_path(self): self._add_instruction(lambda context: context.close_path(),)
+    def _paint(self, context): context.paint()
+    def paint(self): self._add_instruction(self._paint,)
+
+    def _set_source_surface(self, context, image, x, y): context.set_source_surface(image, x, y)
+    def set_source_surface(self, image, x = 0, y = 0): self._add_instruction(self._set_source_surface, image, x, y)
+
+    def _move_to(self, context, x, y): context.move_to(x, y)
+    def move_to(self, x, y): self._add_instruction(self._move_to, x, y)
+
+    def _line_to(self, context, x, y): context.line_to(x, y)
+    def line_to(self, x, y): self._add_instruction(self._line_to, x, y)
+
+    def _curve_to(self, context, x, y, x2, y2, x3, y3): context.curve_to(x, y, x2, y2, x3, y3)
+    def curve_to(self, x, y, x2, y2, x3, y3): self._add_instruction(self._curve_to, x, y, x2, y2, x3, y3)
+
+    def _close_path(self, context): context.close_path()
+    def close_path(self): self._add_instruction(self._close_path,)
 
     def set_line_style(self, width = None):
         if width is not None:
@@ -130,13 +143,11 @@ class Graphics(object):
         r,g,b = color[:3]
         self._add_instruction(self._set_color, r, g, b, a)
 
-    def arc(self, x, y, radius, start_angle, end_angle):
-        self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc(x, y, radius, start_angle, end_angle),
-                                              x, y, radius, start_angle, end_angle)
+    def _arc(self, context, x, y, radius, start_angle, end_angle): context.arc(x, y, radius, start_angle, end_angle)
+    def arc(self, x, y, radius, start_angle, end_angle): self._add_instruction(self._arc, x, y, radius, start_angle, end_angle)
 
-    def arc_negative(self, x, y, radius, start_angle, end_angle):
-        self._add_instruction(lambda context, x, y, radius, start_angle, end_angle: context.arc_negative(x, y, radius, start_angle, end_angle),
-                                              x, y, radius, start_angle, end_angle)
+    def _arc_negative(self, context, x, y, radius, start_angle, end_angle): context.arc_negative(x, y, radius, start_angle, end_angle)
+    def arc_negative(self, x, y, radius, start_angle, end_angle): self._add_instruction(self._arc_negative, x, y, radius, start_angle, end_angle)
 
     def _rounded_rectangle(self, context, x, y, x2, y2, corner_radius):
         half_corner = corner_radius / 2
@@ -151,9 +162,10 @@ class Graphics(object):
         context.line_to(x, y + corner_radius)
         context.curve_to(x, y + half_corner, x + half_corner, y, x + corner_radius,y)
 
+    def _rectangle(self, context, x, y, w, h): context.rectangle(x, y, w, h)
     def rectangle(self, x, y, w, h, corner_radius = 0):
         if corner_radius <=0:
-            self._add_instruction(lambda context, x, y, w, h: context.rectangle(x, y, w, h), x, y, w, h)
+            self._add_instruction(self._rectangle, x, y, w, h)
             return
 
         # make sure that w + h are larger than 2 * corner_radius
@@ -192,42 +204,59 @@ class Graphics(object):
         context.restore()
 
     def draw(self, context, with_extents = False):
-        """perform operations and cache them as paths"""
+        """draw instructions in context"""
 
-        remember_path = self.paths is None
-        if remember_path:
+        if self._instructions: #new stuff!
+            self.extra_instructions = deque()
+            self.instructions = deque()
+            current_color = None
+            path_instructions = False
+
+            while self._instructions:
+                instruction, args = self._instructions.popleft()
+
+                if instruction in (self._set_source_surface, self._paint):
+                    self.instructions.append((None, None, instruction, args))
+                else:
+                    path_instructions = True
+                    if instruction == self._set_color:
+                        current_color = args
+
+                    elif instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
+                        path = context.copy_path()
+                        self.instructions.append((path, current_color, instruction, ()))
+
+                        if instruction in (self._stroke, self._fill):
+                            context.new_path()
+
+                    else:
+                        instruction(context, *args)
+
+            # last one - a path without stroke
+            path = context.copy_path()
+            if str(path):
+                self.instructions.append((path, current_color, None, ())) # last one
+
+        # if we have been moved around, we should update bounds
+        check_extents = with_extents and context.get_matrix() != self.last_matrix
+        if check_extents:
             self.paths = deque()
             self.extents = None
 
-        if self._instructions: #new stuff!
-            self.stroke_paths = deque()
-            current_color = None
-            while self._instructions:
-                instruction, args = self._instructions.popleft()
-                if instruction == self._set_color:
-                    current_color = args
-
-                if instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
-                    path = context.copy_path()
-                    self.stroke_paths.append((path, current_color, instruction))
-
-
-                    if instruction in (self._stroke, self._fill):
-                        context.new_path()
-                else:
-                    instruction(context, *args)
-
-            path = context.copy_path()
-            self.stroke_paths.append((path, current_color, instruction)) # last one
-
-
-        for path, color, instruction in self.stroke_paths:
-            context.append_path(path)
-            if with_extents and remember_path:
-                self.remember_path(context)
-
+        for path, color, instruction, args in self.instructions:
             if color: self._set_color(context, *color)
-            instruction(context)
+
+            if path:
+                context.append_path(path)
+                if check_extents:
+                    self.remember_path(context)
+
+                if instruction: instruction(context, *args)
+
+            else:
+                instruction(context, *args)
+
+        self.last_matrix = context.get_matrix()
 
 
     def _add_instruction(self, function, *params):
@@ -257,18 +286,6 @@ class Sprite(gtk.Object):
         self.parent = None
         self.x, self.y = x, y
         self.rotation = rotation
-
-    def __setattr__(self, name, val):
-        self.__dict__[name] = val
-        if name in('x', 'y', 'opacity', 'rotation', 'visible', 'pivot_x', 'pivot_y'):
-            self.invalidate()
-
-    def invalidate(self):
-        self.graphics.extents = None
-        self.graphics.paths = None
-        for sprite in self.child_sprites:
-            sprite.invalidate()
-
 
     def add_child(self, sprite):
         """add another sprite to this one to inherit position, rotation and opacity"""
