@@ -75,10 +75,12 @@ class Graphics(object):
         self.extents = None
         self.opacity = 1.0
         self.paths = None
+        self.stroke_paths = None
 
     def clear(self):
         self._instructions = deque()
         self.paths = None
+        self.stroke_paths = None
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
@@ -99,6 +101,11 @@ class Graphics(object):
     def fill_preserve(self, color = None, alpha = 1):
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill_preserve,)
+
+    def new_path(self): self._add_instruction(lambda context: context.new_path(),)
+    def paint(self): self._add_instruction(lambda context: context.paint(),)
+    def set_source_surface(self, image, x = 0, y = 0):
+        self._add_instruction(lambda context, image, x, y: context.set_source_surface(image, x, y), image, x, y)
 
     def move_to(self, x, y): self._add_instruction(lambda context, x, y: context.move_to(x, y), x, y)
     def line_to(self, x, y): self._add_instruction(lambda context, x, y: context.line_to(x, y), x, y)
@@ -167,36 +174,60 @@ class Graphics(object):
             context.show_layout(layout)
         self._add_instruction(do_layout, text, font_desc)
 
+
+    def remember_path(self, context):
+        context.save()
+        context.identity_matrix()
+        matrix = context.get_matrix()
+
+        new_extents = context.path_extents()
+        self.extents = self.extents or new_extents
+        self.extents = (min(self.extents[0], new_extents[0]),
+                        min(self.extents[1], new_extents[1]),
+                        max(self.extents[2], new_extents[2]),
+                        max(self.extents[3], new_extents[3]))
+
+        self.paths.append(context.copy_path_flat())
+
+        context.restore()
+
     def draw(self, context, with_extents = False):
+        """perform operations and cache them as paths"""
+
         remember_path = self.paths is None
         if remember_path:
-            self.paths = []
+            self.paths = deque()
             self.extents = None
 
-        for instruction, args in self._instructions:
-            if with_extents and instruction in (self._stroke, self._fill,
-                                                self._stroke_preserve,
-                                                self._fill_preserve):
+        if self._instructions: #new stuff!
+            self.stroke_paths = deque()
+            current_color = None
+            while self._instructions:
+                instruction, args = self._instructions.popleft()
+                if instruction == self._set_color:
+                    current_color = args
 
-                # before stroking get extents, for that we have to do something
-                # bad to the current transformations matrix
-                if remember_path:
-                    context.save()
-                    context.identity_matrix()
-                    matrix = context.get_matrix()
+                if instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
+                    path = context.copy_path()
+                    self.stroke_paths.append((path, current_color, instruction))
 
-                    new_extents = context.path_extents()
-                    self.extents = self.extents or new_extents
-                    self.extents = (min(self.extents[0], new_extents[0]),
-                                    min(self.extents[1], new_extents[1]),
-                                    max(self.extents[2], new_extents[2]),
-                                    max(self.extents[3], new_extents[3]))
 
-                    self.paths.append(context.copy_path_flat())
+                    if instruction in (self._stroke, self._fill):
+                        context.new_path()
+                else:
+                    instruction(context, *args)
 
-                    context.restore()
+            path = context.copy_path()
+            self.stroke_paths.append((path, current_color, instruction)) # last one
 
-            instruction(context, *args)
+
+        for path, color, instruction in self.stroke_paths:
+            context.append_path(path)
+            if with_extents and remember_path:
+                self.remember_path(context)
+
+            if color: self._set_color(context, *color)
+            instruction(context)
 
 
     def _add_instruction(self, function, *params):
@@ -212,6 +243,7 @@ class Sprite(gtk.Object):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
@@ -247,10 +279,13 @@ class Sprite(gtk.Object):
         if self.visible is False:
             return
 
-        context.save()
+        self.emit("on-draw")
 
-        context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
-        context.rotate(self.rotation)
+        if self.x or self.y or self.rotation:
+            context.save()
+
+            context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
+            context.rotate(self.rotation)
 
         self.graphics.opacity = self.opacity * opacity
         self.graphics.draw(context, self.interactive or self.draggable)
@@ -259,7 +294,8 @@ class Sprite(gtk.Object):
             sprite._draw(context, self.opacity * opacity)
 
 
-        context.restore()
+        if self.x or self.y or self.rotation:
+            context.restore()
 
     def _on_click(self, button_state):
         self.emit("on-mouse-click", button_state)
@@ -384,6 +420,8 @@ class Scene(gtk.DrawingArea):
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
     def __init__(self, interactive = True):
@@ -567,11 +605,20 @@ class Scene(gtk.DrawingArea):
         if not over:
             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
-        for sprite in over - self._mouse_sprites: #new mouse overs
-            sprite._on_mouse_over()
+        new_mouse_overs = over - self._mouse_sprites
+        if new_mouse_overs:
+            for sprite in new_mouse_overs:
+                sprite._on_mouse_over()
 
-        for sprite in self._mouse_sprites - over: #gone mouse overs
-            sprite._on_mouse_out()
+            self.emit("on-mouse-over", new_mouse_overs)
+
+
+        gone_mouse_overs = self._mouse_sprites - over
+        if gone_mouse_overs:
+            for sprite in gone_mouse_overs:
+                sprite._on_mouse_out()
+            self.emit("on-mouse-out", gone_mouse_overs)
+
 
         self._mouse_sprites = over
 
@@ -609,7 +656,7 @@ class Scene(gtk.DrawingArea):
             for sprite in self.all_sprites():
                 if sprite.graphics.extents and sprite.interactive:
                     x, y, x2, y2 = sprite.graphics.extents
-                    if x < event.x < x2 and y < event.y < y2:
+                    if x < event.x < x2 and y < event.y < y2 and self._check_hit(sprite, event.x, event.y):
                         targets.append(sprite)
                         sprite._on_click(event.state)
 
