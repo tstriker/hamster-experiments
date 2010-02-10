@@ -126,9 +126,11 @@ class Graphics(object):
     def _close_path(self, context): context.close_path()
     def close_path(self): self._add_instruction(self._close_path,)
 
+    def _set_line_width(self, context, width):
+        context.set_line_width(width)
     def set_line_style(self, width = None):
         if width is not None:
-            self._add_instruction(lambda context, width: context.set_line_width(width), width)
+            self._add_instruction(self._set_line_width, width)
 
     def _set_color(self, context, r, g, b, a):
         if a * self.opacity >= 1:
@@ -212,22 +214,26 @@ class Graphics(object):
             self.extra_instructions = deque()
             self.instructions = deque()
             current_color = None
+            current_line = None
             path_instructions = False
 
             while self._instructions:
                 instruction, args = self._instructions.popleft()
 
                 if instruction in (self._set_source_surface, self._paint, self._show_text):
-                    self.instructions.append((None, None, instruction, args))
+                    self.instructions.append((None, None, None, instruction, args))
                 else:
                     path_instructions = True
                     if instruction == self._set_color:
                         current_color = args
 
+                    if instruction == self._set_line_width:
+                        current_line = args
+
                     elif instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
                         path = context.copy_path()
                         if str(path):
-                            self.instructions.append((path, current_color, instruction, ()))
+                            self.instructions.append((path, current_color, current_line, instruction, ()))
 
                         if instruction in (self._stroke, self._fill):
                             context.new_path()
@@ -235,10 +241,6 @@ class Graphics(object):
                     else:
                         instruction(context, *args)
 
-            # last one - a path without stroke
-            if path_instructions:
-                path = context.copy_path()
-                self.instructions.append((path, current_color, None, ())) # last one
 
         # if we have been moved around, we should update bounds
         check_extents = with_extents and context.get_matrix() != self.last_matrix
@@ -246,8 +248,9 @@ class Graphics(object):
             self.paths = deque()
             self.extents = None
 
-        for path, color, instruction, args in self.instructions:
+        for path, color, line, instruction, args in self.instructions:
             if color: self._set_color(context, *color)
+            if line: self._set_line_width(context, *line)
 
             if path:
                 context.append_path(path)
