@@ -177,14 +177,16 @@ class Graphics(object):
         self.rectangle(x, y, w, h)
         self.fill(color, opacity)
 
+
+    def _show_text(self, context, text, font_desc):
+        layout = context.create_layout()
+        layout.set_font_description(font_desc)
+        layout.set_text(text)
+        context.move_to(0, 0)
+        context.show_layout(layout)
+
     def show_text(self, text, font_desc):
-        def do_layout(context, text, font_desc):
-            layout = context.create_layout()
-            layout.set_font_description(font_desc)
-            layout.set_text(text)
-            context.move_to(0, 0)
-            context.show_layout(layout)
-        self._add_instruction(do_layout, text, font_desc)
+        self._add_instruction(self._show_text, text, font_desc)
 
 
     def remember_path(self, context):
@@ -215,7 +217,7 @@ class Graphics(object):
             while self._instructions:
                 instruction, args = self._instructions.popleft()
 
-                if instruction in (self._set_source_surface, self._paint):
+                if instruction in (self._set_source_surface, self._paint, self._show_text):
                     self.instructions.append((None, None, instruction, args))
                 else:
                     path_instructions = True
@@ -224,7 +226,8 @@ class Graphics(object):
 
                     elif instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
                         path = context.copy_path()
-                        self.instructions.append((path, current_color, instruction, ()))
+                        if str(path):
+                            self.instructions.append((path, current_color, instruction, ()))
 
                         if instruction in (self._stroke, self._fill):
                             context.new_path()
@@ -233,8 +236,8 @@ class Graphics(object):
                         instruction(context, *args)
 
             # last one - a path without stroke
-            path = context.copy_path()
-            if str(path):
+            if path_instructions:
+                path = context.copy_path()
                 self.instructions.append((path, current_color, None, ())) # last one
 
         # if we have been moved around, we should update bounds
@@ -333,19 +336,37 @@ class Sprite(gtk.Object):
 """a few shapes"""
 class Label(Sprite):
     def __init__(self, text = "", size = 10, color = None, **kwargs):
-        Sprite.__init__(self, interactive = False, **kwargs)
+        kwargs.setdefault('interactive', False)
+        Sprite.__init__(self, **kwargs)
         self.text = text
         self.color = color
+        self.width, self.height = None, None
 
         self.font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.font_desc.set_size(size * pango.SCALE)
         self._draw_label()
 
     def _draw_label(self):
+        self._set_dimensions()
         if self.color:
             self.graphics.set_color(self.color)
         self.graphics.show_text(self.text, self.font_desc)
         self.graphics.stroke()
+
+        if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
+            print "ointer"
+            self.graphics.set_color("#000", 0)
+            self.graphics.rectangle(0,0, self.width, self.height)
+            self.graphics.stroke()
+
+
+    def _set_dimensions(self):
+        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 500, 2000)))
+        layout = context.create_layout()
+        layout.set_font_description(self.font_desc)
+        layout.set_text(self.text)
+
+        self.width, self.height = layout.get_pixel_size()
 
 
 class Shape(Sprite):
@@ -608,16 +629,13 @@ class Scene(gtk.DrawingArea):
         #check if we have a mouse over
         over = set()
         for sprite in self.all_sprites():
-            if sprite.graphics.extents:
-                x, y, x2, y2 = sprite.graphics.extents
-                if sprite.interactive and x < mouse_x < x2 and y < mouse_y < y2:
-                    if self._check_hit(sprite, mouse_x, mouse_y):
-                        if sprite.draggable:
-                            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
-                        else:
-                            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+            if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
+                if sprite.draggable:
+                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
+                else:
+                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
-                        over.add(sprite)
+                over.add(sprite)
 
         if not over:
             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
@@ -640,10 +658,24 @@ class Scene(gtk.DrawingArea):
         self._mouse_sprites = over
 
     def _check_hit(self, sprite, x, y):
-        context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
-        for path in sprite.graphics.paths:
-            context.append_path(path)
-        return context.in_fill(x, y)
+        if sprite == self._drag_sprite:
+            return True
+
+        if not sprite.graphics.extents:
+            return False
+
+        sprite_x, sprite_y, sprite_x2, sprite_y2 = sprite.graphics.extents
+
+        if sprite_x <= x <= sprite_x2 and sprite_y <= y <= sprite_y2:
+            paths = sprite.graphics.paths
+
+            context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
+            for path in paths:
+                context.append_path(path)
+            return context.in_fill(x, y)
+        else:
+            return False
+
 
     def __on_button_press(self, area, event):
         x = event.x
@@ -653,10 +685,8 @@ class Scene(gtk.DrawingArea):
 
         over = None
         for sprite in self.all_sprites():
-            if sprite.graphics.extents and sprite.interactive:
-                x, y, x2, y2 = sprite.graphics.extents
-                if sprite.interactive and x < event.x < x2 and y < event.y < y2 and self._check_hit(sprite, event.x, event.y):
-                    over = sprite # last one will take precedence
+            if sprite.interactive and self._check_hit(sprite, event.x, event.y):
+                over = sprite # last one will take precedence
         self._drag_sprite = over
         self._button_press_time = dt.datetime.now()
 
@@ -671,11 +701,9 @@ class Scene(gtk.DrawingArea):
         if click:
             targets = []
             for sprite in self.all_sprites():
-                if sprite.graphics.extents and sprite.interactive:
-                    x, y, x2, y2 = sprite.graphics.extents
-                    if x < event.x < x2 and y < event.y < y2 and self._check_hit(sprite, event.x, event.y):
-                        targets.append(sprite)
-                        sprite._on_click(event.state)
+                if sprite.interactive and self._check_hit(sprite, event.x, event.y):
+                    targets.append(sprite)
+                    sprite._on_click(event.state)
 
             self.emit("on-click", event, targets)
         self.emit("on-mouse-up")
