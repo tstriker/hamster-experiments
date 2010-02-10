@@ -24,6 +24,9 @@ class Canvas(graphics.Scene):
         self.connect("on-click", self.on_mouse_click)
         self.connect("on-enter-frame", self.on_enter_frame)
 
+        # don't care about anything but spraycan
+        self.connect("mouse-move", lambda *args: self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN)))
+
     def on_mouse_click(self, area, event, mouse_areas):
         x, y = event.x, event.y
 
@@ -54,7 +57,6 @@ class Canvas(graphics.Scene):
             context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
 
     def on_enter_frame(self, scene, context):
-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN))
         """here happens all the drawing"""
         if not self.height: return
 
