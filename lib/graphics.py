@@ -67,9 +67,15 @@ class Colors(object):
 
 
 class Graphics(object):
-    """graphics class accepts instructions, and when draw is called with
-       the context, it performs them"""
-    def __init__(self):
+    """If context is given upon contruction, will perform drawing
+       operations on context instantly. Otherwise queues up the drawing
+       instructions and performs them in passed-in order when _draw is called
+       with context.
+
+       Most of instructions are mapped to cairo functions by the same name.
+       Where there are differences, documenation is provided.
+    """
+    def __init__(self, context = None):
         self._instructions = deque()
         self.colors = Colors()
         self.extents = None
@@ -78,8 +84,10 @@ class Graphics(object):
         self.instructions = None
         self.extra_instructions = None
         self.last_matrix = None
+        self.context = context
 
     def clear(self):
+        """clear all instruction"""
         self._instructions = deque()
         self.extra_instructions = None
         self.paths = None
@@ -165,18 +173,20 @@ class Graphics(object):
         context.curve_to(x, y + half_corner, x + half_corner, y, x + corner_radius,y)
 
     def _rectangle(self, context, x, y, w, h): context.rectangle(x, y, w, h)
-    def rectangle(self, x, y, w, h, corner_radius = 0):
+    def rectangle(self, x, y, width, height, corner_radius = 0):
+        "draw a rectangle. if corner_radius is specified, will draw rounded corners"
         if corner_radius <=0:
-            self._add_instruction(self._rectangle, x, y, w, h)
+            self._add_instruction(self._rectangle, x, y, width, height)
             return
 
         # make sure that w + h are larger than 2 * corner_radius
-        corner_radius = min(corner_radius, min(w, h) / 2)
-        x2, y2 = x + w, y + h
+        corner_radius = min(corner_radius, min(width, height) / 2)
+        x2, y2 = x + width, y + height
         self._add_instruction(self._rounded_rectangle, x, y, x2, y2, corner_radius)
 
-    def fill_area(self, x, y, w, h, color, opacity = 1):
-        self.rectangle(x, y, w, h)
+    def fill_area(self, x, y, width, height, color, opacity = 1):
+        """fill rectangular area with specified color"""
+        self.rectangle(x, y, width, height)
         self.fill(color, opacity)
 
 
@@ -189,7 +199,6 @@ class Graphics(object):
 
     def show_text(self, text, font_desc):
         self._add_instruction(self._show_text, text, font_desc)
-
 
     def remember_path(self, context):
         context.save()
@@ -207,8 +216,17 @@ class Graphics(object):
 
         context.restore()
 
-    def draw(self, context, with_extents = False):
-        """draw instructions in context"""
+
+    def _add_instruction(self, function, *params):
+        self.paths = None
+        if self.context:
+            function(self.context, *params)
+        else:
+            self._instructions.append((function, params))
+
+
+    def _draw(self, context, with_extents = False):
+        """draw accumulated instructions in context"""
 
         if self._instructions: #new stuff!
             self.extra_instructions = deque()
@@ -265,11 +283,6 @@ class Graphics(object):
         self.last_matrix = context.get_matrix()
 
 
-    def _add_instruction(self, function, *params):
-        self.paths = None
-        self._instructions.append((function, params))
-
-
 
 class Sprite(gtk.Object):
     """Abstraction object. For drawing use the graphics property (sprite.graphics.)"""
@@ -311,7 +324,7 @@ class Sprite(gtk.Object):
             context.rotate(self.rotation)
 
         self.graphics.opacity = self.opacity * opacity
-        self.graphics.draw(context, self.interactive or self.draggable)
+        self.graphics._draw(context, self.interactive or self.draggable)
 
         for sprite in self.child_sprites:
             sprite._draw(context, self.opacity * opacity)
