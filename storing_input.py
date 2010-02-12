@@ -24,14 +24,6 @@ class Segment(object):
         self.color = color
         self.width = width
 
-    def draw(self, scene, context):
-        color = scene.colors.parse(self.color)
-        context.set_source_rgba(color[0], color[1], color[2], 0.5)
-
-        context.rectangle(self.x - self.width / 2.0, self.y - self.width / 2.0, self.width, self.width)
-        context.fill()
-
-
 
 class Canvas(graphics.Scene):
     def __init__(self):
@@ -49,10 +41,19 @@ class Canvas(graphics.Scene):
         self.segments.insert(0, segment)
 
     def on_enter_frame(self, scene, context):
+        c_graphics = graphics.Graphics(context)
+
+
         # on expose is called when we are ready to draw
         for i, segment in reversed(list(enumerate(self.segments))):
             if segment.width:
-                segment.draw(self, context)
+                c_graphics.set_color(segment.color, 0.5)
+                c_graphics.rectangle(segment.x - segment.width / 2.0,
+                                     segment.y - segment.width / 2.0,
+                                     segment.width,
+                                     segment.width, 3)
+                c_graphics.fill()
+
             else:
                 del self.segments[i]
 

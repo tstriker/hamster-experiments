@@ -31,8 +31,11 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-        context.set_source_rgb(*self.colors.parse("#444"))
-        context.set_line_width(0.6)
+        c_graphics = graphics.Graphics(context)
+
+        c_graphics.set_line_style(width = 0.6)
+        c_graphics.set_color("#444")
+
 
         exes = range(1, self.width, self.max_width)
         whys = range(250, 350, 10)
@@ -58,9 +61,9 @@ class Canvas(graphics.Scene):
 
                 context.rectangle(x, 150 + width * 2, 50, width * 2)
 
-        context.set_source_rgb(*self.colors.parse("#444"))
+        c_graphics.set_color("#444")
         context.fill_preserve()
-        context.set_source_rgb(*self.colors.parse("#fff"))
+        c_graphics.set_color("#fff")
         context.stroke()
 
 

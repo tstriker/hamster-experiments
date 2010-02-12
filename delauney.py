@@ -55,11 +55,13 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-        context.set_line_width(0.5)
+        c_graphics = graphics.Graphics(context)
+        c_graphics.set_line_style(width = 0.5)
+
         if not self.centres:  #reset when adding nodes
             self.centres, self.segments = self.delauney()
 
-        context.set_source_rgb(0.4, 0.4, 0.4)
+        c_graphics.set_color("#666")
         for node, node2 in self.segments:
             context.move_to(node.x, node.y)
             context.line_to(node2.x, node2.y)
@@ -67,12 +69,12 @@ class Canvas(graphics.Scene):
 
         if self.draw_circles:
             for node, radius in self.centres:
-                context.set_source_rgba(1.0, 0, 0, 0.3)
+                c_graphics.set_color("#f00", 0.3)
                 context.arc(node[0], node[1], radius, 0, 2.0 * math.pi)
                 context.fill_preserve()
                 context.stroke()
 
-                context.set_source_rgba(0.9, 0, 0)
+                c_graphics.set_color("#a00")
                 context.rectangle(node[0]-1, node[1]-1, 2, 2)
                 context.stroke()
 

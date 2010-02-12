@@ -87,6 +87,8 @@ class Canvas(graphics.Scene):
         context.fill()
 
     def on_enter_frame(self, scene, context):
+        c_graphics = graphics.Graphics(context)
+
         if not self.nodes:
             for i in range(randint(3, 50)):
                 x, y = self.width / 2, self.height / 2
@@ -115,11 +117,12 @@ class Canvas(graphics.Scene):
 
 
         # first draw
-        context.set_line_width(0.5)
+        c_graphics.set_line_style(width = 0.5)
+
         if self.iteration < self.max_iterations:
-            context.set_source_rgb(*self.colors.parse("#aaa"))
+            c_graphics.set_color("#aaa")
         else:
-            context.set_source_rgb(*self.colors.parse("#666"))
+            c_graphics.set_color("#666")
 
         for edge in self.edge_buffer:
             context.move_to(edge[0].x, edge[0].y)

@@ -37,6 +37,8 @@ class Canvas(graphics.Scene):
         self.coords = self.coords[:10]  # limit trail length
 
     def on_enter_frame(self, scene, context):
+        c_graphics = graphics.Graphics(context)
+
         for i, coords in enumerate(reversed(self.coords)):
             x, y = coords
 
@@ -45,9 +47,11 @@ class Canvas(graphics.Scene):
             else:
                 alpha = float(i+1) / len(self.coords) / 2
 
-            context.set_source_rgba(0.6, 0.6, 0.6, alpha)
-            context.rectangle(x - self.radius, y - self.radius,
-                              self.radius * 2, self.radius * 2)
+            c_graphics.set_color("#999", alpha)
+            c_graphics.rectangle(x - self.radius,
+                                 y - self.radius,
+                                 self.radius * 2,
+                                 self.radius * 2, 3)
             context.fill()
 
         if len(self.coords) > 1:

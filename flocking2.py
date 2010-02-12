@@ -157,13 +157,16 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
+        c_graphics = graphics.Graphics(context)
+
         if len(self.flock) < 80:
             for i in range(2):
                 self.flock.append(Boid(Vector2(self.width / 2, self.height / 2), 2.0, 0.05))
 
         # main loop (i should rename this to something more obvious)
-        context.set_line_width(0.8)
-        context.set_source_rgb(*self.colors.parse("#666"))
+        c_graphics.set_line_style(width = 0.8)
+        c_graphics.set_color("#666")
+
 
         for boid in self.flock:
             neighbours = []

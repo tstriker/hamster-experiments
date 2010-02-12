@@ -422,17 +422,16 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-        # main loop (i should rename this to something more obvious)
-        context.set_line_width(0.8)
+        c_graphics = graphics.Graphics(context)
+        c_graphics.set_line_style(width = 0.8)
 
         for waypoint in self.waypoints:
             waypoint.update(context)
 
-
         for boid in self.boids:
             # the growing antennae circle
             if self.debug_radius:
-                context.set_source_rgba(0.9,0.9,0.9, 0.3)
+                c_graphics.set_color("#aaa", 0.3)
                 context.arc(boid.location.x,
                             boid.location.y,
                             boid.radio,
@@ -442,7 +441,7 @@ class Canvas(graphics.Scene):
 
             # obstacle awareness circle
             if self.debug_awareness:
-                context.set_source_rgba(0.9,0.9,0.9, 0.5)
+                c_graphics.set_color("#aaa", 0.5)
                 context.arc(boid.location.x,
                             boid.location.y,
                             boid.awareness,
@@ -460,7 +459,7 @@ class Canvas(graphics.Scene):
 
 
             # debug trail (if enabled)
-            context.set_source_rgb(0, 1.0, 0)
+            c_graphics.set_color("#0f0")
             for position1, position2 in zip(boid.positions, boid.positions[1:]):
                 context.move_to(position1.x, position1.y)
                 context.line_to(position2.x, position2.y)
@@ -468,7 +467,7 @@ class Canvas(graphics.Scene):
 
 
             # sir boid himself
-            context.set_source_rgb(0.7, 0.7, 0.7)
+            c_graphics.set_color("#999")
             boid.draw(context)
 
             # line between boid and it's target

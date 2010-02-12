@@ -34,7 +34,7 @@ class Canvas(graphics.Scene):
 
         theta = 0
 
-        context.set_source_rgb(*self.colors.parse("#000"))
+        context.set_source_rgb(0, 0, 0)
         context.set_line_width(0.2)
 
         first = True

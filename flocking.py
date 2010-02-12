@@ -187,8 +187,9 @@ class Canvas(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
 
     def on_enter_frame(self, scene, context):
-        context.set_line_width(0.5)
-        context.set_source_rgb(*self.colors.parse("#AA00FF"))
+        c_graphics = graphics.Graphics(context)
+        c_graphics.set_line_style(width = 0.5)
+        c_graphics.set_color("#AA00FF")
 
 
         if len(self.flock) < 40:
