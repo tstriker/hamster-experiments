@@ -17,9 +17,6 @@ import math
 from random import random, randint
 from copy import deepcopy
 
-EPSILON = 0.00001
-ALPHA = 0.2
-
 class Node(object):
     def __init__(self, x, y):
         self.x = x
@@ -30,63 +27,30 @@ class Node(object):
         self.cluster = None
         self.neighbours = []
 
-class DisplayNode(graphics.Circle):
-    def __init__(self, x, y, real_node):
-        graphics.Circle.__init__(self, 5, fill = "#999")
-        self.x = x
-        self.y = y
-        self.real_node = real_node
-        self.pivot_x = 5
-        self.pivot_y = 5
-        self.interactive = True
-        self.draggable = True
 
-
-class Canvas(graphics.Scene):
-    def __init__(self):
-        graphics.Scene.__init__(self)
+class Graph(object):
+    """graph lives on it's own, separated from display"""
+    def __init__(self, area_w, area_h):
         self.nodes = []
         self.edges = []
-        self.edge_buffer = []
         self.clusters = []
-
         self.iteration = 0
         self.force_constant = 0
-        self.connect("on-drag", self.on_drag)
-        self.connect("on-mouse-up", self.on_mouse_up)
 
-        self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-finish-frame", self.on_finish_frame)
+        self.init_layout(area_w, area_h)
 
-        self.mouse_node = None
-
-    def init_calculations(self):
-        self.force_constant = math.sqrt(self.height * self.width / float(len(self.nodes)))
-        self.temperature = len(self.nodes) + math.floor(math.sqrt(len(self.edges)))
-        self.minimum_temperature = 1
-        self.initial_temperature = self.temperature
-        self.iteration = 0
-
-    def on_finish_frame(self, scene, context):
-        context.fill()
-
-
-    def populate_nodes(self):
+    def populate_nodes(self, area_w, area_h):
         self.nodes, self.edges, self.clusters = [], [], []
-        self.edge_buffer = []
 
         # nodes
         for i in range(randint(5, 30)):
-            x, y = self.width / 2, self.height / 2
-            scale_w = ALPHA * x;
-            scale_h = ALPHA * y
+            x, y = area_w / 2, area_h / 2
+            scale_w = x * 0.2;
+            scale_h = y * 0.2
 
             node = Node(x + (random() - 0.5) * 2 * scale_w,
-                                   y + (random() - 0.5) * 2 * scale_h)
+                        y + (random() - 0.5) * 2 * scale_h)
             self.nodes.append(node)
-
-            display_node = DisplayNode(node.x, node.y, node)
-            self.add_child(display_node)
 
         # edges
         node_count = len(self.nodes) - 1
@@ -95,15 +59,32 @@ class Canvas(graphics.Scene):
             idx1, idx2 = randint(0, node_count), randint(0, node_count)
             node1 = self.nodes[idx1]
             node2 = self.nodes[idx2]
-            if node1 == node2:
-                continue
 
-            self.edges.append((node1, node2))
-            self.edge_buffer.append((self.sprites[idx1], self.sprites[idx2]))
-            node1.neighbours.append(node2)
-            node2.neighbours.append(node1)
+            self.add_edge(node1, node2)
 
-        # clusters
+    def add_edge(self, node, node2):
+        if node == node2 or (node, node2) in self.edges or (node2, node) in self.edges:
+            return
+
+        self.edges.append((node, node2))
+        node.neighbours.append(node2)
+        node2.neighbours.append(node)
+
+    def remove_edge(self, node, node2):
+        if (node, node2) in self.edges:
+            self.edges.remove((node, node2))
+            node.neighbours.remove(node2)
+            node2.neighbours.remove(node)
+
+    def init_layout(self, area_w, area_h):
+        if not self.nodes:
+            self.nodes.append(Node(area_w / 2, area_h / 2))
+
+        # cluster
+        self.clusters = []
+        for node in self.nodes:
+            node.cluster = None
+
         all_nodes = list(self.nodes)
 
         def set_cluster(node, cluster):
@@ -120,83 +101,33 @@ class Canvas(graphics.Scene):
                 new_cluster = []
                 self.clusters.append(new_cluster)
                 set_cluster(node, new_cluster)
+        # init forces
+        self.force_constant = math.sqrt(area_h * area_w / float(len(self.nodes)))
+        self.temperature = len(self.nodes) + math.floor(math.sqrt(len(self.edges)))
+        self.minimum_temperature = 1
+        self.initial_temperature = self.temperature
+        self.iteration = 0
 
 
-    def on_enter_frame(self, scene, context):
-        c_graphics = graphics.Graphics(context)
+    def update(self, area_w, area_h):
+        self.node_repulsion()
+        self.atraction()
+        self.cluster_repulsion()
+        self.position()
 
-        if not self.nodes:
-            self.populate_nodes()
-            self.init_calculations()
-
-
-        # first draw
-        c_graphics.set_line_style(width = 0.5)
-
-        done = abs(self.minimum_temperature - self.temperature) < 0.05
+        self.iteration +=1
+        self.temperature = max(self.temperature - (self.initial_temperature / 100), self.minimum_temperature)
 
 
-        if not done:
-            c_graphics.set_color("#aaa")
-        else:
-            c_graphics.set_color("#666")
+        # update temperature every ten iterations
+        if self.iteration % 10 == 0:
+            min_x, min_y, max_x, max_y = self.bounds(self.nodes)
 
-        for edge in self.edge_buffer:
-            context.move_to(edge[0].x, edge[0].y)
-            context.line_to(edge[1].x, edge[1].y)
-        context.stroke()
+            graph_w, graph_h = max_x - min_x, max_y - min_y
+            graph_magnitude = math.sqrt(graph_w * graph_w + graph_h * graph_h)
+            canvas_magnitude = math.sqrt(area_w * area_w + area_h * area_h)
 
-
-        # then recalculate positions
-        if not done:
-            self.node_repulsion()
-            self.atraction()
-            self.cluster_repulsion()
-            self.position()
-
-            self.iteration +=1
-            self.temperature = max(self.temperature - (self.initial_temperature / 100), self.minimum_temperature)
-
-
-            # update image every x iterations
-            if self.iteration % 10 == 0:
-                self.is_layout_done()
-
-                # find bounds
-                min_x, min_y, max_x, max_y = self.bounds(self.nodes)
-
-                factor_x = float(self.width) / (max_x - min_x)
-                factor_y = float(self.height) / (max_y - min_y)
-                factor = min(factor_x, factor_y) * 0.9
-                start_x = (self.width - (max_x - min_x) * factor) / 2
-                start_y = (self.height - (max_y - min_y) * factor) / 2
-
-                """
-                for i, node in enumerate(self.sprites):
-                    adjusted_x = (self.nodes[i].x - min_x) * factor
-                    adjusted_y = (self.nodes[i].y - min_y) * factor
-                    node.x = adjusted_x
-                    node.y = adjusted_y
-                """
-
-                for i, node in enumerate(self.sprites):
-                    self.tweener.killTweensOf(node)
-                    self.animate(node, dict(x = (self.nodes[i].x - min_x) * factor + start_x,
-                                            y = (self.nodes[i].y - min_y) * factor + start_y),
-                                 easing = Easing.Expo.easeOut,
-                                 duration = 1,
-                                 instant = False)
-
-            self.redraw_canvas()
-
-    def bounds(self, nodes):
-        x1, y1, x2, y2 = 1000, 1000, -1000, -1000
-        for node in nodes:
-            x1, y1 = min(x1, node.x), min(y1, node.y)
-            x2, y2 = max(x2, node.x), max(y2, node.y)
-
-        return (x1, y1, x2, y2)
-
+            self.minimum_temperature = graph_magnitude / canvas_magnitude
 
     def cluster_repulsion(self):
         """push around unconnected nodes on overlap"""
@@ -271,23 +202,6 @@ class Canvas(graphics.Scene):
 
 
 
-    def is_layout_done(self):
-        totalChange = 0
-
-        min_x, min_y, max_x, max_y = 10000, 10000, -10000, -10000
-        for node in self.nodes:
-            min_x, min_y = min(min_x, node.x), min(min_y, node.y)
-            max_x, max_y = max(max_x, node.x), max(max_y, node.y)
-
-
-        graph_w, graph_h = max_x - min_x, max_y - min_y
-        graph_magnitude = math.sqrt(graph_w * graph_w + graph_h * graph_h)
-        canvas_magnitude = math.sqrt(self.width * self.width + self.height * self.height)
-
-        self.minimum_temperature = graph_magnitude / canvas_magnitude
-
-
-
     def position(self):
         biggest_move = -1
 
@@ -299,21 +213,205 @@ class Canvas(graphics.Scene):
                 node.y += node.vy / distance * min(abs(node.vy), self.temperature)
 
 
+    def bounds(self, nodes):
+        x1, y1, x2, y2 = 100000, 100000, -100000, -100000
+        for node in nodes:
+            x1, y1 = min(x1, node.x), min(y1, node.y)
+            x2, y2 = max(x2, node.x), max(y2, node.y)
 
-    # just for kicks - mouse events
-    def on_drag(self, scene, target, coords):
-        self.mouse_node = idx = self.sprites.index(target)
-        # dragging around
-        self.nodes[idx].fixed = True
-        self.nodes[idx].x = coords[0]
-        self.nodes[idx].y = coords[1]
-        self.init_calculations()
+        return (x1, y1, x2, y2)
+
+
+
+class DisplayNode(graphics.Sprite):
+    def __init__(self, x, y, real_node):
+        graphics.Sprite.__init__(self)
+
+        self.x = x
+        self.y = y
+        self.real_node = real_node
+        self.pivot_x = 5
+        self.pivot_y = 5
+        self.interactive = True
+        self.fill = "#999"
+
+        self.connect("on-mouse-over", self.on_mouse_over)
+        self.connect("on-mouse-out", self.on_mouse_out)
+        self.draw_graphics()
+
+    def on_mouse_over(self, sprite):
+        self.fill = "#000"
+        self.draw_graphics()
+
+    def on_mouse_out(self, sprite):
+        self.fill = "#999"
+        self.draw_graphics()
+
+
+    def draw_graphics(self):
+        self.graphics.clear()
+        self.graphics.set_color(self.fill)
+        self.graphics.arc(5, 5, 5, 0, math.pi * 2)
+        self.graphics.fill()
+
+        # adding invisible circle with bigger radius for easier targeting
+        self.graphics.set_color("#000", 0)
+        self.graphics.arc(5, 5, 10, 0, math.pi * 2)
+        self.graphics.stroke()
+
+
+
+class Canvas(graphics.Scene):
+    def __init__(self):
+        graphics.Scene.__init__(self)
+        self.edge_buffer = []
+        self.clusters = []
+
+        self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-finish-frame", self.on_finish_frame)
+        self.connect("on-click", self.on_node_click)
+        self.connect("mouse-move", self.on_mouse_move)
+
+        self.mouse_node = None
+        self.mouse = None
+        self.graph = None
+        self.redo_layout = False
+
+
+    def on_node_click(self, scene, event,  sprite):
+        mouse_node = None
+        if sprite:
+            mouse_node = sprite[0]
+
+        if mouse_node:
+            if self.mouse_node:
+                if mouse_node == self.mouse_node:
+                    self.mouse_node = None
+                    return
+
+                #check if maybe there is an edge already - in that case remove it
+                if (self.mouse_node.real_node, mouse_node.real_node) in self.graph.edges:
+                    self.graph.remove_edge(self.mouse_node.real_node, mouse_node.real_node)
+
+                elif (mouse_node.real_node, self.mouse_node.real_node) in self.graph.edges:
+                    self.graph.remove_edge(mouse_node.real_node, self.mouse_node.real_node)
+
+                else:
+                    self.graph.add_edge(self.mouse_node.real_node, mouse_node.real_node)
+
+                self.update_buffer()
+
+                self.mouse_node = None
+                self.queue_relayout()
+            else:
+                self.mouse_node = mouse_node
+        else:
+            new_node = Node(event.x, event.y)
+            self.graph.nodes.append(new_node)
+            display_node = DisplayNode(event.x, event.y, new_node)
+            self.add_child(display_node)
+            if self.mouse_node:
+                self.graph.add_edge(self.mouse_node.real_node, new_node)
+                self.update_buffer()
+                self.mouse_node = None
+            else:
+                self.mouse_node = display_node
+
+            self.queue_relayout()
+
+    def on_mouse_move(self, scene, event):
+        self.mouse = (event.x, event.y)
         self.redraw_canvas()
 
-    def on_mouse_up(self, scene):
-        if self.mouse_node:
-            self.nodes[self.mouse_node].fixed = False
-        self.mouse_node = None
+    def new_graph(self):
+        self.clear()
+        self.edge_buffer = []
+
+        if not self.graph:
+            self.graph = Graph(self.width, self.height)
+        else:
+            self.graph.populate_nodes(self.width, self.height)
+            self.queue_relayout()
+
+        for node in self.graph.nodes:
+            self.add_child(DisplayNode(node.x, node.y, node))
+        self.update_buffer()
+
+        self.redraw_canvas()
+
+    def queue_relayout(self):
+        self.redo_layout = True
+        self.redraw_canvas()
+
+    def update_buffer(self):
+        self.edge_buffer = []
+
+        for edge in self.graph.edges:
+            self.edge_buffer.append((
+                self.sprites[self.graph.nodes.index(edge[0])],
+                self.sprites[self.graph.nodes.index(edge[1])],
+            ))
+
+
+    def on_finish_frame(self, scene, context):
+        if self.mouse_node and self.mouse:
+            c_graphics = graphics.Graphics(context)
+            c_graphics.set_color("#666")
+            c_graphics.move_to(self.mouse_node.x, self.mouse_node.y)
+            c_graphics.line_to(*self.mouse)
+            c_graphics.stroke()
+
+
+    def on_enter_frame(self, scene, context):
+        c_graphics = graphics.Graphics(context)
+
+        if not self.graph:
+            self.new_graph()
+
+        if self.redo_layout:
+            self.redo_layout = False
+            self.graph.init_layout(self.width, self.height)
+
+
+        # first draw
+        c_graphics.set_line_style(width = 0.5)
+
+        done = abs(self.graph.minimum_temperature - self.graph.temperature) < 0.05
+
+
+        if not done:
+            c_graphics.set_color("#aaa")
+        else:
+            c_graphics.set_color("#666")
+
+        for edge in self.edge_buffer:
+            context.move_to(edge[0].x, edge[0].y)
+            context.line_to(edge[1].x, edge[1].y)
+        context.stroke()
+
+
+        if not done:
+            # then recalculate positions
+            self.graph.update(self.width, self.height)
+
+            # find bounds
+            min_x, min_y, max_x, max_y = self.graph.bounds(self.graph.nodes)
+
+            factor_x = float(self.width) / (max_x - min_x)
+            factor_y = float(self.height) / (max_y - min_y)
+            factor = min(factor_x, factor_y) * 0.9
+            start_x = (self.width - (max_x - min_x) * factor) / 2
+            start_y = (self.height - (max_y - min_y) * factor) / 2
+
+            for i, node in enumerate(self.sprites):
+                self.tweener.killTweensOf(node)
+                self.animate(node, dict(x = (self.graph.nodes[i].x - min_x) * factor + start_x,
+                                        y = (self.graph.nodes[i].y - min_y) * factor + start_y),
+                             easing = Easing.Expo.easeOut,
+                             duration = 1,
+                             instant = False)
+
+            self.redraw_canvas()
 
 class BasicWindow:
     def __init__(self):
@@ -326,21 +424,15 @@ class BasicWindow:
         box = gtk.VBox()
         box.pack_start(self.canvas)
 
-        button = gtk.Button("Redo")
-        def on_click(*args):
-            self.canvas.clear()
-            self.canvas.populate_nodes()
-            self.canvas.init_calculations()
-            self.canvas.redraw_canvas()
-        button.connect("clicked", on_click)
-        box.pack_start(button, False)
+        hbox = gtk.HBox(False, 5)
+        hbox.set_border_width(12)
 
-        button = gtk.Button("Repeat Layout")
-        def on_click(*args):
-            self.canvas.init_calculations()
-            self.canvas.redraw_canvas()
-        button.connect("clicked", on_click)
-        box.pack_start(button, False)
+        box.pack_start(hbox, False)
+
+        hbox.pack_start(gtk.HBox()) # filler
+        button = gtk.Button("Random Nodes")
+        button.connect("clicked", lambda *args: self.canvas.new_graph())
+        hbox.pack_start(button, False)
 
         window.add(box)
         window.show_all()
