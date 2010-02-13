@@ -3,23 +3,9 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
- Ported from prefuse (http://prefuse.org/).
- Extra:
-   * added node gravitation towards centre
-   * buffering node positions and tweening every now and then to avoid stuttering
-
- Original docu:
- <p>Layout instance implementing the Fruchterman-Reingold algorithm for
- force-directed placement of graph nodes. The computational complexity of
- this algorithm is quadratic [O(n^2)] in the number of nodes, so should
- only be applied for relatively small graphs, particularly in interactive
- situations.</p>
-
- <p>This implementation was ported from the implementation in the
- <a href="http://jung.sourceforge.net/">JUNG</a> framework.</p>
-
- @author Scott White, Yan-Biao Boey, Danyel Fisher
- @author <a href="http://jheer.org">jeffrey heer</a>
+ Frankensteined together from everywhere, including prefuse (http://prefuse.org/),
+ heygraph (http://www.heychinaski.com/blog/?p=288) and this monstrosity
+ (http://www.mathiasbader.de/studium/bioinformatics/)
 """
 
 

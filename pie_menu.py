@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
-""" guilloches, following.  observe how detail grows and your cpu melts.
-    move mouse horizontally and vertically to change parameters
-    http://ministryoftype.co.uk/words/article/guilloches/
+"""
+    Bit of pie in progress.
 """
 
 import gtk
