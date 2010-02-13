@@ -684,6 +684,8 @@ class Scene(gtk.DrawingArea):
 
         if sprite_x <= x <= sprite_x2 and sprite_y <= y <= sprite_y2:
             paths = sprite.graphics.paths
+            if not paths:
+                return True
 
             context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
             for path in paths:
