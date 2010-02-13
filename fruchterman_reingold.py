@@ -41,6 +41,8 @@ class Node(object):
         self.vx = 0
         self.vy = 0
         self.fixed = False #to pin down
+        self.cluster = None
+        self.neighbours = []
 
 class DisplayNode(graphics.Circle):
     def __init__(self, x, y, real_node):
@@ -59,11 +61,9 @@ class Canvas(graphics.Scene):
         graphics.Scene.__init__(self)
         self.nodes = []
         self.edges = []
-
-        self.node_buffer = []
         self.edge_buffer = []
+        self.clusters = []
 
-        self.max_iterations = 300
         self.iteration = 0
         self.force_constant = 0
         self.connect("on-drag", self.on_drag)
@@ -75,51 +75,82 @@ class Canvas(graphics.Scene):
         self.mouse_node = None
 
     def init_calculations(self):
+        self.force_constant = math.sqrt(self.height * self.width / float(len(self.nodes)))
+        self.temperature = len(self.nodes) + math.floor(math.sqrt(len(self.edges)))
+        self.minimum_temperature = 1
+        self.initial_temperature = self.temperature
         self.iteration = 0
-        self.force_constant = 0.75 *  math.sqrt(self.height * self.width / len(self.nodes))
-        self.temperature = self.width / float(10)
-
-    def cooldown(self):
-        self.temperature = self.temperature * (1.0 - self.iteration / float(self.max_iterations))
-
 
     def on_finish_frame(self, scene, context):
         context.fill()
+
+
+    def populate_nodes(self):
+        self.nodes, self.edges, self.clusters = [], [], []
+        self.edge_buffer = []
+
+        # nodes
+        for i in range(randint(5, 30)):
+            x, y = self.width / 2, self.height / 2
+            scale_w = ALPHA * x;
+            scale_h = ALPHA * y
+
+            node = Node(x + (random() - 0.5) * 2 * scale_w,
+                                   y + (random() - 0.5) * 2 * scale_h)
+            self.nodes.append(node)
+
+            display_node = DisplayNode(node.x, node.y, node)
+            self.add_child(display_node)
+
+        # edges
+        node_count = len(self.nodes) - 1
+
+        for i in range(randint(node_count / 3, node_count)):  #connect random nodes
+            idx1, idx2 = randint(0, node_count), randint(0, node_count)
+            node1 = self.nodes[idx1]
+            node2 = self.nodes[idx2]
+            if node1 == node2:
+                continue
+
+            self.edges.append((node1, node2))
+            self.edge_buffer.append((self.sprites[idx1], self.sprites[idx2]))
+            node1.neighbours.append(node2)
+            node2.neighbours.append(node1)
+
+        # clusters
+        all_nodes = list(self.nodes)
+
+        def set_cluster(node, cluster):
+            if not node.cluster:
+                node.cluster = cluster
+                cluster.append(node)
+                all_nodes.remove(node)
+                for node2 in node.neighbours:
+                    set_cluster(node2, cluster)
+
+        while all_nodes:
+            node = all_nodes[0]
+            if not node.cluster:
+                new_cluster = []
+                self.clusters.append(new_cluster)
+                set_cluster(node, new_cluster)
+
 
     def on_enter_frame(self, scene, context):
         c_graphics = graphics.Graphics(context)
 
         if not self.nodes:
-            for i in range(randint(3, 50)):
-                x, y = self.width / 2, self.height / 2
-                scale_w = ALPHA * x;
-                scale_h = ALPHA * y
-
-                node = Node(x + (random() - 0.5) * 2 * scale_w,
-                                       y + (random() - 0.5) * 2 * scale_h)
-                self.nodes.append(node)
-
-                display_node = DisplayNode(node.x, node.y, node)
-                self.add_child(display_node)
-
-
-            node_count = len(self.nodes) - 1
-
-            self.edges, self.edge_buffer = [], []
-            for i in range(randint(node_count / 2, node_count)):  #connect random nodes
-                from_index = randint(0, node_count)
-                to_index = randint(0, node_count)
-
-                self.edges.append((self.nodes[from_index], self.nodes[to_index]))
-                self.edge_buffer.append((self.sprites[from_index], self.sprites[to_index]))
-
+            self.populate_nodes()
             self.init_calculations()
 
 
         # first draw
         c_graphics.set_line_style(width = 0.5)
 
-        if self.iteration < self.max_iterations:
+        done = abs(self.minimum_temperature - self.temperature) < 0.05
+
+
+        if not done:
             c_graphics.set_color("#aaa")
         else:
             c_graphics.set_color("#666")
@@ -131,96 +162,155 @@ class Canvas(graphics.Scene):
 
 
         # then recalculate positions
-        if self.iteration <= self.max_iterations:
-            for node in self.nodes:
-                if not node.fixed:
-                    self.repulsion(node)
-                    self.gravitate(node)
+        if not done:
+            self.node_repulsion()
+            self.atraction()
+            self.cluster_repulsion()
+            self.position()
 
-            for edge in self.edges:
-                self.atraction(edge)
+            self.iteration +=1
+            self.temperature = max(self.temperature - (self.initial_temperature / 100), self.minimum_temperature)
 
-            for node in self.nodes:
-                if not node.fixed:
-                    self.position(node)
-
-            self.cooldown()
 
             # update image every x iterations
-            if self.iteration % 10 == 0 or self.iteration == self.max_iterations:
+            if self.iteration % 10 == 0:
+                self.is_layout_done()
+
+                # find bounds
+                min_x, min_y, max_x, max_y = self.bounds(self.nodes)
+
+                factor_x = float(self.width) / (max_x - min_x)
+                factor_y = float(self.height) / (max_y - min_y)
+                factor = min(factor_x, factor_y) * 0.9
+                start_x = (self.width - (max_x - min_x) * factor) / 2
+                start_y = (self.height - (max_y - min_y) * factor) / 2
+
+                """
+                for i, node in enumerate(self.sprites):
+                    adjusted_x = (self.nodes[i].x - min_x) * factor
+                    adjusted_y = (self.nodes[i].y - min_y) * factor
+                    node.x = adjusted_x
+                    node.y = adjusted_y
+                """
+
                 for i, node in enumerate(self.sprites):
                     self.tweener.killTweensOf(node)
-                    self.animate(node, dict(x = self.nodes[i].x,
-                                            y = self.nodes[i].y),
+                    self.animate(node, dict(x = (self.nodes[i].x - min_x) * factor + start_x,
+                                            y = (self.nodes[i].y - min_y) * factor + start_y),
                                  easing = Easing.Expo.easeOut,
                                  duration = 1,
                                  instant = False)
 
-            self.iteration +=1
             self.redraw_canvas()
 
+    def bounds(self, nodes):
+        x1, y1, x2, y2 = 1000, 1000, -1000, -1000
+        for node in nodes:
+            x1, y1 = min(x1, node.x), min(y1, node.y)
+            x2, y2 = max(x2, node.x), max(y2, node.y)
+
+        return (x1, y1, x2, y2)
 
 
-    def repulsion(self, node):
+    def cluster_repulsion(self):
+        """push around unconnected nodes on overlap"""
+        for cluster in self.clusters:
+            ax1, ay1, ax2, ay2 = self.bounds(cluster)
+
+            for cluster2 in self.clusters:
+                if cluster == cluster2:
+                    continue
+
+                bx1, by1, bx2, by2 = self.bounds(cluster2)
+
+                if (bx1 <= ax1 <= bx2 or bx1 <= ax2 <= bx2) \
+                and (by1 <= ay1 <= by2 or by1 <= ay2 <= by2):
+
+                    dx = (ax1 + ax2) / 2 - (bx1 + bx2) / 2
+                    dy = (ay1 + ay2) / 2 - (by1 + by2) / 2
+
+                    max_d = float(max(abs(dx), abs(dy)))
+
+                    dx, dy = dx / max_d, dy / max_d
+
+                    force_x = dx * random() * 100
+                    force_y = dy * random() * 100
+
+                    for node in cluster:
+                        node.x += force_x
+                        node.y += force_y
+
+                    for node in cluster2:
+                        node.x -= force_x
+                        node.y -= force_y
+
+    def node_repulsion(self):
         """calculate repulsion for the node"""
-        node.vx, node.vy = 0, 0 # reset velocity back to zero
 
-        for node2 in self.nodes:
-            if node is node2 or node2.fixed:
-                continue
+        for node in self.nodes:
+            node.vx, node.vy = 0, 0 # reset velocity back to zero
 
-            dx = node.x - node2.x
-            dy = node.y - node2.y
+            for node2 in node.cluster:
+                if node == node2: continue
 
-            distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
-            force = self.force_constant * self.force_constant / distance
-            node.vx += dx / distance * force
-            node.vy += dy / distance * force
+                dx = node.x - node2.x
+                dy = node.y - node2.y
 
-    def atraction(self, edge):
-        node1, node2 = edge
-
-        dx = node1.x - node2.x
-        dy = node1.y - node2.y
-
-        distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
-        force = distance * distance / self.force_constant
-
-        node1.vx -= dx / distance * force
-        node1.vy -= dy / distance * force
-
-        node2.vx += dx / distance * force
-        node2.vy += dy / distance * force
-
-    def gravitate(self, node):
-        dx = node.x - self.width / 2
-        dy = node.y - self.height / 2
-
-        distance = max(EPSILON, math.sqrt(dx * dx + dy * dy))
-        force = distance * distance / self.force_constant * 0.9
-
-        node.vx -= dx / distance * force
-        node.vy -= dy / distance * force
+                magnitude = math.sqrt(dx * dx + dy * dy)
 
 
-    def position(self, node):
-        distance = max(EPSILON, math.sqrt(node.vx * node.vx + node.vy * node.vy))
+                if magnitude:
+                    force = self.force_constant * self.force_constant / magnitude
+                    node.vx += dx / magnitude * force
+                    node.vy += dy / magnitude * force
 
-        node.x += node.vx / distance * min(distance, self.temperature)
-        node.y += node.vy / distance * min(distance, self.temperature)
 
-        # don't let nodes leave the display
-        margin = self.width / 50.0
 
-        if node.x < margin:
-            node.x = margin + random() * margin * 2
-        if node.x > self.width - margin:
-            node.x = self.width - margin - random() * margin * 2
+    def atraction(self):
+        for edge in self.edges:
+            node1, node2 = edge
 
-        if node.y < margin:
-            node.y = margin + random() * margin * 2
-        if node.y > self.height - margin:
-            node.y = self.height - margin - random() * margin * 2
+            dx = node1.x - node2.x
+            dy = node1.y - node2.y
+
+            distance = math.sqrt(dx * dx + dy * dy)
+            if distance:
+                force = distance * distance / self.force_constant
+
+                node1.vx -= dx / distance * force
+                node1.vy -= dy / distance * force
+
+                node2.vx += dx / distance * force
+                node2.vy += dy / distance * force
+
+
+
+    def is_layout_done(self):
+        totalChange = 0
+
+        min_x, min_y, max_x, max_y = 10000, 10000, -10000, -10000
+        for node in self.nodes:
+            min_x, min_y = min(min_x, node.x), min(min_y, node.y)
+            max_x, max_y = max(max_x, node.x), max(max_y, node.y)
+
+
+        graph_w, graph_h = max_x - min_x, max_y - min_y
+        graph_magnitude = math.sqrt(graph_w * graph_w + graph_h * graph_h)
+        canvas_magnitude = math.sqrt(self.width * self.width + self.height * self.height)
+
+        self.minimum_temperature = graph_magnitude / canvas_magnitude
+
+
+
+    def position(self):
+        biggest_move = -1
+
+        for node in self.nodes:
+            distance = math.sqrt(node.vx * node.vx + node.vy * node.vy)
+
+            if distance:
+                node.x += node.vx / distance * min(abs(node.vx), self.temperature)
+                node.y += node.vy / distance * min(abs(node.vy), self.temperature)
 
 
 
@@ -253,12 +343,18 @@ class BasicWindow:
         button = gtk.Button("Redo")
         def on_click(*args):
             self.canvas.clear()
-            self.canvas.nodes = []
-            self.canvas.mouse_node = None
+            self.canvas.populate_nodes()
+            self.canvas.init_calculations()
             self.canvas.redraw_canvas()
         button.connect("clicked", on_click)
         box.pack_start(button, False)
 
+        button = gtk.Button("Repeat Layout")
+        def on_click(*args):
+            self.canvas.init_calculations()
+            self.canvas.redraw_canvas()
+        button.connect("clicked", on_click)
+        box.pack_start(button, False)
 
         window.add(box)
         window.show_all()
