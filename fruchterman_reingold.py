@@ -36,8 +36,8 @@ class Graph(object):
         self.clusters = []
         self.iteration = 0
         self.force_constant = 0
-
         self.init_layout(area_w, area_h)
+        self.graph_bounds = None
 
     def populate_nodes(self, area_w, area_h):
         self.nodes, self.edges, self.clusters = [], [], []
@@ -121,7 +121,7 @@ class Graph(object):
 
         # update temperature every ten iterations
         if self.iteration % 10 == 0:
-            min_x, min_y, max_x, max_y = self.bounds(self.nodes)
+            min_x, min_y, max_x, max_y = self.graph_bounds
 
             graph_w, graph_h = max_x - min_x, max_y - min_y
             graph_magnitude = math.sqrt(graph_w * graph_w + graph_h * graph_h)
@@ -205,13 +205,23 @@ class Graph(object):
     def position(self):
         biggest_move = -1
 
+        x1, y1, x2, y2 = 100000, 100000, -100000, -100000
+
         for node in self.nodes:
+            if node.fixed:
+                node.fixed = False
+                continue
+
             distance = math.sqrt(node.vx * node.vx + node.vy * node.vy)
 
             if distance:
                 node.x += node.vx / distance * min(abs(node.vx), self.temperature)
                 node.y += node.vy / distance * min(abs(node.vy), self.temperature)
 
+            x1, y1 = min(x1, node.x), min(y1, node.y)
+            x2, y2 = max(x2, node.x), max(y2, node.y)
+
+        self.graph_bounds = (x1,y1,x2,y2)
 
     def bounds(self, nodes):
         x1, y1, x2, y2 = 100000, 100000, -100000, -100000
@@ -233,6 +243,7 @@ class DisplayNode(graphics.Sprite):
         self.pivot_x = 5
         self.pivot_y = 5
         self.interactive = True
+        self.draggable = True
         self.fill = "#999"
 
         self.connect("on-mouse-over", self.on_mouse_over)
@@ -270,6 +281,7 @@ class Canvas(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
         self.connect("on-finish-frame", self.on_finish_frame)
         self.connect("on-click", self.on_node_click)
+        self.connect("on-drag", self.on_node_drag)
         self.connect("mouse-move", self.on_mouse_move)
 
         self.mouse_node = None
@@ -301,27 +313,33 @@ class Canvas(graphics.Scene):
 
                 self.update_buffer()
 
-                self.mouse_node = None
+                self.mouse_node = mouse_node
                 self.queue_relayout()
             else:
                 self.mouse_node = mouse_node
         else:
-            new_node = Node(event.x, event.y)
+            new_node = Node(*self.screen_to_graph(event.x, event.y))
             self.graph.nodes.append(new_node)
             display_node = DisplayNode(event.x, event.y, new_node)
             self.add_child(display_node)
             if self.mouse_node:
                 self.graph.add_edge(self.mouse_node.real_node, new_node)
                 self.update_buffer()
-                self.mouse_node = None
-            else:
-                self.mouse_node = display_node
+
+            self.mouse_node = display_node
+
 
             self.queue_relayout()
 
+    def on_node_drag(self, scene, node, coords):
+        node.real_node.x, node.real_node.y = self.screen_to_graph(*coords)
+        node.real_node.fixed = True
+        self.redraw_canvas()
+
+
     def on_mouse_move(self, scene, event):
         self.mouse = (event.x, event.y)
-        self.redraw_canvas()
+        self.queue_relayout()
 
     def new_graph(self):
         self.clear()
@@ -367,6 +385,8 @@ class Canvas(graphics.Scene):
 
         if not self.graph:
             self.new_graph()
+            self.graph.update(self.width, self.height)
+
 
         if self.redo_layout:
             self.redo_layout = False
@@ -395,7 +415,7 @@ class Canvas(graphics.Scene):
             self.graph.update(self.width, self.height)
 
             # find bounds
-            min_x, min_y, max_x, max_y = self.graph.bounds(self.graph.nodes)
+            min_x, min_y, max_x, max_y = self.graph.graph_bounds
 
             factor_x = float(self.width) / (max_x - min_x)
             factor_y = float(self.height) / (max_y - min_y)
@@ -408,10 +428,32 @@ class Canvas(graphics.Scene):
                 self.animate(node, dict(x = (self.graph.nodes[i].x - min_x) * factor + start_x,
                                         y = (self.graph.nodes[i].y - min_y) * factor + start_y),
                              easing = Easing.Expo.easeOut,
-                             duration = 1,
+                             duration = 2,
                              instant = False)
 
             self.redraw_canvas()
+
+    def screen_to_graph(self,x, y):
+        if len(self.graph.nodes) <= 1:
+            return x, y
+
+        min_x, min_y, max_x, max_y = self.graph.graph_bounds
+
+        factor_x = float(self.width) / (max_x - min_x)
+        factor_y = float(self.height) / (max_y - min_y)
+        factor = min(factor_x, factor_y) * 0.9
+
+        start_x = (self.width - (max_x - min_x) * factor) / 2
+        start_y = (self.height - (max_y - min_y) * factor) / 2
+
+        graph_x = (x - self.width / 2) / factor
+        graph_y = (y - self.height / 2) / factor
+
+        return graph_x, graph_y
+
+    def graph_to_screen(self,x, y):
+        pass
+
 
 class BasicWindow:
     def __init__(self):
@@ -424,6 +466,7 @@ class BasicWindow:
         box = gtk.VBox()
         box.pack_start(self.canvas)
 
+        """
         hbox = gtk.HBox(False, 5)
         hbox.set_border_width(12)
 
@@ -433,6 +476,7 @@ class BasicWindow:
         button = gtk.Button("Random Nodes")
         button.connect("clicked", lambda *args: self.canvas.new_graph())
         hbox.pack_start(button, False)
+        """
 
         window.add(box)
         window.show_all()
