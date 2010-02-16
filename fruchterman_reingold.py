@@ -442,20 +442,25 @@ class Canvas(graphics.Scene):
 
             # find bounds
             min_x, min_y, max_x, max_y = self.graph.graph_bounds
+            graph_w, graph_h = max_x - min_x, max_y - min_y
 
-            factor_x = float(self.width) / (max_x - min_x)
-            factor_y = float(self.height) / (max_y - min_y)
-            factor = min(factor_x, factor_y) * 0.9
-            start_x = (self.width - (max_x - min_x) * factor) / 2
-            start_y = (self.height - (max_y - min_y) * factor) / 2
+            factor_x = self.width / float(graph_w)
+            factor_y = self.height / float(graph_h)
+            graph_mid_x = (min_x + max_x) / 2.0
+            graph_mid_y = (min_y + max_y) / 2.0
+
+            mid_x, mid_y = self.width / 2.0, self.height / 2.0
+
+            factor = min(factor_x, factor_y) * 0.9 # just have the smaller scale, avoid deformations
 
             for i, node in enumerate(self.display_nodes):
                 self.tweener.killTweensOf(node)
-                self.animate(node, dict(x = (self.graph.nodes[i].x - min_x) * factor + start_x,
-                                        y = (self.graph.nodes[i].y - min_y) * factor + start_y),
+                self.animate(node, dict(x = mid_x + (self.graph.nodes[i].x - graph_mid_x) * factor,
+                                        y = mid_y + (self.graph.nodes[i].y - graph_mid_y) * factor),
                              easing = Easing.Expo.easeOut,
-                             duration = 2,
+                             duration = 3,
                              instant = False)
+
 
             self.redraw_canvas()
 
@@ -463,19 +468,25 @@ class Canvas(graphics.Scene):
         if len(self.graph.nodes) <= 1:
             return x, y
 
+
+
         min_x, min_y, max_x, max_y = self.graph.graph_bounds
+        graph_w, graph_h = max_x - min_x, max_y - min_y
 
-        factor_x = float(self.width) / (max_x - min_x)
-        factor_y = float(self.height) / (max_y - min_y)
-        factor = min(factor_x, factor_y) * 0.9
+        factor_x = self.width / float(graph_w)
+        factor_y = self.height / float(graph_h)
+        graph_mid_x = (min_x + max_x) / 2.0
+        graph_mid_y = (min_y + max_y) / 2.0
 
-        start_x = (self.width - (max_x - min_x) * factor) / 2
-        start_y = (self.height - (max_y - min_y) * factor) / 2
+        mid_x, mid_y = self.width / 2.0, self.height / 2.0
 
-        graph_x = (x - self.width / 2) / factor
-        graph_y = (y - self.height / 2) / factor
+        factor = min(factor_x, factor_y) * 0.9 # just have the smaller scale, avoid deformations
+
+        graph_x = (x - mid_x) / factor + graph_mid_x
+        graph_y = (y - mid_y) / factor + graph_mid_y
 
         return graph_x, graph_y
+
 
     def graph_to_screen(self,x, y):
         pass
