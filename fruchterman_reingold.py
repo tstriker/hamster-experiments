@@ -288,9 +288,11 @@ class Canvas(graphics.Scene):
         self.mouse = None
         self.graph = None
         self.redo_layout = False
+        self.display_nodes = []
 
 
     def on_node_click(self, scene, event,  sprite):
+
         mouse_node = None
         if sprite:
             mouse_node = sprite[0]
@@ -300,6 +302,7 @@ class Canvas(graphics.Scene):
                 if mouse_node == self.mouse_node:
                     self.mouse_node = None
                     return
+
 
                 #check if maybe there is an edge already - in that case remove it
                 if (self.mouse_node.real_node, mouse_node.real_node) in self.graph.edges:
@@ -313,20 +316,27 @@ class Canvas(graphics.Scene):
 
                 self.update_buffer()
 
-                self.mouse_node = mouse_node
+                if event.button != 3:
+                    self.mouse_node = mouse_node
+                else:
+                    self.mouse_node = None
+
                 self.queue_relayout()
             else:
                 self.mouse_node = mouse_node
         else:
-            new_node = Node(*self.screen_to_graph(event.x, event.y))
-            self.graph.nodes.append(new_node)
-            display_node = DisplayNode(event.x, event.y, new_node)
-            self.add_child(display_node)
-            if self.mouse_node:
-                self.graph.add_edge(self.mouse_node.real_node, new_node)
-                self.update_buffer()
+            if event.button == 3:
+                self.mouse_node = None
+            else:
+                new_node = Node(*self.screen_to_graph(event.x, event.y))
+                self.graph.nodes.append(new_node)
+                display_node = self.add_node(event.x, event.y, new_node)
 
-            self.mouse_node = display_node
+                if self.mouse_node:
+                    self.graph.add_edge(self.mouse_node.real_node, new_node)
+                    self.update_buffer()
+
+                self.mouse_node = display_node
 
 
             self.queue_relayout()
@@ -341,8 +351,23 @@ class Canvas(graphics.Scene):
         self.mouse = (event.x, event.y)
         self.queue_relayout()
 
+
+    def delauney(self):
+        pass
+
+    def add_node(self, x, y, real_node):
+        display_node = DisplayNode(x, y, real_node)
+        self.add_child(display_node)
+        self.display_nodes.append(display_node)
+        return display_node
+
+
     def new_graph(self):
         self.clear()
+        self.display_nodes = []
+        self.add_child(graphics.Label("Click on screen to add node. Right-click to stop the thread from going on", color="#666", x=10, y=10))
+
+
         self.edge_buffer = []
 
         if not self.graph:
@@ -352,7 +377,8 @@ class Canvas(graphics.Scene):
             self.queue_relayout()
 
         for node in self.graph.nodes:
-            self.add_child(DisplayNode(node.x, node.y, node))
+            self.add_node(node.x, node.y, node)
+
         self.update_buffer()
 
         self.redraw_canvas()
@@ -366,8 +392,8 @@ class Canvas(graphics.Scene):
 
         for edge in self.graph.edges:
             self.edge_buffer.append((
-                self.sprites[self.graph.nodes.index(edge[0])],
-                self.sprites[self.graph.nodes.index(edge[1])],
+                self.display_nodes[self.graph.nodes.index(edge[0])],
+                self.display_nodes[self.graph.nodes.index(edge[1])],
             ))
 
 
@@ -423,7 +449,7 @@ class Canvas(graphics.Scene):
             start_x = (self.width - (max_x - min_x) * factor) / 2
             start_y = (self.height - (max_y - min_y) * factor) / 2
 
-            for i, node in enumerate(self.sprites):
+            for i, node in enumerate(self.display_nodes):
                 self.tweener.killTweensOf(node)
                 self.animate(node, dict(x = (self.graph.nodes[i].x - min_x) * factor + start_x,
                                         y = (self.graph.nodes[i].y - min_y) * factor + start_y),
