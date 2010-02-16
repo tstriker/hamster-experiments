@@ -190,15 +190,14 @@ class Graphics(object):
         self.fill(color, opacity)
 
 
-    def _show_text(self, context, text, font_desc):
+    def _show_layout(self, context, text, font_desc):
         layout = context.create_layout()
         layout.set_font_description(font_desc)
         layout.set_text(text)
-        context.move_to(0, 0)
         context.show_layout(layout)
 
-    def show_text(self, text, font_desc):
-        self._add_instruction(self._show_text, text, font_desc)
+    def show_layout(self, text, font_desc):
+        self._add_instruction(self._show_layout, text, font_desc)
 
     def remember_path(self, context):
         context.save()
@@ -238,8 +237,12 @@ class Graphics(object):
             while self._instructions:
                 instruction, args = self._instructions.popleft()
 
-                if instruction in (self._set_source_surface, self._paint, self._show_text):
+                if instruction in (self._set_source_surface, self._paint):
                     self.instructions.append((None, None, None, instruction, args))
+
+                elif instruction == self._show_layout:
+                    self.instructions.append((None, current_color, None, instruction, args))
+
                 else:
                     path_instructions = True
                     if instruction == self._set_color:
@@ -275,9 +278,7 @@ class Graphics(object):
                 if check_extents:
                     self.remember_path(context)
 
-                if instruction: instruction(context, *args)
-
-            else:
+            if instruction:
                 instruction(context, *args)
 
         self.last_matrix = context.get_matrix()
@@ -366,8 +367,7 @@ class Label(Sprite):
         self._set_dimensions()
         if self.color:
             self.graphics.set_color(self.color)
-        self.graphics.show_text(self.text, self.font_desc)
-        self.graphics.stroke()
+        self.graphics.show_layout(self.text, self.font_desc)
 
         if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
             print "ointer"
