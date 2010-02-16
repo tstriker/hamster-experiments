@@ -51,6 +51,8 @@ class Vector2(object):
         return 'Vector2(%.2f, %.2f)' % (self.x, self.y)
 
     def __eq__(self, other):
+        if not other: return False
+
         if isinstance(other, Vector2):
             return self.x == other.x and \
                    self.y == other.y
@@ -172,6 +174,10 @@ class Vector2(object):
     def cross(self):
         return Vector2(self.y, -self.x)
 
+    def product(self, v2):
+        # product of our vector and the other vector's perpendicular
+        return self.x * v2.y - self.y * v2.x
+
     def reflect(self, normal):
         # assume normal is normalized
         assert isinstance(normal, Vector2)
@@ -186,9 +192,9 @@ class Vector2(object):
 
     def heading(self):
         return math.atan2(self.y, self.x)
-        
+
     def angle(self, other):
-        """finds angle between this and the other vector"""
+        """angle between this and the other vector in radians"""
         if self == -other:  # same vector facing the opposite way will kill acos on float precision
             return math.pi
 
@@ -681,4 +687,3 @@ class Circle(Geometry):
 
     def _connect_circle(self, other):
         return _connect_circle_circle(other, self)
-
