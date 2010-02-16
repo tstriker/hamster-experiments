@@ -196,6 +196,10 @@ class Graphics(object):
         layout.set_text(text)
         context.show_layout(layout)
 
+    def show_text(self, text):
+        font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
+        self.show_layout(text, font_desc)
+
     def show_layout(self, text, font_desc):
         self._add_instruction(self._show_layout, text, font_desc)
 
