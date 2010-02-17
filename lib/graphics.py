@@ -606,7 +606,6 @@ class Scene(gtk.DrawingArea):
 
         self.mouse_x, self.mouse_y = mouse_x, mouse_y
 
-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
         if self._drag_sprite and self._drag_sprite.draggable and gtk.gdk.BUTTON1_MASK & event.state:
             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
@@ -638,8 +637,9 @@ class Scene(gtk.DrawingArea):
                 self.redraw_canvas()
 
                 return
+        else:
+            self.check_mouse(event.x, event.y)
 
-        self.check_mouse(event.x, event.y)
         self.emit("mouse-move", event)
 
 
@@ -648,17 +648,18 @@ class Scene(gtk.DrawingArea):
 
         #check if we have a mouse over
         over = set()
+
+        cursor = gtk.gdk.ARROW
+
         for sprite in self.all_sprites():
             if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
                 if sprite.draggable:
-                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
+                    cursor = gtk.gdk.FLEUR
                 else:
-                    self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+                    cursor = gtk.gdk.HAND2
 
                 over.add(sprite)
 
-        if not over:
-            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
 
         new_mouse_overs = over - self._mouse_sprites
         if new_mouse_overs:
@@ -676,6 +677,9 @@ class Scene(gtk.DrawingArea):
 
 
         self._mouse_sprites = over
+        self.window.set_cursor(gtk.gdk.Cursor(cursor))
+
+
 
     def _check_hit(self, sprite, x, y):
         if sprite == self._drag_sprite:
