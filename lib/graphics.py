@@ -89,9 +89,9 @@ class Graphics(object):
     def clear(self):
         """clear all instruction"""
         self._instructions = deque()
-        self.extra_instructions = None
-        self.paths = None
-        self.instructions = None
+        self.extra_instructions = []
+        self.paths = []
+        self.instructions = []
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
