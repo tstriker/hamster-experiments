@@ -410,7 +410,7 @@ class Geometry(object):
         return 0.0
 
 def _intersect_point2_circle(P, C):
-    return abs(P - C.c) <= C.r
+    return (P - C.c).magnitude_squared() <= C.r * C.r
 
 def _intersect_line2_line2(A, B):
     d = B.v.y * A.v.x - B.v.x * A.v.y
