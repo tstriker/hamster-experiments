@@ -81,7 +81,7 @@ class Graphics(object):
         self.extents = None
         self.opacity = 1.0
         self.paths = None
-        self.instructions = None
+        self.instructions = []
         self.extra_instructions = None
         self.last_matrix = None
         self.context = context
@@ -237,6 +237,7 @@ class Graphics(object):
             current_color = None
             current_line = None
             path_instructions = False
+            instruction_cache = []
 
             while self._instructions:
                 instruction, args = self._instructions.popleft()
@@ -256,15 +257,17 @@ class Graphics(object):
                         current_line = args
 
                     elif instruction in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
-                        path = context.copy_path()
-                        if str(path):
-                            self.instructions.append((path, current_color, current_line, instruction, ()))
-
-                        if instruction in (self._stroke, self._fill):
-                            context.new_path()
-
+                        self.instructions.append((context.copy_path(), current_color, current_line, instruction, ()))
+                        context.new_path() # reset even on preserve as the instruction will preserve it instead
+                        instruction_cache = []
                     else:
                         instruction(context, *args)
+                        instruction_cache.append((instruction, args))
+
+
+            while instruction_cache: # stroke's missing so we just cache
+                instruction, args = instruction_cache.pop(0)
+                self.instructions.append((None, None, None, instruction, args))
 
 
         # if we have been moved around, we should update bounds
@@ -296,7 +299,6 @@ class Sprite(gtk.Object):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
@@ -319,8 +321,6 @@ class Sprite(gtk.Object):
     def _draw(self, context, opacity = 1):
         if self.visible is False:
             return
-
-        self.emit("on-draw")
 
         if self.x or self.y or self.rotation:
             context.save()
@@ -374,7 +374,6 @@ class Label(Sprite):
         self.graphics.show_layout(self.text, self.font_desc)
 
         if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
-            print "ointer"
             self.graphics.set_color("#000", 0)
             self.graphics.rectangle(0,0, self.width, self.height)
             self.graphics.stroke()
@@ -393,11 +392,12 @@ class Shape(Sprite):
     """shape is a simple continuous shape that can have fill and stroke
     """
 
-    def __init__(self, stroke = None, fill = None, **kwargs):
+    def __init__(self, stroke = None, fill = None, line_width = None, **kwargs):
         kwargs.setdefault("interactive", False)
         Sprite.__init__(self, **kwargs)
         self.stroke_color = stroke
         self.fill_color = fill
+        self.line_width = line_width
         self.draw_shape()
         self._color()
         self._sprite_dirty = False # a dirty shape needs it's graphics regenerated, because params have changed
@@ -423,6 +423,9 @@ class Shape(Sprite):
         raise UnimplementedException
 
     def _color(self):
+        if self.line_width:
+            self.graphics.set_line_style(self.line_width)
+
         if self.fill_color:
             if self.stroke_color:
                 self.graphics.fill_preserve(self.fill_color)
