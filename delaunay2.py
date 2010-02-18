@@ -308,11 +308,12 @@ class BasicWindow:
         button = gtk.Button("Generate points in centers")
         def on_click(*args):
             for centre in self.canvas.centres:
-                point = Vector2(centre.x, centre.y)
-                self.canvas.points.append(point)
-                node = Node(point.x, point.y, point)
-                self.canvas.nodes.append(node)
-                self.canvas.add_child(node)
+                if abs(centre) < 2000:
+                    point = Vector2(centre.x, centre.y)
+                    self.canvas.points.append(point)
+                    node = Node(point.x, point.y, point)
+                    self.canvas.nodes.append(node)
+                    self.canvas.add_child(node)
             self.canvas.centres = []
             self.canvas.redraw_canvas()
 
