@@ -38,13 +38,13 @@ class Canvas(graphics.Scene):
             self.redraw_canvas()
 
     def on_enter_frame(self, scene, context):
-        graphics = graphics.Graphics(context)
-        graphics.set_color("999")
+        g = graphics.Graphics(context)
+        g.set_color("#999")
 
         for node, node2 in self.convex_hull():
-            graphics.move_to(node.x, node.y)
-            graphics.line_to(node2.x, node2.y)
-        graphics.stroke()
+            g.move_to(node.x, node.y)
+            g.line_to(node2.x, node2.y)
+        g.stroke()
 
 
 
