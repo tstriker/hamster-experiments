@@ -17,8 +17,16 @@ class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
-        self.circle1 = graphics.Circle(90, x=100, y=300, pivot_x = 90, pivot_y = 90, interactive = True, draggable=True, stroke = "#000", fill="#ccc")
-        self.circle2 = graphics.Circle(50, x=350, y=300, pivot_x = 50, pivot_y = 50, interactive = True, draggable=True, stroke = "#000", fill="#ccc")
+        self.circle1 = graphics.Circle(90,
+                                       x=100, y=300,
+                                       pivot_x = 90, pivot_y = 90,
+                                       interactive = True, draggable=True,
+                                       stroke = "#000", fill="#ccc", line_width = 1)
+        self.circle2 = graphics.Circle(50,
+                                       x=350, y=300,
+                                       pivot_x = 50, pivot_y = 50,
+                                       interactive = True, draggable=True,
+                                       stroke = "#000", fill="#ccc", line_width = 1)
 
         self.add_child(self.circle1)
         self.add_child(self.circle2)
@@ -30,6 +38,7 @@ class Canvas(graphics.Scene):
 
         self.connect("on-drag", self.on_drag_circle)
 
+
     def on_drag_circle(self, scene, event, targets):
         self.draw_tangent()
 
@@ -37,7 +46,9 @@ class Canvas(graphics.Scene):
         tangent = self.tangent
         tangent.graphics.clear()
 
-        band_radius = 10
+        tangent.graphics.set_line_style(width = 0.5)
+
+        band_radius = 30
 
         v1 = Vector2(self.circle1.x, self.circle1.y)
         v2 = Vector2(self.circle2.x, self.circle2.y)
@@ -51,7 +62,7 @@ class Canvas(graphics.Scene):
         #tangent.graphics.line_to(v2.x, v2.y)
 
         c = distance
-        distance = max(distance*3, self.circle1.radius, self.circle2.radius) + 1
+        distance = 100
 
         a = distance + self.circle2.radius
         b = distance + self.circle1.radius
@@ -96,7 +107,6 @@ class Canvas(graphics.Scene):
         tangent.graphics.stroke()
 
         tangent.graphics.arc_negative(v2.x, v2.y, self.circle2.radius + band_radius, (v3_1-v2).heading(), (v3_2-v2).heading())
-
         tangent.graphics.stroke()
 
 
