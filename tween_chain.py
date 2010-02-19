@@ -2,21 +2,23 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
+# This is intentionally slow to test how well the lib behaves on many sprites
+# moving.
+# It could be easily (and totally appropriately) improved by doing all the
+# drawing in on_enter_frame and forgetting about sprites.
+
 import colorsys
 
 import gtk
 from lib import graphics
 from lib.pytweener import Easing
+from math import floor
 
 
-class TailParticle(graphics.Sprite):
+class TailParticle(graphics.Rectangle):
     def __init__(self, x, y, color, follow = None):
-        graphics.Sprite.__init__(self, x, y, interactive = False)
+        graphics.Rectangle.__init__(self, 10, 10, 3, x = x, y = y, pivot_x = 5, pivot_y = 5, fill = color)
         self.follow = follow
-
-        self.graphics.set_color(color)
-        self.graphics.rectangle(-5, -5, 10, 10, 3)
-        self.graphics.fill()
 
 
 class Canvas(graphics.Scene):
@@ -39,37 +41,30 @@ class Canvas(graphics.Scene):
 
         self.connect("mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.mouse_x, self.mouse_y = 0, 0
 
 
     def on_mouse_move(self, area, event):
         # oh i know this should not be performed using tweeners, but hey - a demo!
-        x, y = event.x, event.y
-
-        for particle in reversed(self.tail):
-            new_x, new_y = x, y
-            if particle.follow:
-                new_x, new_y = particle.follow.x, particle.follow.y
-
-            self.tweener.killTweensOf(particle)
-            self.animate(particle, dict(x=float(new_x), y=float(new_y)), duration = 0.3, easing = Easing.Expo.easeOut, instant = False)
-
-        self.mouse_moving = True
+        self.mouse_x, self.mouse_y = event.x, event.y
         self.redraw_canvas()
 
 
     def on_enter_frame(self, scene, context):
-        if self.mouse_moving == False:
-            # retract tail when the movement has stopped
-            for particle in reversed(self.tail):
-                if particle.follow and round(particle.follow.x, 2) != round(particle.x, 2) and round(particle.follow.y, 2) != round(particle.y, 2) :
-                    new_x, new_y = particle.follow.x, particle.follow.y
-                    self.tweener.killTweensOf(particle)
-                    self.animate(particle, dict(x=new_x, y=new_y), duration = 0.3, easing = Easing.Expo.easeOut, instant = False)
+        for particle in reversed(self.tail):
+            if particle.follow:
+                new_x, new_y = particle.follow.x, particle.follow.y
+            else:
+                new_x, new_y = self.mouse_x, self.mouse_y
 
-        self.mouse_moving = False
+            self.tweener.killTweensOf(particle)
 
-        if int(self.tail[0].x) != int(self.tail[-1].x) and int(self.tail[0].y) != int(self.tail[-1].y):
-            self.redraw_canvas() # constant redraw (maintaining the requested frame rate)
+            if abs(particle.x - new_x) + abs(particle.y - new_y) > 0.01:
+                self.animate(particle, dict(x=new_x, y=new_y), duration = 0.3, easing = Easing.Expo.easeOut, instant = False)
+
+
+        if abs(self.tail[0].x - self.tail[-1].x) + abs(self.tail[0].y - self.tail[-1].y) > 1:
+            self.redraw_canvas() # redraw if the tail is not on the head
 
 
 class BasicWindow:
