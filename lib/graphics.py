@@ -1,6 +1,6 @@
 # - coding: utf-8 -
 
-# Copyright (C) 2008-2009 Toms Bauģis <toms.baugis at gmail.com>
+# Copyright (C) 2008-2010 Toms Bauģis <toms.baugis at gmail.com>
 
 # This file is part of Project Hamster.
 
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Project Hamster.  If not, see <http://www.gnu.org/licenses/>.
 import math
-import time, datetime as dt
+import datetime as dt
 import gtk, gobject
 
 import pango, cairo
@@ -28,10 +28,6 @@ import colorsys
 from collections import deque
 
 class Colors(object):
-    aluminium = [(238, 238, 236), (211, 215, 207), (186, 189, 182),
-                 (136, 138, 133), (85, 87, 83), (46, 52, 54)]
-    almost_white = (250, 250, 250)
-
     def parse(self, color):
         assert color is not None
 
@@ -520,7 +516,7 @@ class Scene(gtk.DrawingArea):
         self.sprites = []
 
     def redraw_canvas(self):
-        """Redraw canvas. Triggers also to do all animations"""
+        """Queue scene redraw"""
         if not self.__drawing_queued: #if we are moving, then there is a timeout somewhere already
             self.__drawing_queued = True
             self.last_frame_time = dt.datetime.now()
@@ -683,7 +679,6 @@ class Scene(gtk.DrawingArea):
         self.window.set_cursor(gtk.gdk.Cursor(cursor))
 
 
-
     def _check_hit(self, sprite, x, y):
         if sprite == self._drag_sprite:
             return True
@@ -736,70 +731,3 @@ class Scene(gtk.DrawingArea):
 
             self.emit("on-click", event, targets)
         self.emit("on-mouse-up")
-
-
-""" simple example """
-class SampleScene(Scene):
-    def __init__(self):
-        Scene.__init__(self)
-
-        self.rectangle = Rectangle(90, 90, 10, stroke = "#666", fill = "#ff00ff",
-                                   x = 50, y = 50,
-                                   interactive = True, draggable = True)
-        self.add_child(self.rectangle)
-
-        self.label = Label("Hello world", 30, "#000", x = 10, y = -100) # setting y to -100 so it will fall "from the sky"
-
-        self.add_child(self.label)
-
-
-class BasicWindow:
-    def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("Project Hamster Graphics Module")
-        window.set_size_request(300, 300)
-        window.connect("delete_event", lambda *args: gtk.main_quit())
-
-        self.scene = SampleScene()
-        box = gtk.VBox()
-        box.pack_start(self.scene)
-
-        button = gtk.Button("Hello")
-        button.connect("clicked", self.on_go_clicked)
-
-        box.add_with_properties(button, "expand", False)
-
-        window.add(box)
-        window.show_all()
-
-        # drop the hello on init
-        self.scene.animate(self.scene.label,
-                           dict(y = 120),
-                           duration = 0.7,
-                           easing = Easing.Bounce.easeOut)
-
-
-    def on_go_clicked(self, widget):
-        """ when button clicked, we just throw the scene's rectangle
-            object to some other random place, using tweens for smoother animation"""
-        import random
-
-        # set x and y to random position within the drawing area
-        x = round(min(random.random() * self.scene.width,
-                      self.scene.width - 90))
-        y = round(min(random.random() * self.scene.height,
-                      self.scene.height - 90))
-
-        # here we call the animate function with parameters we would like to change
-        # the easing functions outside graphics module can be accessed via
-        # graphics.Easing
-        self.scene.tweener.killTweensOf(self.scene.rectangle)
-        self.scene.animate(self.scene.rectangle,
-                           dict(x = x, y = y),
-                           duration = 0.8,
-                           easing = Easing.Expo.easeOut)
-
-
-if __name__ == "__main__":
-   example = BasicWindow()
-   gtk.main()
