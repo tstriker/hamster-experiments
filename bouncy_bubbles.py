@@ -26,12 +26,11 @@ FRICTION = -0.9;
 
 
 class Ball(graphics.Circle):
-    def __init__(self, x, y, radius, color):
-        graphics.Circle.__init__(self, radius, fill = color, x = x, y = y, pivot_x = radius, pivot_y = radius)
+    def __init__(self, x, y, radius):
+        graphics.Circle.__init__(self, radius, x = x, y = y, pivot_x = radius, pivot_y = radius)
 
         # just for kicks add mass, so bigger balls would not bounce as easy as little ones
         self.mass = float(self.radius) * 2
-        self.color = color
 
         # velocity
         self.vx = 0
@@ -94,19 +93,20 @@ class Canvas(graphics.Scene):
         self.window_pos = None
 
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-finish-frame", self.on_finish_frame)
 
     def on_enter_frame(self, scene, context):
+        # render and update positions of the balls
         if not self.balls:
             for i in range(15):
                 radius = randint(10, 30)
                 ball = Ball(randint(radius, self.width - radius),
                                     randint(radius, self.height - radius),
-                                    radius,
-                                    "#aaaaaa")
+                                    radius)
                 self.balls.append(ball)
                 self.add_child(ball)
 
-        # on expose is called when we are ready to draw
+
         for ball in self.balls:
             ball.move((self.width, self.height))
             ball.colide(self.balls)
@@ -123,6 +123,11 @@ class Canvas(graphics.Scene):
 
         self.redraw_canvas()
 
+    def on_finish_frame(self, scene, context):
+        # save some CPU and do all the filling once at the end
+        g = graphics.Graphics(context)
+        g.set_color("#aaa")
+        g.fill()
 
 class BasicWindow:
     def __init__(self):
