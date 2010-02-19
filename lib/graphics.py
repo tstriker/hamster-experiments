@@ -385,18 +385,14 @@ class Label(Sprite):
 
 
 class Shape(Sprite):
-    """shape is a simple continuous shape that can have fill and stroke
-    """
-
+    """shape is a simple continuous shape that can have fill and stroke"""
     def __init__(self, stroke = None, fill = None, line_width = None, **kwargs):
         kwargs.setdefault("interactive", False)
         Sprite.__init__(self, **kwargs)
         self.stroke_color = stroke
         self.fill_color = fill
         self.line_width = line_width
-        self.draw_shape()
-        self._color()
-        self._sprite_dirty = False # a dirty shape needs it's graphics regenerated, because params have changed
+        self._sprite_dirty = True # a dirty shape needs it's graphics regenerated, because params have changed
 
     def __setattr__(self, name, val):
         self.__dict__[name] = val
