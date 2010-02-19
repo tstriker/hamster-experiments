@@ -70,6 +70,9 @@ class Graphics(object):
 
        Most of instructions are mapped to cairo functions by the same name.
        Where there are differences, documenation is provided.
+
+       See http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context
+       for detailed description of all the functions below.
     """
     def __init__(self, context = None):
         self._instructions = deque()
@@ -83,7 +86,7 @@ class Graphics(object):
         self.context = context
 
     def clear(self):
-        """clear all instruction"""
+        """clear all instructions"""
         self._instructions = deque()
         self.extra_instructions = []
         self.paths = []
@@ -91,48 +94,65 @@ class Graphics(object):
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
+        """stroke the line with given color and opacity"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._stroke,)
 
     def _fill(self, context): context.fill()
     def fill(self, color = None, alpha = 1):
+        """fill path with given color and opacity"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill,)
 
     def _stroke_preserve(self, context): context.stroke_preserve()
     def stroke_preserve(self, color = None, alpha = 1):
+        """same as stroke, only after stroking, don't discard the path"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._stroke_preserve,)
 
     def _fill_preserve(self, context): context.fill_preserve()
     def fill_preserve(self, color = None, alpha = 1):
+        """same as fill, only after filling, don't discard the path"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill_preserve,)
 
     def _new_path(self, context): context.new_path()
-    def new_path(self): self._add_instruction(self._new_path,)
+    def new_path(self):
+        """discard current path"""
+        self._add_instruction(self._new_path,)
 
     def _paint(self, context): context.paint()
-    def paint(self): self._add_instruction(self._paint,)
+    def paint(self):
+        """errrm. paint"""
+        self._add_instruction(self._paint,)
 
     def _set_source_surface(self, context, image, x, y): context.set_source_surface(image, x, y)
     def set_source_surface(self, image, x = 0, y = 0): self._add_instruction(self._set_source_surface, image, x, y)
 
     def _move_to(self, context, x, y): context.move_to(x, y)
-    def move_to(self, x, y): self._add_instruction(self._move_to, x, y)
+    def move_to(self, x, y):
+        """change current position"""
+        self._add_instruction(self._move_to, x, y)
 
     def _line_to(self, context, x, y): context.line_to(x, y)
-    def line_to(self, x, y): self._add_instruction(self._line_to, x, y)
+    def line_to(self, x, y):
+        """draw line"""
+        self._add_instruction(self._line_to, x, y)
 
     def _curve_to(self, context, x, y, x2, y2, x3, y3): context.curve_to(x, y, x2, y2, x3, y3)
-    def curve_to(self, x, y, x2, y2, x3, y3): self._add_instruction(self._curve_to, x, y, x2, y2, x3, y3)
+    def curve_to(self, x, y, x2, y2, x3, y3):
+        """draw curve. (x2, y2) is the middle point of the curve"""
+        self._add_instruction(self._curve_to, x, y, x2, y2, x3, y3)
 
     def _close_path(self, context): context.close_path()
-    def close_path(self): self._add_instruction(self._close_path,)
+    def close_path(self):
+        """connect end with beginning of path"""
+        self._add_instruction(self._close_path,)
 
     def _set_line_width(self, context, width):
         context.set_line_width(width)
     def set_line_style(self, width = None):
+        """change the width of the line"""
         if width is not None:
             self._add_instruction(self._set_line_width, width)
 
@@ -142,18 +162,25 @@ class Graphics(object):
         else:
             context.set_source_rgba(r, g, b, a * self.opacity)
 
-    def set_color(self, color, a = 1):
+    def set_color(self, color, alpha = 1):
+        """set active color. You can use hex colors like "#aaa", or you can use
+        normalized RGB tripplets (where every value is in range 0..1), or
+        you can do the same thing in range 0..65535"""
         color = self.colors.parse(color) #parse whatever we have there into a normalized triplet
-        if len(color) == 4 and a is None:
-            a = color[3]
-        r,g,b = color[:3]
-        self._add_instruction(self._set_color, r, g, b, a)
+        if len(color) == 4 and alpha is None:
+            alpha = color[3]
+        r, g, b = color[:3]
+        self._add_instruction(self._set_color, r, g, b, alpha)
 
     def _arc(self, context, x, y, radius, start_angle, end_angle): context.arc(x, y, radius, start_angle, end_angle)
-    def arc(self, x, y, radius, start_angle, end_angle): self._add_instruction(self._arc, x, y, radius, start_angle, end_angle)
+    def arc(self, x, y, radius, start_angle, end_angle):
+        """draw arc going counter-clockwise from start_angle to end_angle"""
+        self._add_instruction(self._arc, x, y, radius, start_angle, end_angle)
 
     def _arc_negative(self, context, x, y, radius, start_angle, end_angle): context.arc_negative(x, y, radius, start_angle, end_angle)
-    def arc_negative(self, x, y, radius, start_angle, end_angle): self._add_instruction(self._arc_negative, x, y, radius, start_angle, end_angle)
+    def arc_negative(self, x, y, radius, start_angle, end_angle):
+        """draw arc going clockwise from start_angle to end_angle"""
+        self._add_instruction(self._arc_negative, x, y, radius, start_angle, end_angle)
 
     def _rounded_rectangle(self, context, x, y, x2, y2, corner_radius):
         half_corner = corner_radius / 2
@@ -193,13 +220,18 @@ class Graphics(object):
         context.show_layout(layout)
 
     def show_text(self, text):
+        """display text with system's default font"""
         font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.show_layout(text, font_desc)
 
     def show_layout(self, text, font_desc):
+        """display text. font_desc is string of pango font description
+           ofter handier than calling this function directly, is to create
+           a class:Label object
+        """
         self._add_instruction(self._show_layout, text, font_desc)
 
-    def remember_path(self, context):
+    def _remember_path(self, context):
         context.save()
         context.identity_matrix()
         matrix = context.get_matrix()
@@ -279,7 +311,7 @@ class Graphics(object):
             if path:
                 context.append_path(path)
                 if check_extents:
-                    self.remember_path(context)
+                    self._remember_path(context)
 
             if instruction:
                 instruction(context, *args)
@@ -289,7 +321,11 @@ class Graphics(object):
 
 
 class Sprite(gtk.Object):
-    """Abstraction object. For drawing use the graphics property (sprite.graphics.)"""
+    """The Sprite class is a basic display list building block: a display list
+       node that can display graphics and can also contain children.
+       Once you have created the sprite, use Scene's add_child to add it to
+       scene"""
+
     __gsignals__ = {
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
@@ -467,8 +503,10 @@ class Circle(Shape):
 
 
 
-""" the main place where all the action is going on"""
 class Scene(gtk.DrawingArea):
+    """ The main place where all the action is going on.
+        Create sprites and add them to scene using add_child."""
+
     __gsignals__ = {
         "expose-event": "override",
         "configure_event": "override",
@@ -482,6 +520,7 @@ class Scene(gtk.DrawingArea):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
+    """@param interactive - whether canvas will be interactive"""
     def __init__(self, interactive = True):
         gtk.DrawingArea.__init__(self)
         if interactive:
@@ -491,7 +530,10 @@ class Scene(gtk.DrawingArea):
             self.connect("button_release_event", self.__on_button_release)
 
         self.sprites = []
-        self.framerate = 80
+        """a rather magic docstring"""
+        self.framerate = 80 # frame rate
+
+
         self.width, self.height = None, None
 
         self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
@@ -511,9 +553,11 @@ class Scene(gtk.DrawingArea):
 
 
     def add_child(self, sprite):
+        """Add child sprite to scene """
         self.sprites.append(sprite)
 
     def clear(self):
+        """Removing all sprites from the scene"""
         self.sprites = []
 
     def redraw_canvas(self):
@@ -538,15 +582,17 @@ class Scene(gtk.DrawingArea):
         return self.__drawing_queued
 
 
-    def animate(self, object, params = {}, duration = None, easing = None, callback = None, instant = True):
+    def animate(self, sprite, params = {}, duration = None, easing = None, callback = None, instant = True):
+        """Interpolate attributes of the given object using the internal tweener
+           and redrawing scene after every tweener update.
+        """
         if duration: params["tweenTime"] = duration  # if none will fallback to tweener default
         if easing: params["tweenType"] = easing    # if none will fallback to tweener default
         if callback: params["onCompleteFunction"] = callback
-        self.tweener.addTween(object, **params)
+        self.tweener.addTween(sprite, **params)
 
         if instant:
             self.redraw_canvas()
-
 
     """ exposure events """
     def do_configure_event(self, event):
@@ -568,7 +614,7 @@ class Scene(gtk.DrawingArea):
         for sprite in self.sprites:
             sprite._draw(context)
 
-        self.check_mouse(self.mouse_x, self.mouse_y)
+        self._check_mouse(self.mouse_x, self.mouse_y)
 
 
         if self._debug_bounds:
@@ -587,8 +633,7 @@ class Scene(gtk.DrawingArea):
 
     """ mouse events """
     def all_sprites(self, sprites = None):
-        """returns generator that will iterate through a flattened list of the
-           sprite tree"""
+        """returns flat list of the sprite tree for simplified iteration"""
 
         if sprites is None:
             sprites = self.sprites
@@ -642,12 +687,12 @@ class Scene(gtk.DrawingArea):
                 return
         else:
             if not self.__drawing_queued: # avoid double mouse checks - the redraw will also check for mouse!
-                self.check_mouse(event.x, event.y)
+                self._check_mouse(event.x, event.y)
 
         self.emit("mouse-move", event)
 
 
-    def check_mouse(self, mouse_x, mouse_y):
+    def _check_mouse(self, mouse_x, mouse_y):
         if mouse_x is None: return
 
         #check if we have a mouse over
