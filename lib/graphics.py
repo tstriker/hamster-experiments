@@ -295,6 +295,7 @@ class Sprite(gtk.Object):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        #"on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
@@ -321,15 +322,19 @@ class Sprite(gtk.Object):
         if self.x or self.y or self.rotation:
             context.save()
 
-            context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
-            context.rotate(self.rotation)
+            if self.x or self.y:
+                context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
+
+            if self.rotation:
+                context.rotate(self.rotation)
 
         self.graphics.opacity = self.opacity * opacity
+
+        #self.emit("on-draw") # TODO - this is expensive when doing constant redraw with many frames. maybe we can have a simple callback here?
         self.graphics._draw(context, self.interactive or self.draggable)
 
         for sprite in self.child_sprites:
             sprite._draw(context, self.opacity * opacity)
-
 
         if self.x or self.y or self.rotation:
             context.restore()
@@ -396,7 +401,7 @@ class Shape(Sprite):
 
     def __setattr__(self, name, val):
         self.__dict__[name] = val
-        if name != '_sprite_dirty':
+        if name not in ('_sprite_dirty', 'x', 'y', 'rotation'):
             self._sprite_dirty = True
 
 
@@ -569,7 +574,7 @@ class Scene(gtk.DrawingArea):
         if self._debug_bounds:
             context.set_line_width(1)
             context.set_source_rgb(.2, .2, .5)
-            for sprite in self.all_sprites(self.sprites):
+            for sprite in self.all_sprites():
                 if sprite.graphics.extents:
                     x,y,x2,y2 = sprite.graphics.extents
                     context.rectangle(x, y, x2-x, y2-y)
@@ -582,14 +587,17 @@ class Scene(gtk.DrawingArea):
 
     """ mouse events """
     def all_sprites(self, sprites = None):
-        """recursively flatten the tree and return all sprites"""
-        sprites = sprites or self.sprites
-        res = []
+        """returns generator that will iterate through a flattened list of the
+           sprite tree"""
+
+        if sprites is None:
+            sprites = self.sprites
+
         for sprite in sprites:
-            res.append(sprite)
+            yield sprite
             if sprite.child_sprites:
-                res.extend(self.all_sprites(sprite.child_sprites))
-        return res
+                for child in self.all_sprites(sprite.child_sprites):
+                    yield child
 
     def __on_mouse_move(self, area, event):
         if event.is_hint:
@@ -633,7 +641,8 @@ class Scene(gtk.DrawingArea):
 
                 return
         else:
-            self.check_mouse(event.x, event.y)
+            if not self.__drawing_queued: # avoid double mouse checks - the redraw will also check for mouse!
+                self.check_mouse(event.x, event.y)
 
         self.emit("mouse-move", event)
 
