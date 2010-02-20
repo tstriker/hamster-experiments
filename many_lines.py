@@ -83,10 +83,13 @@ class Scene(graphics.Scene):
             for i in range(30):
                 self.particles.append(Particle(random() * self.width, random() * self.height))
 
+        g.set_line_style(width=0.3)
 
         for i, path in enumerate(self.paths):
             context.append_path(path)
-            g.set_color("#333", i / float(len(self.paths)))
+
+            if i % 10 == 0:
+                g.set_color("#000", i / float(len(self.paths)))
             context.stroke()
 
         for particle in self.particles:
@@ -95,10 +98,10 @@ class Scene(graphics.Scene):
             g.line_to(particle.x, particle.y)
 
         self.paths.append(context.copy_path())
-        if len(self.paths) > 50:
+        if len(self.paths) > 30:
             self.paths.popleft()
 
-        g.set_color("#333")
+        g.set_color("#000")
         g.stroke()
 
         self.redraw_canvas()
