@@ -73,7 +73,7 @@ class Scene(graphics.Scene):
         #new_tile_size = random.randint(4, min([self.width / self.pattern_tiles, self.height / self.pattern_tiles]))
 
         self.tweener.addTween(self,
-                              tweenType = Easing.Expo.easeInOut,
+                              tweenType = Easing.Expo.ease_in_out,
                               tweenTime = 1,
                               dx = new_dx,
                               dy = new_dy,

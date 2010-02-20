@@ -56,9 +56,9 @@ class Scene(graphics.Scene):
         easing = clicked.easing_method()
 
         if clicked.left_side:
-            self.animate(clicked, dict(x = 300), easing = easing.__getattribute__("easeOut"))
+            self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"))
         else:
-            self.animate(clicked, dict(x = 90), easing = easing.__getattribute__("easeIn"))
+            self.animate(clicked, x = 90, easing = easing.__getattribute__("ease_in"))
 
         clicked.left_side = not clicked.left_side
 

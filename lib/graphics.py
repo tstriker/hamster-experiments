@@ -542,7 +542,7 @@ class Scene(gtk.DrawingArea):
         self.width, self.height = None, None
 
         if pytweener:
-            self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
+            self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
         self.last_frame_time = None
         self.colors = Colors()
@@ -584,7 +584,7 @@ class Scene(gtk.DrawingArea):
         if pytweener:
             self.tweener.update(time_since_last_frame)
 
-        self.__drawing_queued = pytweener and self.tweener.hasTweens()
+        self.__drawing_queued = pytweener and self.tweener.has_tweens()
 
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
@@ -592,17 +592,14 @@ class Scene(gtk.DrawingArea):
         return self.__drawing_queued
 
 
-    def animate(self, sprite, params = {}, duration = None, easing = None, callback = None, instant = True):
+    def animate(self, sprite, instant = True, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
         """Interpolate attributes of the given object using the internal tweener
            and redrawing scene after every tweener update.
         """
         if not pytweener: # here we complain
             raise Exception("pytweener not found. Include it to enable animations")
 
-        if duration: params["tweenTime"] = duration  # if none will fallback to tweener default
-        if easing: params["tweenType"] = easing    # if none will fallback to tweener default
-        if callback: params["onCompleteFunction"] = callback
-        self.tweener.addTween(sprite, **params)
+        self.tweener.add_tween(sprite, duration = duration, easing = easing, on_complete = on_complete, on_update = on_update, delay = delay, **kwargs)
 
         if instant:
             self.redraw_canvas()
