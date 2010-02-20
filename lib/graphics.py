@@ -22,8 +22,12 @@ import gtk, gobject
 
 import pango, cairo
 
-import pytweener
-from pytweener import Easing
+try:
+    import pytweener
+except:
+    # we can also live without tweener. Scene.animate won't work in this case
+    pytweener = None
+
 import colorsys
 from collections import deque
 
@@ -537,7 +541,9 @@ class Scene(gtk.DrawingArea):
 
         self.width, self.height = None, None
 
-        self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
+        if pytweener:
+            self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.easeInOut)
+
         self.last_frame_time = None
         self.colors = Colors()
 
@@ -575,8 +581,10 @@ class Scene(gtk.DrawingArea):
             return True
 
         time_since_last_frame = (dt.datetime.now() - self.last_frame_time).microseconds / 1000000.0
-        self.tweener.update(time_since_last_frame)
-        self.__drawing_queued = self.tweener.hasTweens()
+        if pytweener:
+            self.tweener.update(time_since_last_frame)
+
+        self.__drawing_queued = pytweener and self.tweener.hasTweens()
 
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
@@ -588,6 +596,9 @@ class Scene(gtk.DrawingArea):
         """Interpolate attributes of the given object using the internal tweener
            and redrawing scene after every tweener update.
         """
+        if not pytweener: # here we complain
+            raise Exception("pytweener not found. Include it to enable animations")
+
         if duration: params["tweenTime"] = duration  # if none will fallback to tweener default
         if easing: params["tweenType"] = easing    # if none will fallback to tweener default
         if callback: params["onCompleteFunction"] = callback
