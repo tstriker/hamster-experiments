@@ -21,7 +21,7 @@ class EasingBox(graphics.Rectangle):
         self.interactive = True
 
 
-class Canvas(graphics.Scene):
+class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
@@ -69,14 +69,7 @@ class BasicWindow:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_size_request(450, 630)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-
-        canvas = Canvas()
-
-        box = gtk.VBox()
-        box.pack_start(canvas)
-
-
-        window.add(box)
+        window.add(Scene())
         window.show_all()
 
 
