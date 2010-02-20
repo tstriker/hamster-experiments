@@ -3,7 +3,12 @@
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
 """
-  Ported from javascript via chrome experiments. Doesn't scale too well right now, heh
+  Ported from javascript via chrome experiments.
+  Most addictive. There are some params to adjust in the Scene class.
+  Color and number of particles reduced due to performance
+  Without fadeout this becomes a mess soon, drawing/storing whole window seems
+  to be bit expensive though. Although scales lineary. Check earlier code of this
+  same file for some snippets, if you want to go that way.
 
   Super Simple Particle System
   Eric Ishii Eckhardt for Adapted
@@ -73,6 +78,10 @@ class Scene(graphics.Scene):
         self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()
 
+        self.particle_count = 100 # these are the flies
+        self.max_path_count = 5   # set this bigger to get longer tails and fry your computer
+        self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
+
     def on_mouse_move(self, scene, event):
         self.mouse_x, self.mouse_y = event.x, event.y
 
@@ -80,7 +89,7 @@ class Scene(graphics.Scene):
         g = graphics.Graphics(context)
 
         if not self.particles:
-            for i in range(30):
+            for i in range(self.particle_count):
                 self.particles.append(Particle(random() * self.width, random() * self.height))
 
         g.set_line_style(width=0.3)
@@ -88,7 +97,7 @@ class Scene(graphics.Scene):
         for i, path in enumerate(self.paths):
             context.append_path(path)
 
-            if i % 10 == 0:
+            if i % self.fade_step == 0:
                 g.set_color("#000", i / float(len(self.paths)))
             context.stroke()
 
@@ -98,7 +107,7 @@ class Scene(graphics.Scene):
             g.line_to(particle.x, particle.y)
 
         self.paths.append(context.copy_path())
-        if len(self.paths) > 30:
+        if len(self.paths) > self.max_path_count:
             self.paths.popleft()
 
         g.set_color("#000")
