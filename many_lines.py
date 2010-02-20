@@ -14,6 +14,7 @@
 import gtk
 from lib import graphics
 from random import random
+import collections
 
 
 class Particle(object):
@@ -70,45 +71,35 @@ class Scene(graphics.Scene):
         self.connect("mouse-move", self.on_mouse_move)
         self.particles = []
         self.mouse_x, self.mouse_y = 0, 0
-        self.screen_image = None
-        self.frame = 0
-        self.context_memory = None
+        self.paths = collections.deque()
 
     def on_mouse_move(self, scene, event):
         self.mouse_x, self.mouse_y = event.x, event.y
 
     def on_enter_frame(self, scene, context):
-        if self.screen_image:
-            self.window.draw_image(self.get_style().black_gc, self.screen_image, 0, 0, 0, 0, -1, -1)
-
         g = graphics.Graphics(context)
 
-        self.frame +=1
-
-        if self.frame % 10 == 0:
-            g.fill_area(0, 0, self.width, self.height, "#fff", 0.08) # fade out
-
         if not self.particles:
-            for i in range(20):
+            for i in range(30):
                 self.particles.append(Particle(random() * self.width, random() * self.height))
 
-        if self.context_memory:
-            context.append_path(self.context_memory)
+
+        for i, path in enumerate(self.paths):
+            context.append_path(path)
+            g.set_color("#333", i / float(len(self.paths)))
+            context.stroke()
 
         for particle in self.particles:
             particle.update(self.mouse_x, self.mouse_y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
 
-        self.context_memory = context.copy_path()
+        self.paths.append(context.copy_path())
+        if len(self.paths) > 50:
+            self.paths.popleft()
 
         g.set_color("#333")
         g.stroke()
-
-        if self.frame % 10 == 0:
-            self.screen_image = self.window.get_image(0, 0, self.width, self.height)
-            self.context_memory = None
-            # now get our pixmap
 
         self.redraw_canvas()
 
