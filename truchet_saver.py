@@ -14,7 +14,7 @@ import math
 import random
 from lib.pytweener import Easing
 
-class Canvas(graphics.Scene):
+class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
         self.tile_size = 40
@@ -138,13 +138,7 @@ class BasicWindow:
         window.set_size_request(500, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
-        canvas = Canvas()
-
-        box = gtk.VBox()
-        box.pack_start(canvas)
-
-
-        window.add(box)
+        window.add(Scene())
         window.show_all()
 
 
