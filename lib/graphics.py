@@ -346,10 +346,11 @@ class Sprite(gtk.Object):
         self.x, self.y = x, y
         self.rotation = rotation
 
-    def add_child(self, sprite):
+    def add_child(self, *sprites):
         """add another sprite to this one to inherit position, rotation and opacity"""
-        self.child_sprites.append(sprite)
-        sprite.parent = self
+        for sprite in sprites:
+            self.child_sprites.append(sprite)
+            sprite.parent = self
 
     def _draw(self, context, opacity = 1):
         if self.visible is False:
@@ -552,9 +553,10 @@ class Scene(gtk.DrawingArea):
         self._debug_bounds = False
 
 
-    def add_child(self, sprite):
+    def add_child(self, *sprites):
         """Add child sprite to scene """
-        self.sprites.append(sprite)
+        for sprite in sprites:
+            self.sprites.append(sprite)
 
     def clear(self):
         """Removing all sprites from the scene"""
