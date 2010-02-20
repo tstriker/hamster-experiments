@@ -278,6 +278,8 @@ class Graphics(object):
                     self.instructions.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
+                    x,y = context.get_current_point()
+                    self.instructions.append((None, None, None, self._move_to, (x,y))) #previous move_to call will be actually executed after this
                     self.instructions.append((None, current_color, None, instruction, args))
 
                 else:
