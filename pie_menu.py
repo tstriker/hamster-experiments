@@ -7,7 +7,6 @@
 
 import gtk
 from lib import graphics
-from lib.pytweener import Easing
 from lib.euclid import Vector2
 import math
 

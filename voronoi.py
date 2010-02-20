@@ -10,7 +10,6 @@
 
 import gtk
 from lib import graphics
-from lib.pytweener import Easing
 
 import math
 from lib.euclid import Vector2, Point2
@@ -28,7 +27,7 @@ class Node(graphics.Rectangle):
         self.x = x
         self.y = y
 
-class Canvas(graphics.Scene):
+class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
         self.nodes = [Node(-10000, -10000), Node(10000, -10000), Node(0, 10000)]
@@ -135,12 +134,12 @@ class BasicWindow:
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
-        self.canvas = Canvas()
+        self.scene = Scene()
 
         box = gtk.VBox()
-        box.pack_start(self.canvas)
+        box.pack_start(self.scene)
 
-        button = gtk.Button("Redo")
+        button = gtk.Button("Clear")
         def on_click(*args):
             self.canvas.nodes = []
             self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None

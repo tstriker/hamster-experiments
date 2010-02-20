@@ -9,7 +9,7 @@
 
 import gtk
 
-from lib import graphics, pytweener
+from lib import graphics
 
 import math
 import random
