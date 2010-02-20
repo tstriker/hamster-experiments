@@ -29,44 +29,30 @@ class Particle(object):
 
         self.prev_x, self.prev_y = x, y
 
+        # bouncyness - set to 1 to disable
         self.speed_mod_x = random() * 20 + 8
         self.speed_mod_y = random() * 20 + 8
-        self.speed_mod_target_x = random() * 3 + 2
-        self.speed_mod_target_y = random() * 3 + 2
 
-        self.max_speed = random() * 20 + 5
+        # random force of atraction towards target (0.1 .. 0.5)
+        self.accel_mod_x = random() * 0.5 + 0.2
+        self.accel_mod_y = random() * 0.5 + 0.2
 
         self.speed_x, self.speed_y = 0, 0
 
     def update(self, mouse_x, mouse_y):
+        self.prev_x, self.prev_y = self.x, self.y
+
+        target_accel_x = (mouse_x - self.x) * self.accel_mod_x
+        target_accel_y = (mouse_y - self.y) * self.accel_mod_y
 
 
-        target_speed_x = (mouse_x - self.x) / self.speed_mod_target_x
-        target_speed_y = (mouse_y - self.y) / self.speed_mod_target_y
-
-        if abs(self.speed_x) > self.max_speed:
-            if self.speed_x < 0:
-                self.speed_x = -self.max_speed
-            else:
-                self.speed_x = self.max_speed
-
-        if abs(self.speed_y) > self.max_speed:
-            if self.speed_y < 0:
-                self.speed_y = -self.max_speed
-            else:
-                self.speed_y = self.max_speed
+        self.speed_x = self.speed_x + (target_accel_x - self.speed_x) / self.speed_mod_x
+        self.speed_y = self.speed_y + (target_accel_y - self.speed_y) / self.speed_mod_y
 
 
-        self.speed_x = self.speed_x + (target_speed_x - self.speed_x) / self.speed_mod_x
-        self.speed_y = self.speed_y + (target_speed_y - self.speed_y) / self.speed_mod_y
-
-        self.prev_x = self.x
-        self.prev_y = self.y
 
         self.x = self.x + self.speed_x
         self.y = self.y + self.speed_y
-
-
 
 class Scene(graphics.Scene):
     def __init__(self):
@@ -78,9 +64,11 @@ class Scene(graphics.Scene):
         self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()
 
-        self.particle_count = 100 # these are the flies
-        self.max_path_count = 5   # set this bigger to get longer tails and fry your computer
+        self.particle_count = 50 # these are the flies
+        self.max_path_count = 10   # set this bigger to get longer tails and fry your computer
         self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
+
+
 
     def on_mouse_move(self, scene, event):
         self.mouse_x, self.mouse_y = event.x, event.y
