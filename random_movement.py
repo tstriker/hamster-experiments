@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+# - coding: utf-8 -
+# Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
+
+"""
+    Looking into random movement. Specifically looking for something elegant.
+    These are just beginnings.
+"""
+
+
+import gtk
+from lib import graphics
+from lib.euclid import Vector2
+import math
+from random import random
+
+class Boid(graphics.Shape):
+    def __init__(self):
+        graphics.Shape.__init__(self)
+        self.visible = True
+        self.radius = 4
+        self.acceleration = Vector2()
+        self.velocity = Vector2()
+
+        self.location = Vector2(150, 150)
+        self.positions = []
+        self.message = None # a message that waypoint has set perhaps
+        self.flight_angle = 0
+        self.stroke_color = "#666"
+
+    def update_position(self, w, h):
+        raise TableSpoon # forgot the name of the real exception, so can as well raise a table spoon
+
+    def draw_shape(self):
+        #draw boid triangle
+        if self.flight_angle:
+            theta = self.flight_angle
+        else:
+            theta = self.velocity.heading() + math.pi / 2
+
+        self.rotation = theta
+        self.x, self.y = self.location.x, self.location.y
+        self.graphics.set_line_style(width = 1)
+
+        self.graphics.move_to(0, -self.radius*2)
+        self.graphics.line_to(-self.radius, self.radius * 2)
+        self.graphics.line_to(self.radius, self.radius * 2)
+        self.graphics.line_to(0, -self.radius*2)
+
+
+
+class Boid1(Boid):
+    """purely random acceleration plus gravitational pull towards the center"""
+    def __init__(self):
+        Boid.__init__(self)
+
+    def update_position(self, w, h):
+        self.acceleration = Vector2(random() * 2 - 1, random() * 2 - 1)
+
+        self.acceleration += (Vector2(w/2, h/2) - self.location) / 4000
+
+        self.velocity += self.acceleration
+        self.velocity.limit(5)
+        self.location += self.velocity
+        self.location.x = max(min(self.location.x, w), 0)
+        self.location.y = max(min(self.location.y, h), 0)
+
+
+
+class Scene(graphics.Scene):
+    def __init__(self):
+        graphics.Scene.__init__(self)
+
+        self.boids = [Boid1()]
+        self.add_child(*self.boids)
+        self.connect("on-enter-frame", self.on_enter_frame)
+
+    def on_enter_frame(self, scene, context):
+        for boid in self.boids:
+            boid.update_position(self.width, self.height)
+
+        self.redraw_canvas()
+
+
+class BasicWindow:
+    def __init__(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_size_request(600, 500)
+        window.connect("delete_event", lambda *args: gtk.main_quit())
+        window.add(Scene())
+        window.show_all()
+
+example = BasicWindow()
+gtk.main()
