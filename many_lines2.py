@@ -19,10 +19,41 @@
 import gtk
 from lib import graphics
 from lib.euclid import Vector2
-from random import random
+from random import random, randint
 import collections
 
+class Boid(object):
+    def __init__(self):
+        self.acceleration = Vector2()
+        self.velocity = Vector2()
+        self.location = Vector2(150, 150)
 
+class Boid3(Boid):
+    """Sir Boid from random_movement.py"""
+    def __init__(self):
+        Boid.__init__(self)
+        self.target = None
+        self.prev_distance = None
+
+    def update_position(self, w, h):
+        distance = 0
+        if self.target:
+            distance = (self.target - self.location).magnitude_squared()
+
+        if not self.target or self.prev_distance and distance > self.prev_distance:
+            self.prev_distance = w * w + h * h
+            self.target = Vector2(randint(0, w), randint(0, h))
+
+        target = (self.target - self.location)
+
+        self.acceleration = (target - self.velocity).normalize() * 2
+        self.velocity += self.acceleration
+
+        self.velocity.limit(20)
+
+        self.prev_distance = distance
+
+        self.location += self.velocity
 
 class Particle(object):
     def __init__(self, x, y):
@@ -66,12 +97,11 @@ class Scene(graphics.Scene):
         self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()
 
-        self.particle_count = 50 # these are the flies
-        self.max_path_count = 50   # set this bigger to get longer tails and fry your computer
+        self.particle_count = 40 # these are the flies
+        self.max_path_count = 14   # set this bigger to get longer tails and fry your computer
         self.fade_step = 2         # the smaller is this the "ghostier" it looks (and slower too)
 
-        self.target = None
-        self.target_velocity = None
+        self.target = Boid3()
 
 
 
@@ -82,19 +112,9 @@ class Scene(graphics.Scene):
             for i in range(self.particle_count):
                 self.particles.append(Particle(random() * self.width, random() * self.height))
 
-        if not self.target:
-            self.target = Vector2(random() * self.width, random()* self.height)
-            self.target_velocity = Vector2(random() * 5, random() * 5)
-
-        self.target_velocity += Vector2((random() + 0.5 - 1) * 1, (random() + 0.5 - 1) * 1)
-        self.target_velocity.limit(20)
-
-        self.target += self.target_velocity
-        if self.target.x < 0 or self.target.x > self.width or self.target.y < 0 or self.target.y > self.height:
-            self.target_velocity = - self.target_velocity
+        self.target.update_position(self.width, self.height)
 
         g.set_line_style(width=0.3)
-
         for i, path in enumerate(self.paths):
             context.append_path(path)
 
@@ -103,7 +123,7 @@ class Scene(graphics.Scene):
             context.stroke()
 
         for particle in self.particles:
-            particle.update(self.target.x, self.target.y)
+            particle.update(self.target.location.x, self.target.location.y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
 
