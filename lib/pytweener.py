@@ -74,9 +74,9 @@ class Tweener(object):
 
         # remove all the completed tweens
         for tween in done_list:
-            self.current_tweens[obj].remove(tween)
-            if not self.current_tweens[obj]:
-                del self.current_tweens[obj]
+            self.current_tweens[tween.target].remove(tween)
+            if not self.current_tweens[tween.target]:
+                del self.current_tweens[tween.target]
 
 
 class Tween(object):
