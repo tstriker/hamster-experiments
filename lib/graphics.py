@@ -278,7 +278,7 @@ class Graphics(object):
                     self.instructions.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
-                    x,y = context.get_current_point()
+                    x,y = context.get_current_point() or (0,0)
                     self.instructions.append((None, None, None, self._move_to, (x,y))) #previous move_to call will be actually executed after this
                     self.instructions.append((None, current_color, None, instruction, args))
 
@@ -413,6 +413,8 @@ class Label(Sprite):
 
     def _draw_label(self):
         self._set_dimensions()
+        self.graphics.move_to(0, 0) #make sure we don't wander off somewhere nowhere
+
         if self.color:
             self.graphics.set_color(self.color)
         self.graphics.show_layout(self.text, self.font_desc)
