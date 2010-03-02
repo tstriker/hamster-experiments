@@ -109,7 +109,6 @@ class Boid3(Boid):
         if not self.target or self.prev_distance and distance > self.prev_distance:
             self.prev_distance = w * w + h * h
             self.target = Vector2(randint(0, w), randint(0, h))
-            print self.target
 
         target = (self.target - self.location)
 
