@@ -32,16 +32,14 @@ class Scene(graphics.Scene):
             if easing_class.startswith("__") == False:
                 the_class = classes.__getattribute__(easing_class)
 
-                label = graphics.Label(easing_class, color = "#333")
-                label.x, label.y = 10, i * 49 + 40
+                label = graphics.Label(easing_class, color = "#333", x = 10, y = i * 49 + 40)
                 self.add_child(label)
 
                 box = EasingBox(easing_class, 90, i * 49 + 30, the_class)
                 self.add_child(box)
                 self.boxes.append(box)
 
-                label = graphics.Label(easing_class, color = "#333")
-                label.x, label.y = 350, i * 49 + 40
+                label = graphics.Label(easing_class, color = "#333", x = 350, y = i * 49 + 40)
                 self.add_child(label)
 
 
