@@ -37,7 +37,7 @@ class Scene(graphics.Scene):
         x, y = event.x, event.y
 
         segment = Segment(x, y, "#666666", 50)
-        self.tweener.addTween(segment, tweenType = Easing.Cubic.ease_out, tweenTime=1.5, width = 0)
+        self.tweener.add_tween(segment, easing = Easing.Cubic.ease_out, duration=1.5, width = 0)
         self.segments.insert(0, segment)
 
     def on_enter_frame(self, scene, context):

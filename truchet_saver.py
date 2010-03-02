@@ -72,12 +72,12 @@ class Scene(graphics.Scene):
         new_dy = (random.random() * 0.8 + 0.1) * random.choice([-1,1])
         #new_tile_size = random.randint(4, min([self.width / self.pattern_tiles, self.height / self.pattern_tiles]))
 
-        self.tweener.addTween(self,
-                              tweenType = Easing.Expo.ease_in_out,
-                              tweenTime = 1,
+        self.tweener.add_tween(self,
+                              easing = Easing.Expo.ease_in_out,
+                              duration = 1,
                               dx = new_dx,
                               dy = new_dy,
-                              onComplete = switch_tiles)
+                              on_complete = switch_tiles)
 
 
     def generate_tile_map(self, horizontal, vertical):
