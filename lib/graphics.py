@@ -16,6 +16,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with Project Hamster.  If not, see <http://www.gnu.org/licenses/>.
+# t
 import math
 import datetime as dt
 import gtk, gobject
