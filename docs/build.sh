@@ -1,3 +1,4 @@
+# builds documentation and pushes update
 rm -Rf _build/
 make html
 python sphinxtogithub.py _build/html/
