@@ -440,8 +440,8 @@ class Shape(Sprite):
     def __init__(self, stroke = None, fill = None, line_width = None, **kwargs):
         kwargs.setdefault("interactive", False)
         Sprite.__init__(self, **kwargs)
-        self.stroke_color = stroke
-        self.fill_color = fill
+        self.stroke = stroke # stroke color
+        self.fill = fill     # fill color
         self.line_width = line_width
         self._sprite_dirty = True # a dirty shape needs it's graphics regenerated, because params have changed
 
@@ -462,21 +462,23 @@ class Shape(Sprite):
 
 
     def draw_shape(self):
-        """implement this function in your subclassed object"""
+        """implement this function in your subclassed object. leave out stroke
+        and fill instructions - those will be performed by the shape itself, using
+        the stroke and fill attributes"""
         raise UnimplementedException
 
     def _color(self):
         if self.line_width:
             self.graphics.set_line_style(self.line_width)
 
-        if self.fill_color:
-            if self.stroke_color:
-                self.graphics.fill_preserve(self.fill_color)
+        if self.fill:
+            if self.stroke:
+                self.graphics.fill_preserve(self.fill)
             else:
-                self.graphics.fill(self.fill_color)
+                self.graphics.fill(self.fill)
 
-        if self.stroke_color:
-            self.graphics.stroke(self.stroke_color)
+        if self.stroke:
+            self.graphics.stroke(self.stroke)
 
 
 
@@ -542,20 +544,18 @@ class Scene(gtk.DrawingArea):
             self.connect("button_release_event", self.__on_button_release)
 
         self.sprites = []
-        """a rather magic docstring"""
         self.framerate = framerate # frame rate
-
 
         self.width, self.height = None, None
 
         if pytweener:
             self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
-        self.last_frame_time = None
         self.colors = Colors()
 
         self.__drawing_queued = False
 
+        self._last_frame_time = None
         self._mouse_sprites = set()
         self._mouse_drag = None
         self._drag_sprite = None
@@ -577,10 +577,10 @@ class Scene(gtk.DrawingArea):
 
     def redraw(self):
         """Queue redraw. The redraw will be performed not more often than
-           the :param:`framerate` allows"""
+           the `framerate` allows"""
         if not self.__drawing_queued: #if we are moving, then there is a timeout somewhere already
             self.__drawing_queued = True
-            self.last_frame_time = dt.datetime.now()
+            self._last_frame_time = dt.datetime.now()
             gobject.timeout_add(1000 / self.framerate, self.__interpolate)
 
     """ animation bits """
@@ -588,7 +588,7 @@ class Scene(gtk.DrawingArea):
         if not self.window: #will wait until window comes
             return True
 
-        time_since_last_frame = (dt.datetime.now() - self.last_frame_time).microseconds / 1000000.0
+        time_since_last_frame = (dt.datetime.now() - self._last_frame_time).microseconds / 1000000.0
         if pytweener:
             self.tweener.update(time_since_last_frame)
 
@@ -596,7 +596,7 @@ class Scene(gtk.DrawingArea):
 
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
-        self.last_frame_time = dt.datetime.now()
+        self._last_frame_time = dt.datetime.now()
         return self.__drawing_queued
 
 

@@ -26,7 +26,7 @@ class Boid(graphics.Shape):
         self.positions = []
         self.message = None # a message that waypoint has set perhaps
         self.flight_angle = 0
-        self.stroke_color = "#666"
+        self.stroke = "#666"
 
     def update_position(self, w, h):
         raise TableSpoon # forgot the name of the real exception, so can as well raise a table spoon
@@ -70,7 +70,7 @@ class Boid2(Boid):
     """
     def __init__(self):
         Boid.__init__(self)
-        self.stroke_color = "#0f0"
+        self.stroke = "#0f0"
 
     def update_position(self, w, h):
         acc_angle = self.velocity.heading() + (random() * 2 - 1)
@@ -97,7 +97,7 @@ class Boid3(Boid):
     """
     def __init__(self):
         Boid.__init__(self)
-        self.stroke_color = "#00f"
+        self.stroke = "#00f"
         self.target = None
         self.prev_distance = None
 

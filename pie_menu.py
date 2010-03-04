@@ -47,10 +47,10 @@ class Menu(graphics.Sprite):
             self.add_item()
 
     def on_mouse_over(self, sprite):
-        sprite.fill_color = "#ddd"
+        sprite.fill = "#ddd"
 
     def on_mouse_out(self, sprite):
-        sprite.fill_color = ""
+        sprite.fill = ""
 
     def on_click(self, sprite, event):
         self.add_item()
