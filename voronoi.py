@@ -44,11 +44,11 @@ class Scene(graphics.Scene):
             self.nodes.append(node)
             self.add_child(node)
 
-            self.redraw_canvas()
+            self.redraw()
 
 
     def on_node_drag(self, scene, node, coords):
-        self.redraw_canvas()
+        self.redraw()
 
 
     def on_enter_frame(self, scene, context):
@@ -143,7 +143,7 @@ class BasicWindow:
         def on_click(*args):
             self.canvas.nodes = []
             self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
-            self.canvas.redraw_canvas()
+            self.canvas.redraw()
 
         button.connect("clicked", on_click)
         box.pack_start(button, False)

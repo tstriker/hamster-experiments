@@ -71,7 +71,7 @@ class Canvas(graphics.Scene):
             prev.y = segment.y + math.sin(segment.angle) * SEGMENT_LENGTH
 
 
-        self.redraw_canvas()
+        self.redraw()
 
     def on_enter_frame(self, scene, context):
         self.segments[-1].y = self.height

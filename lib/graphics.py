@@ -336,7 +336,7 @@ class Sprite(gtk.Object):
     __gsignals__ = {
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        "on-mouse-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         #"on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
@@ -354,7 +354,7 @@ class Sprite(gtk.Object):
         self.rotation = rotation
 
     def add_child(self, *sprites):
-        """add another sprite to this one to inherit position, rotation and opacity"""
+        """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
             self.child_sprites.append(sprite)
             sprite.parent = self
@@ -384,7 +384,7 @@ class Sprite(gtk.Object):
             context.restore()
 
     def _on_click(self, button_state):
-        self.emit("on-mouse-click", button_state)
+        self.emit("on-click", button_state)
 
     def _on_mouse_over(self):
         # scene will call us when there is mouse
@@ -514,8 +514,11 @@ class Circle(Shape):
 
 
 class Scene(gtk.DrawingArea):
-    """ The main place where all the action is going on.
-        Create sprites and add them to scene using add_child."""
+    """ Widget for displaying sprites.
+        Add sprites to the Scene by calling :func:`add_child`.
+        Scene is descendant of `gtk.DrawingArea <http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html>`_
+        and thus inherits all it's methods and everything.
+    """
 
     __gsignals__ = {
         "expose-event": "override",
@@ -530,8 +533,7 @@ class Scene(gtk.DrawingArea):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-    """@param interactive - whether canvas will be interactive"""
-    def __init__(self, interactive = True):
+    def __init__(self, interactive = True, framerate = 80):
         gtk.DrawingArea.__init__(self)
         if interactive:
             self.set_events(gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
@@ -541,7 +543,7 @@ class Scene(gtk.DrawingArea):
 
         self.sprites = []
         """a rather magic docstring"""
-        self.framerate = 80 # frame rate
+        self.framerate = framerate # frame rate
 
 
         self.width, self.height = None, None
@@ -565,16 +567,17 @@ class Scene(gtk.DrawingArea):
 
 
     def add_child(self, *sprites):
-        """Add child sprite to scene """
+        """Add one or several sprites to scene """
         for sprite in sprites:
             self.sprites.append(sprite)
 
     def clear(self):
-        """Removing all sprites from the scene"""
+        """Clear scene by removing all sprites"""
         self.sprites = []
 
-    def redraw_canvas(self):
-        """Queue scene redraw"""
+    def redraw(self):
+        """Queue redraw. The redraw will be performed not more often than
+           the :param:`framerate` allows"""
         if not self.__drawing_queued: #if we are moving, then there is a timeout somewhere already
             self.__drawing_queued = True
             self.last_frame_time = dt.datetime.now()
@@ -607,7 +610,7 @@ class Scene(gtk.DrawingArea):
         self.tweener.add_tween(sprite, duration = duration, easing = easing, on_complete = on_complete, on_update = on_update, delay = delay, **kwargs)
 
         if instant:
-            self.redraw_canvas()
+            self.redraw()
 
     """ exposure events """
     def do_configure_event(self, event):
@@ -697,7 +700,7 @@ class Scene(gtk.DrawingArea):
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
                 self._drag_sprite._on_drag(new_x, new_y)
                 self.emit("on-drag", self._drag_sprite, (new_x, new_y))
-                self.redraw_canvas()
+                self.redraw()
 
                 return
         else:

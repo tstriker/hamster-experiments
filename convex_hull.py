@@ -35,7 +35,7 @@ class Canvas(graphics.Scene):
 
             self.nodes.append(node)
             self.add_child(node)
-            self.redraw_canvas()
+            self.redraw()
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
@@ -103,7 +103,7 @@ class BasicWindow:
         def on_click(*args):
             self.canvas.nodes = []
             self.canvas.clear()
-            self.canvas.redraw_canvas()
+            self.canvas.redraw()
 
         button.connect("clicked", on_click)
         box.pack_start(button, False)

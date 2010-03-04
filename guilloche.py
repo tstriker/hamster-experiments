@@ -53,7 +53,7 @@ class Scene(graphics.Scene):
         context.stroke()
 
         self.theta_step = self.theta_step -0.0000003
-        self.redraw_canvas()
+        self.redraw()
 
 
 

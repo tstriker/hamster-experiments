@@ -34,7 +34,7 @@ class Canvas(graphics.Scene):
         color1 = colormap.alloc_color(self.colors.gdk("#ff0000"))
 
         self.flood_fill(self.image, x, y, color1.pixel)
-        self.redraw_canvas()
+        self.redraw()
 
 
     def stroke_tile(self, context, x, y, size, orient):

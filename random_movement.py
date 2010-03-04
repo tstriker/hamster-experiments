@@ -134,7 +134,7 @@ class Scene(graphics.Scene):
         for boid in self.boids:
             boid.update_position(self.width, self.height)
 
-        self.redraw_canvas()
+        self.redraw()
 
 
 class BasicWindow:

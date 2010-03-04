@@ -200,7 +200,7 @@ class Canvas(graphics.Scene):
 
         context.stroke()
         context.fill()
-        self.redraw_canvas()
+        self.redraw()
 
 
 class BasicWindow:

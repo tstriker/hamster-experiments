@@ -38,7 +38,7 @@ class Canvas(graphics.Scene):
         self.image = self.window.get_image(0, 0, self.width, self.height)
         self.blur()
 
-        self.redraw_canvas()
+        self.redraw()
 
 
     def two_tile_random(self, context):

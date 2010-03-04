@@ -58,7 +58,7 @@ class Scene(graphics.Scene):
            self.y > pattern_size or self.y < -pattern_size:
             self.randomize()
 
-        self.redraw_canvas()
+        self.redraw()
 
     def randomize(self):
         self.x = 0

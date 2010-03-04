@@ -129,11 +129,11 @@ class Canvas(graphics.Scene):
 
             self.triangulate()
 
-            self.redraw_canvas()
+            self.redraw()
 
     def on_node_drag(self, scene, node, coords):
         self.centres = []
-        self.redraw_canvas()
+        self.redraw()
 
 
     def on_enter_frame(self, scene, context):
@@ -315,7 +315,7 @@ class BasicWindow:
                     self.canvas.nodes.append(node)
                     self.canvas.add_child(node)
             self.canvas.centres = []
-            self.canvas.redraw_canvas()
+            self.canvas.redraw()
 
 
         button.connect("clicked", on_click)
@@ -327,7 +327,7 @@ class BasicWindow:
             self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
             self.canvas.centres = []
             self.canvas.clear()
-            self.canvas.redraw_canvas()
+            self.canvas.redraw()
 
         button.connect("clicked", on_click)
         box.pack_end(button, False)
@@ -338,7 +338,7 @@ class BasicWindow:
         button = gtk.CheckButton("show circumcenter")
         def on_click(button):
             self.canvas.draw_circles = button.get_active()
-            self.canvas.redraw_canvas()
+            self.canvas.redraw()
 
         button.connect("clicked", on_click)
         box.pack_start(button, False)

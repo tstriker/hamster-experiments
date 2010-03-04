@@ -54,7 +54,7 @@ class Scene(graphics.Scene):
         if len(self.coords) > 1:
             self.coords.pop(-1)
 
-        self.redraw_canvas() # constant redraw (maintaining the requested frame rate)
+        self.redraw() # constant redraw (maintaining the requested frame rate)
 
 
 class BasicWindow:

@@ -59,7 +59,7 @@ class Menu(graphics.Sprite):
         item = Sector(25, 50, math.pi / 2, 0, interactive = True, stroke = "#aaa")
         item.connect("on-mouse-over", self.on_mouse_over)
         item.connect("on-mouse-out", self.on_mouse_out)
-        item.connect("on-mouse-click", self.on_click)
+        item.connect("on-click", self.on_click)
 
 
         self.menu.append(item)
@@ -88,7 +88,7 @@ class Scene(graphics.Scene):
     def on_enter_frame(self, scene, context):
         # turn the menu a bit and queue redraw
         self.menu.rotation += 0.002
-        self.redraw_canvas()
+        self.redraw()
 
 
 class BasicWindow:

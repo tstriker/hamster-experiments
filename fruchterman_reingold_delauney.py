@@ -302,7 +302,7 @@ class Canvas(graphics.Scene):
     def on_node_drag(self, scene, node, coords):
         node.real_node.x, node.real_node.y = self.screen_to_graph(*coords)
         node.real_node.fixed = True
-        self.redraw_canvas()
+        self.redraw()
 
 
     def on_mouse_move(self, scene, event):
@@ -394,11 +394,11 @@ class Canvas(graphics.Scene):
 
         self.update_buffer()
 
-        self.redraw_canvas()
+        self.redraw()
 
     def queue_relayout(self):
         self.redo_layout = True
-        self.redraw_canvas()
+        self.redraw()
 
     def update_buffer(self):
         self.edge_buffer = []
@@ -492,7 +492,7 @@ class Canvas(graphics.Scene):
             context.stroke()
 
 
-            self.redraw_canvas()
+            self.redraw()
 
     def screen_to_graph(self,x, y):
         if len(self.graph.nodes) <= 1:

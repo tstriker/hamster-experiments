@@ -47,7 +47,7 @@ class Canvas(graphics.Scene):
     def on_mouse_move(self, area, event):
         # oh i know this should not be performed using tweeners, but hey - a demo!
         self.mouse_x, self.mouse_y = event.x, event.y
-        self.redraw_canvas()
+        self.redraw()
 
 
     def on_enter_frame(self, scene, context):
@@ -63,7 +63,7 @@ class Canvas(graphics.Scene):
 
 
         if abs(self.tail[0].x - self.tail[-1].x) + abs(self.tail[0].y - self.tail[-1].y) > 1:
-            self.redraw_canvas() # redraw if the tail is not on the head
+            self.redraw() # redraw if the tail is not on the head
 
 
 class BasicWindow:

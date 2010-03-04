@@ -35,7 +35,7 @@ class Scene(graphics.Scene):
         self.zoom = abs((event.x / float(self.width)) * 2 - 1)
         self.image = None
         self.x, self.y = 0,0
-        self.redraw_canvas()
+        self.redraw()
 
     def on_enter_frame(self, scene, context):
         if not self.image:
@@ -53,7 +53,7 @@ class Scene(graphics.Scene):
                                  color1)
 
         self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
-        self.redraw_canvas()
+        self.redraw()
 
 class BasicWindow:
     def __init__(self):

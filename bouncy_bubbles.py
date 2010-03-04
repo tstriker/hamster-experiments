@@ -120,7 +120,7 @@ class Scene(graphics.Scene):
                 ball.y -= dy
         self.window_pos = window_pos
 
-        self.redraw_canvas()
+        self.redraw()
 
     def on_finish_frame(self, scene, context):
         # save some CPU and do all the filling once at the end

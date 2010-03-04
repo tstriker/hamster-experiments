@@ -65,7 +65,7 @@ class Canvas(graphics.Scene):
     def on_mouse_move(self, area, event):
         self.tile_size = int(event.x / float(self.width) * 200 + 5) # x changes size of tile from 20 to 200(+20)
         self.tile_size = min([max(self.tile_size, 10), self.width, self.height])
-        self.redraw_canvas()
+        self.redraw()
 
     def on_enter_frame(self, scene, context):
         self.checker_fill()

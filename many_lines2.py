@@ -134,7 +134,7 @@ class Scene(graphics.Scene):
         g.set_color("#000")
         g.stroke()
 
-        self.redraw_canvas()
+        self.redraw()
 
 
 

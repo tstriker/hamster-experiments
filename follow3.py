@@ -74,7 +74,7 @@ class Canvas(graphics.Scene):
         for prev, segment in zip(self.segments, self.segments[1:]):
             segment.drag(prev.x, prev.y)
 
-        self.redraw_canvas()
+        self.redraw()
 
     def on_finish_frame(self, scene, context):
         context.set_source_rgb(*self.colors.parse("#666"))

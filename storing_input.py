@@ -57,7 +57,7 @@ class Scene(graphics.Scene):
             else:
                 del self.segments[i]
 
-        self.redraw_canvas()
+        self.redraw()
 
 
 class BasicWindow:

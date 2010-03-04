@@ -184,7 +184,7 @@ class Canvas(graphics.Scene):
 
         context.stroke()
 
-        self.redraw_canvas()
+        self.redraw()
 
 
     def wrap(self, boid):
