@@ -59,7 +59,7 @@ class Tweener(object):
         """jump the the last frame of all tweens"""
         for obj in self.current_tweens:
             for t in self.current_tweens[obj]:
-                t.update(t.duration)
+                t._update(t.duration)
         self.current_tweens = {}
 
     def update(self, delta_seconds):
@@ -68,7 +68,7 @@ class Tweener(object):
         done_list = set()
         for obj in self.current_tweens:
             for tween in self.current_tweens[obj]:
-                done = tween.update(delta_seconds)
+                done = tween._update(delta_seconds)
                 if done:
                     done_list.add(tween)
 
@@ -113,7 +113,7 @@ class Tween(object):
         if self.paused:
             self.paused=False
 
-    def update(self, ptime):
+    def _update(self, ptime):
         """Update tween with the time since the last frame
            if there is an update callback, it is always called
            whether the tween is running or paused"""
@@ -188,6 +188,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 class Easing(object):
+    """Class containing easing classes to use together with the tweener.
+       All of the classes have :func:`ease_in`, :func:`ease_out` and
+       :func:`ease_in_out` functions."""
+
     class Back(object):
         @staticmethod
         def ease_in(t, b, c, d, s = 1.70158):
