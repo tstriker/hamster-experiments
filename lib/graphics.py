@@ -572,7 +572,7 @@ class Scene(gtk.DrawingArea):
             self.sprites.append(sprite)
 
     def clear(self):
-        """Clear scene by removing all sprites"""
+        """Remove all sprites from scene"""
         self.sprites = []
 
     def redraw(self):
@@ -603,6 +603,12 @@ class Scene(gtk.DrawingArea):
     def animate(self, sprite, instant = True, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
         """Interpolate attributes of the given object using the internal tweener
            and redrawing scene after every tweener update.
+           Specify the sprite and sprite's attributes that need changing.
+           `duration` defaults to 0.4 seconds and `easing` to cubic in-out
+           (for others see pytweener.Easing class).
+           Example::
+             # tween some_sprite to coordinates (50,100) using default duration and easing
+             scene.animate(some_sprite, x = 50, y = 100)
         """
         if not pytweener: # here we complain
             raise Exception("pytweener not found. Include it to enable animations")
