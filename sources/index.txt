@@ -7,6 +7,24 @@ pygtk and cairo.
 Create a :class:`graphics.Scene` and add it to the window. Then you can start
 adding and manipulating sprites.
 
+**Hello world**::
+
+    import gtk
+    from lib import graphics
+
+    class Scene(graphics.Scene):
+        def __init__(self):
+            graphics.Scene.__init__(self)
+            label = graphics.Label("Hello World", 24, "#000", x = 5, y = 5)
+            self.add_child(label) # remember to add sprites to the scene
+
+    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    window.add(Scene())
+    window.show_all()
+    gtk.main()
+
+
+
 The Scene
 ========================
 
@@ -26,7 +44,8 @@ also influence the smoothness of tweeners.
 **width, height** - width and height of the scene. Will be `None` until first
 expose (that is until first on-enter-frame signal below).
 
-**tweener** - tweener used by :func:`animate` function
+**tweener** - instance of :class:`pytweener.Tweener` that is used by
+:func:`animate` function, but can be also accessed directly for advanced control.
 
 **colors** - instance of :class:`Colors` class for color parsing
 
@@ -179,6 +198,9 @@ A few shapes to speed up your drawing.
 
 The Tweener
 ========================
+You can use the tweener on it's own but must convenient is to use the
+:func:`animate` function of :class:`Scene`, or alternatively the `Scene.tweener`
+that is an instance of this class.
 
 .. autoclass:: pytweener.Tweener
    :members:
@@ -195,5 +217,5 @@ The Tweener
     Example of tweener usage::
 
       from pytweener import Easing
-      
+
       scene.animate(my_object, x = 100, easing=Easing.Cubic.ease_out)

@@ -40,6 +40,22 @@
 pygtk and cairo.
 Create a <a title="graphics.Scene" class="reference internal" href="#graphics.Scene"><tt class="xref docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
 adding and manipulating sprites.</p>
+<p><strong>Hello world</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
+<span class="kn">from</span> <span class="nn">lib</span> <span class="kn">import</span> <span class="n">graphics</span>
+
+<span class="k">class</span> <span class="nc">Scene</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">,</span> <span class="mf">24</span><span class="p">,</span> <span class="s">&quot;#000&quot;</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="c"># remember to add sprites to the scene</span>
+
+<span class="n">window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Scene</span><span class="p">())</span>
+<span class="n">window</span><span class="o">.</span><span class="n">show_all</span><span class="p">()</span>
+<span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
 <div class="section" id="the-scene">
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -53,7 +69,7 @@ and thus inherits all it&#8217;s methods and everything.</p>
 <dl class="method">
 <dt id="graphics.Scene.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.add_child" title="Permalink to this definition">¶</a></dt>
-<dd>Add one or several sprites to scene</dd></dl>
+<dd>Add one or several <a title="graphics.Sprite" class="reference internal" href="#graphics.Sprite"><tt class="xref docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.all_sprites">
@@ -67,7 +83,10 @@ and thus inherits all it&#8217;s methods and everything.</p>
 and redrawing scene after every tweener update.
 Specify the sprite and sprite&#8217;s attributes that need changing.
 <cite>duration</cite> defaults to 0.4 seconds and <cite>easing</cite> to cubic in-out
-(for others see pytweener.Easing class).
+(for others see pytweener.Easing class).</p>
+<p>By default redraw is requested right after creating the animation.
+If you would like to add several tweens and only then redraw,
+set <cite>instant</cite> to False.
 Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># tween some_sprite to coordinates (50,100) using default duration and easing</span>
 <span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">100</span><span class="p">)</span>
@@ -96,7 +115,8 @@ redraw will be performed (that is - not more often than the framerate). It will
 also influence the smoothness of tweeners.</p>
 <p><strong>width, height</strong> - width and height of the scene. Will be <cite>None</cite> until first
 expose (that is until first on-enter-frame signal below).</p>
-<p><strong>tweener</strong> - tweener used by <tt class="xref docutils literal"><span class="pre">animate()</span></tt> function</p>
+<p><strong>tweener</strong> - instance of <a title="pytweener.Tweener" class="reference internal" href="#pytweener.Tweener"><tt class="xref docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
+<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
 <p><strong>colors</strong> - instance of <tt class="xref docutils literal"><span class="pre">Colors</span></tt> class for color parsing</p>
 <p><strong>mouse_x, self.mouse_y</strong> - last known coordinates of mouse cursor</p>
 </div>
@@ -346,6 +366,9 @@ class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</t
 </div>
 <div class="section" id="the-tweener">
 <h2>The Tweener<a class="headerlink" href="#the-tweener" title="Permalink to this headline">¶</a></h2>
+<p>You can use the tweener on it&#8217;s own but must convenient is to use the
+<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <cite>Scene.tweener</cite>
+that is an instance of this class.</p>
 <dl class="class">
 <dt id="pytweener.Tweener">
 <em class="property">
