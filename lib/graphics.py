@@ -567,7 +567,7 @@ class Scene(gtk.DrawingArea):
 
 
     def add_child(self, *sprites):
-        """Add one or several sprites to scene """
+        """Add one or several :class:`graphics.Sprite` sprites to scene """
         for sprite in sprites:
             self.sprites.append(sprite)
 
@@ -606,6 +606,10 @@ class Scene(gtk.DrawingArea):
            Specify the sprite and sprite's attributes that need changing.
            `duration` defaults to 0.4 seconds and `easing` to cubic in-out
            (for others see pytweener.Easing class).
+
+           By default redraw is requested right after creating the animation.
+           If you would like to add several tweens and only then redraw,
+           set `instant` to False.
            Example::
              # tween some_sprite to coordinates (50,100) using default duration and easing
              scene.animate(some_sprite, x = 50, y = 100)
