@@ -64,7 +64,7 @@ class Scene(graphics.Scene):
         self.x = 0
         self.y = 0
 
-        def switch_tiles():
+        def switch_tiles(sprite):
             self.pattern = None
             self.pattern_tiles = random.randint(1, 5) * 2
 
