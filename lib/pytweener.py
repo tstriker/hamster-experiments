@@ -74,6 +74,9 @@ class Tweener(object):
 
         # remove all the completed tweens
         for tween in done_list:
+            if tween.on_complete:
+                tween.on_complete(tween.target)
+
             self.current_tweens[tween.target].remove(tween)
             if not self.current_tweens[tween.target]:
                 del self.current_tweens[tween.target]
@@ -139,11 +142,9 @@ class Tween(object):
 
         if self.delta == self.duration:
             self.complete = True
-            if self.on_complete:
-                self.on_complete()
 
         if self.on_update:
-            self.on_update()
+            self.on_update(self.target)
 
         return self.complete
 
