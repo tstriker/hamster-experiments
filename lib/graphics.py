@@ -743,14 +743,14 @@ class Scene(gtk.DrawingArea):
             for sprite in new_mouse_overs:
                 sprite._on_mouse_over()
 
-            self.emit("on-mouse-over", new_mouse_overs)
+            self.emit("on-mouse-over", list(new_mouse_overs))
 
 
         gone_mouse_overs = self._mouse_sprites - over
         if gone_mouse_overs:
             for sprite in gone_mouse_overs:
                 sprite._on_mouse_out()
-            self.emit("on-mouse-out", gone_mouse_overs)
+            self.emit("on-mouse-out", list(gone_mouse_overs))
 
 
         self._mouse_sprites = over
