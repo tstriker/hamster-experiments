@@ -39,7 +39,7 @@ class Canvas(graphics.Scene):
 
         self.mouse_moving = False
 
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
         self.mouse_x, self.mouse_y = 0, 0
 

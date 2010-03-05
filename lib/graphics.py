@@ -529,7 +529,7 @@ class Scene(gtk.DrawingArea):
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
-        "mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -717,7 +717,7 @@ class Scene(gtk.DrawingArea):
             if not self.__drawing_queued: # avoid double mouse checks - the redraw will also check for mouse!
                 self._check_mouse(event.x, event.y)
 
-        self.emit("mouse-move", event)
+        self.emit("on-mouse-move", event)
 
 
     def _check_mouse(self, mouse_x, mouse_y):

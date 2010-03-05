@@ -59,7 +59,7 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
 
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.particles = []
         self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()

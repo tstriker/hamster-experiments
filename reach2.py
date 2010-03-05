@@ -43,7 +43,7 @@ class Canvas(graphics.Scene):
             self.segments.append(segment)
             self.add_child(segment)
 
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
 

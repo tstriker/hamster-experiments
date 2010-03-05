@@ -282,7 +282,7 @@ class Canvas(graphics.Scene):
         self.connect("on-finish-frame", self.on_finish_frame)
         self.connect("on-click", self.on_node_click)
         self.connect("on-drag", self.on_node_drag)
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
 
         self.mouse_node = None
         self.mouse = None

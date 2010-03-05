@@ -20,7 +20,7 @@ class Scene(graphics.Scene):
         self.R = 50 # big steps
         self.r = 0.08 # little steps
         self.p = 25 # size of the ring
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
     def on_mouse_move(self, area, event):

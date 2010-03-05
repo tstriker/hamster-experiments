@@ -24,7 +24,7 @@ class Scene(graphics.Scene):
         self.coords = []
         self.x, self.y = 0, 0
         self.radius = 30
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
 

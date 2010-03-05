@@ -45,7 +45,7 @@ class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
         self.tile_size = 40
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
     def checker_fill(self):

@@ -70,7 +70,7 @@ sprite. `mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/
 The signal is emitted also for sprites that have `draggable` disabled.
 So you can for example disable automatic dragging but react to the drag motion.
 
-**mouse-move** *(mouse_event)* - fired when user moves the mouse.
+**on-mouse-move** *(mouse_event)* - fired when user moves the mouse.
 `mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_.
 
 

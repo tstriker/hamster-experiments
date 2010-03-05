@@ -27,7 +27,7 @@ class Scene(graphics.Scene):
         self.x, self.y = 0,0
         self.image = None
 
-        self.connect("mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
     def on_mouse_move(self, area, event):

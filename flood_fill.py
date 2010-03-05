@@ -25,7 +25,7 @@ class Canvas(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
 
         # don't care about anything but spraycan
-        self.connect("mouse-move", lambda *args: self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN)))
+        self.connect("on-mouse-move", lambda *args: self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN)))
 
     def on_mouse_click(self, area, event, mouse_areas):
         x, y = event.x, event.y
