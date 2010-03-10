@@ -182,6 +182,32 @@ class Graphics(object):
         """draw arc going counter-clockwise from start_angle to end_angle"""
         self._add_instruction(self._arc, x, y, radius, start_angle, end_angle)
 
+    def circle(self, x, y, radius):
+        """draw circle"""
+        self._add_instruction(self._arc, x, y, radius, 0, math.pi * 2)
+
+    def ellipse(self, x, y, width, height, edges):
+        """draw 'perfect' ellipse, opposed to squashed circle. works also for
+           equilateral polygons"""
+        steps = edges or max((32, width, height)) / 3 # the automatic edge case is somewhat arbitrary
+
+        angle = 0
+        step = math.pi * 2 / steps
+        points = []
+        while angle < math.pi * 2:
+            points.append((self.width / 2.0 * math.cos(angle),
+                           self.height / 2.0 * math.sin(angle)))
+            angle += step
+
+        min_x = min((point[0] for point in points))
+        min_y = min((point[1] for point in points))
+
+        self._move_to(points[0][0] - min_x, points[0][1] - min_y)
+        for x, y in points:
+            self._line_to(x - min_x, y - min_y)
+        self._line_to(points[0][0] - min_x, points[0][1] - min_y)
+
+
     def _arc_negative(self, context, x, y, radius, start_angle, end_angle): context.arc_negative(x, y, radius, start_angle, end_angle)
     def arc_negative(self, x, y, radius, start_angle, end_angle):
         """draw arc going clockwise from start_angle to end_angle"""
@@ -346,7 +372,7 @@ class Sprite(gtk.Object):
         self.graphics = Graphics()
         self.interactive = interactive
         self.draggable = draggable
-        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point
+        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point, in sprite's coordinates
         self.opacity = opacity
         self.visible = visible
         self.parent = None
@@ -367,10 +393,13 @@ class Sprite(gtk.Object):
             context.save()
 
             if self.x or self.y:
-                context.translate(self.x - self.pivot_x, self.y - self.pivot_y)
+                context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:
                 context.rotate(self.rotation)
+
+            if self.pivot_x or self.pivot_y:
+                context.translate(-self.pivot_x, -self.pivot_y)
 
         self.graphics.opacity = self.opacity * opacity
 
@@ -465,7 +494,7 @@ class Shape(Sprite):
         """implement this function in your subclassed object. leave out stroke
         and fill instructions - those will be performed by the shape itself, using
         the stroke and fill attributes"""
-        raise UnimplementedException
+        raise(NotImplementedError, "expected draw_shape functoin in the class")
 
     def _color(self):
         if self.line_width:
