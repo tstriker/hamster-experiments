@@ -1,22 +1,9 @@
 # - coding: utf-8 -
 
 # Copyright (C) 2008-2010 Toms Bauģis <toms.baugis at gmail.com>
+# Dual licensed under the MIT or GPL Version 2 licenses.
+# See http://github.com/tbaugis/hamster_experiments/blob/master/README.textile
 
-# This file is part of Project Hamster.
-
-# Project Hamster is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# Project Hamster is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with Project Hamster.  If not, see <http://www.gnu.org/licenses/>.
-# t
 import math
 import datetime as dt
 import gtk, gobject
