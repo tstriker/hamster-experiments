@@ -133,7 +133,7 @@ context to the listener</p>
 sprite. <cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
 The signal is emitted also for sprites that have <cite>draggable</cite> disabled.
 So you can for example disable automatic dragging but react to the drag motion.</p>
-<p><strong>mouse-move</strong> <em>(mouse_event)</em> - fired when user moves the mouse.
+<p><strong>on-mouse-move</strong> <em>(mouse_event)</em> - fired when user moves the mouse.
 <cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.</p>
 <p><strong>on-mouse-over</strong> <em>(affected_sprites)</em> - fired when user moves over any interactive sprite.</p>
 <p><strong>on-mouse-out</strong> <em>(affected_sprites)</em> - fired when user leaves an interactive sprite.</p>
@@ -212,6 +212,11 @@ for detailed description of all the functions below.</p>
 <dd>draw arc going clockwise from start_angle to end_angle</dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.circle">
+<tt class="descname">circle</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em><big>)</big><a class="headerlink" href="#graphics.Graphics.circle" title="Permalink to this definition">¶</a></dt>
+<dd>draw circle</dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.clear" title="Permalink to this definition">¶</a></dt>
 <dd>clear all instructions</dd></dl>
@@ -225,6 +230,12 @@ for detailed description of all the functions below.</p>
 <dt id="graphics.Graphics.curve_to">
 <tt class="descname">curve_to</tt><big>(</big><em>x</em>, <em>y</em>, <em>x2</em>, <em>y2</em>, <em>x3</em>, <em>y3</em><big>)</big><a class="headerlink" href="#graphics.Graphics.curve_to" title="Permalink to this definition">¶</a></dt>
 <dd>draw curve. (x2, y2) is the middle point of the curve</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.ellipse">
+<tt class="descname">ellipse</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>edges</em><big>)</big><a class="headerlink" href="#graphics.Graphics.ellipse" title="Permalink to this definition">¶</a></dt>
+<dd>draw &#8216;perfect&#8217; ellipse, opposed to squashed circle. works also for
+equilateral polygons</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.fill">

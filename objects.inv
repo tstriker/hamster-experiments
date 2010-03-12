@@ -22,7 +22,7 @@ graphics.Graphics.fill_preserve method index.html
 graphics.Rectangle class index.html
 pytweener.Tweener.add_tween method index.html
 graphics.Scene.all_sprites method index.html
-graphics.Shape.draw_shape method index.html
+graphics.Graphics.ellipse method index.html
 graphics.Shape class index.html
 graphics.Graphics.clear method index.html
 graphics.Graphics.show_layout method index.html
@@ -32,6 +32,7 @@ graphics.Scene.add_child method index.html
 pytweener.Tween class index.html
 graphics.Graphics.set_color method index.html
 graphics.Graphics.stroke_preserve method index.html
+graphics.Graphics.circle method index.html
 graphics.Polygon class index.html
 graphics.Graphics.move_to method index.html
 pytweener.Easing class index.html
@@ -40,6 +41,7 @@ graphics.Graphics.close_path method index.html
 graphics.Scene.redraw method index.html
 graphics.Graphics class index.html
 graphics.Graphics.stroke method index.html
+graphics.Shape.draw_shape method index.html
 pytweener.Tweener class index.html
 graphics.Graphics.paint method index.html
 pytweener.Tweener.kill_tweens method index.html
