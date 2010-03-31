@@ -12,8 +12,7 @@ import pango, cairo
 
 try:
     import pytweener
-except:
-    # we can also live without tweener. Scene.animate won't work in this case
+except: # we can also live without tweener. Scene.animate won't work in this case
     pytweener = None
 
 import colorsys
@@ -51,8 +50,7 @@ class Colors(object):
         # returns color darker by step (where step is in range 0..255)
         hls = colorsys.rgb_to_hls(*self.rgb(color))
         return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
-
-
+Colors = Colors() # this is a static class, so an instance will do -- TODO - could be bad practice
 
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
@@ -64,25 +62,22 @@ class Graphics(object):
        Where there are differences, documenation is provided.
 
        See http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context
-       for detailed description of all the functions below.
+       for detailed description of the cairo drawing functions.
     """
     def __init__(self, context = None):
-        self._instructions = deque()
-        self.colors = Colors()
+        self._instructions = deque() # instruction set until it is converted into path-based instructions
+        self.instructions = [] # paths colors and operations
+        self.colors = Colors
         self.extents = None
         self.opacity = 1.0
         self.paths = None
-        self.instructions = []
-        self.extra_instructions = None
         self.last_matrix = None
         self.context = context
 
     def clear(self):
         """clear all instructions"""
         self._instructions = deque()
-        self.extra_instructions = []
         self.paths = []
-        self.instructions = []
 
     def _stroke(self, context): context.stroke()
     def stroke(self, color = None, alpha = 1):
@@ -244,7 +239,7 @@ class Graphics(object):
 
     def show_layout(self, text, font_desc):
         """display text. font_desc is string of pango font description
-           ofter handier than calling this function directly, is to create
+           often handier than calling this function directly, is to create
            a class:Label object
         """
         self._add_instruction(self._show_layout, text, font_desc)
@@ -278,11 +273,9 @@ class Graphics(object):
         """draw accumulated instructions in context"""
 
         if self._instructions: #new stuff!
-            self.extra_instructions = deque()
             self.instructions = deque()
             current_color = None
             current_line = None
-            path_instructions = False
             instruction_cache = []
 
             while self._instructions:
@@ -297,7 +290,6 @@ class Graphics(object):
                     self.instructions.append((None, current_color, None, instruction, args))
 
                 else:
-                    path_instructions = True
                     if instruction == self._set_color:
                         current_color = args
 
@@ -313,9 +305,9 @@ class Graphics(object):
                         instruction_cache.append((instruction, args))
 
 
-            while instruction_cache: # stroke's missing so we just cache
-                instruction, args = instruction_cache.pop(0)
-                self.instructions.append((None, None, None, instruction, args))
+                while instruction_cache: # stroke's missing so we just cache
+                    instruction, args = instruction_cache.pop(0)
+                    self.instructions.append((None, None, None, instruction, args))
 
 
         # if we have been moved around, we should update bounds
@@ -359,7 +351,7 @@ class Sprite(gtk.Object):
         self.graphics = Graphics()
         self.interactive = interactive
         self.draggable = draggable
-        self.pivot_x, self.pivot_y = pivot_x, pivot_y # the anchor and rotation point, in sprite's coordinates
+        self.pivot_x, self.pivot_y = pivot_x, pivot_y # rotation point in sprite's coordinates
         self.opacity = opacity
         self.visible = visible
         self.parent = None
@@ -567,7 +559,7 @@ class Scene(gtk.DrawingArea):
         if pytweener:
             self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
-        self.colors = Colors()
+        self.colors = Colors
 
         self.__drawing_queued = False
 
