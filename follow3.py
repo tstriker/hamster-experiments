@@ -26,11 +26,9 @@ class Segment(graphics.Sprite):
         self.angle = 1
         self.color = color
 
-        self.graphics.rectangle(0, 0, 10, 10, 3)
-        self.graphics.move_to(5, 5)
-        self.graphics.line_to(SEGMENT_LENGTH, 5)
-
-        self.pivot_x, self.pivot_y = 5, 5  #center will be in the middle of the rectangle
+        self.graphics.rectangle(-5, -5, 10, 10, 3)
+        self.graphics.move_to(0, 0)
+        self.graphics.line_to(SEGMENT_LENGTH, 0)
 
 
     def drag(self, x, y):

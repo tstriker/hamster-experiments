@@ -15,10 +15,13 @@ from lib.pytweener import Easing
 from math import floor
 
 
-class TailParticle(graphics.Rectangle):
+class TailParticle(graphics.Shape):
     def __init__(self, x, y, color, follow = None):
-        graphics.Rectangle.__init__(self, 10, 10, 3, x = x, y = y, pivot_x = 5, pivot_y = 5, fill = color)
+        graphics.Shape.__init__(self, x = x, y = y, fill = color)
         self.follow = follow
+
+    def draw_shape(self):
+        self.graphics.rectangle(-5, -5, 10, 10, 3)
 
 
 class Canvas(graphics.Scene):

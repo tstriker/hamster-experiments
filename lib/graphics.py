@@ -267,10 +267,10 @@ class Graphics(object):
 
 
     def _add_instruction(self, function, *params):
-        self.paths = None
         if self.context:
             function(self.context, *params)
         else:
+            self.paths = None
             self._instructions.append((function, params))
 
 
@@ -379,7 +379,7 @@ class Sprite(gtk.Object):
         if self.x or self.y or self.rotation:
             context.save()
 
-            if self.x or self.y:
+            if self.x or self.y or self.pivot_x or self.pivot_y:
                 context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:

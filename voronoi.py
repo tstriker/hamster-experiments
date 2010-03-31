@@ -18,14 +18,13 @@ import itertools
 
 EPSILON = 0.00001
 
-class Node(graphics.Rectangle):
+class Node(graphics.Shape):
     def __init__(self, x, y):
-        graphics.Rectangle.__init__(self, 10, 10, 3, fill = "#999")
-        self.pivot_x, self.pivot_y = 5, 5
-        self.draggable = True
-        self.interactive = True
-        self.x = x
-        self.y = y
+        graphics.Shape.__init__(self, x = x, y = y,
+                                interactive = True, draggable = True,
+                                fill = "#999")
+    def draw_shape(self):
+        self.graphics.rectangle(-5, -5, 10, 10, 3)
 
 class Scene(graphics.Scene):
     def __init__(self):

@@ -14,12 +14,13 @@ import math
 from lib.euclid import Point2
 
 
-class Node(graphics.Rectangle):
+class Node(graphics.Shape):
     def __init__(self, x, y):
-        graphics.Rectangle.__init__(self, 10, 10, 3, pivot_x = 5, pivot_y = 5, interactive = True, draggable = True, fill = "#999")
-        self.x = x
-        self.y = y
-
+        graphics.Shape.__init__(self, x = x, y = y,
+                                interactive = True, draggable = True,
+                                fill = "#999")
+    def draw_shape(self):
+        self.graphics.rectangle(-5, -5, 10, 10, 3)
 
 class Canvas(graphics.Scene):
     def __init__(self):
@@ -44,7 +45,12 @@ class Canvas(graphics.Scene):
         for node, node2 in self.convex_hull():
             g.move_to(node.x, node.y)
             g.line_to(node2.x, node2.y)
+
+            node.rotation += 0.01
+
         g.stroke()
+
+        self.redraw()
 
 
 
