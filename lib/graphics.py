@@ -355,7 +355,7 @@ class Sprite(gtk.Object):
     }
     def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
         gtk.Widget.__init__(self)
-        self.child_sprites = []
+        self.sprites = []
         self.graphics = Graphics()
         self.interactive = interactive
         self.draggable = draggable
@@ -369,7 +369,7 @@ class Sprite(gtk.Object):
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
-            self.child_sprites.append(sprite)
+            self.sprites.append(sprite)
             sprite.parent = self
 
     def _draw(self, context, opacity = 1):
@@ -393,7 +393,7 @@ class Sprite(gtk.Object):
         #self.emit("on-draw") # TODO - this is expensive when doing constant redraw with many frames. maybe we can have a simple callback here?
         self.graphics._draw(context, self.interactive or self.draggable)
 
-        for sprite in self.child_sprites:
+        for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
 
         if self.x or self.y or self.rotation:
@@ -712,8 +712,8 @@ class Scene(gtk.DrawingArea):
 
         for sprite in sprites:
             yield sprite
-            if sprite.child_sprites:
-                for child in self.all_sprites(sprite.child_sprites):
+            if sprite.sprites:
+                for child in self.all_sprites(sprite.sprites):
                     yield child
 
     def __on_mouse_move(self, area, event):

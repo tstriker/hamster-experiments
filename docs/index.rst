@@ -107,7 +107,7 @@ Sprite attributes
 
 **opacity** - sprite opacity
 
-**child_sprites** - list of children sprites
+**sprites** - list of children sprites
 
 **parent** - pointer to parent :class:`Sprite` or :class:`Scene`
 
