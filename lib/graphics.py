@@ -226,11 +226,12 @@ class Graphics(object):
         self.fill(color, opacity)
 
 
-    def _show_layout(self, context, text, font_desc, width = -1, wrap = None, ellipsize = None):
+    def _show_layout(self, context, text, font_desc, alignment, width, wrap, ellipsize):
         layout = context.create_layout()
         layout.set_font_description(font_desc)
         layout.set_text(text)
         layout.set_width(width)
+        layout.set_alignment(alignment)
 
         if width > 0:
             if wrap is not None:
@@ -245,12 +246,12 @@ class Graphics(object):
         font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.show_layout(text, font_desc)
 
-    def show_layout(self, text, font_desc, width = -1, wrap = None, ellipsize = None):
+    def show_layout(self, text, font_desc, alignment = pango.ALIGN_LEFT, width = -1, wrap = None, ellipsize = None):
         """display text. font_desc is string of pango font description
            often handier than calling this function directly, is to create
            a class:Label object
         """
-        self._add_instruction(self._show_layout, text, font_desc, width, wrap, ellipsize)
+        self._add_instruction(self._show_layout, text, font_desc, alignment, width, wrap, ellipsize)
 
     def _remember_path(self, context):
         context.save()
@@ -464,7 +465,7 @@ class Shape(Sprite):
 
 
 class Label(Shape):
-    def __init__(self, text = "", size = 10, color = None, **kwargs):
+    def __init__(self, text = "", size = 10, color = None, alignment = pango.ALIGN_LEFT, **kwargs):
         kwargs.setdefault('interactive', False)
         Shape.__init__(self, **kwargs)
         self.width, self.height = None, None
@@ -478,6 +479,7 @@ class Label(Shape):
         self.text = text
         self.color = color
         self.size = size
+        self.alignment = alignment
 
 
     def __setattr__(self, name, val):
@@ -502,7 +504,10 @@ class Label(Shape):
             self.graphics.set_color(self.color)
 
         self.graphics.show_layout(self.text, self.font_desc,
-                                  self._bounds_width, self.wrap, self.ellipsize)
+                                  self.alignment,
+                                  self._bounds_width,
+                                  self.wrap,
+                                  self.ellipsize)
 
         if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
             self.graphics.set_color("#000", 0)
@@ -582,8 +587,12 @@ class Scene(gtk.DrawingArea):
     def __init__(self, interactive = True, framerate = 80):
         gtk.DrawingArea.__init__(self)
         if interactive:
-            self.set_events(gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+            self.set_events(gtk.gdk.POINTER_MOTION_MASK
+                            | gtk.gdk.LEAVE_NOTIFY_MASK | gtk.gdk.ENTER_NOTIFY_MASK
+                            | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
             self.connect("motion_notify_event", self.__on_mouse_move)
+            self.connect_after("enter_notify_event", self.__on_mouse_enter)
+            self.connect_after("leave_notify_event", self.__on_mouse_leave)
             self.connect("button_press_event", self.__on_button_press)
             self.connect("button_release_event", self.__on_button_release)
 
@@ -608,6 +617,7 @@ class Scene(gtk.DrawingArea):
         self.mouse_x, self.mouse_y = None, None
 
         self._debug_bounds = False
+        self._mouse_in = False
 
 
     def add_child(self, *sprites):
@@ -698,8 +708,6 @@ class Scene(gtk.DrawingArea):
                     context.rectangle(x, y, x2-x, y2-y)
             context.stroke()
 
-
-
         self.emit("on-finish-frame", context)
 
 
@@ -716,14 +724,11 @@ class Scene(gtk.DrawingArea):
                 for child in self.all_sprites(sprite.sprites):
                     yield child
 
-    def __on_mouse_move(self, area, event):
-        if event.is_hint:
-            mouse_x, mouse_y, state = event.window.get_pointer()
-        else:
-            mouse_x = event.x
-            mouse_y = event.y
-            state = event.state
 
+    def __on_mouse_move(self, area, event):
+        mouse_x = event.x
+        mouse_y = event.y
+        state = event.state
         self.mouse_x, self.mouse_y = mouse_x, mouse_y
 
 
@@ -765,7 +770,8 @@ class Scene(gtk.DrawingArea):
 
 
     def _check_mouse(self, mouse_x, mouse_y):
-        if mouse_x is None: return
+        if mouse_x is None or not self._mouse_in:
+            return
 
         #check if we have a mouse over
         over = set()
@@ -802,6 +808,16 @@ class Scene(gtk.DrawingArea):
         self._mouse_sprites = over
         self.window.set_cursor(gtk.gdk.Cursor(cursor))
 
+
+    def __on_mouse_enter(self, area, event):
+        self._mouse_in = True
+
+    def __on_mouse_leave(self, area, event):
+        self._mouse_in = False
+        if self._mouse_sprites:
+            self.emit("on-mouse-out", list(self._mouse_sprites))
+            self._mouse_sprites = set()
+            self.redraw()
 
     def _check_hit(self, sprite, x, y):
         if sprite == self._drag_sprite:
