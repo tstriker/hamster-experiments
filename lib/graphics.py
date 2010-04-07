@@ -319,7 +319,7 @@ class Graphics(object):
 
 
         # if we have been moved around, we should update bounds
-        check_extents = with_extents and context.get_matrix() != self.last_matrix
+        check_extents = with_extents and (context.get_matrix() != self.last_matrix or not self.paths)
         if check_extents:
             self.paths = deque()
             self.extents = None
