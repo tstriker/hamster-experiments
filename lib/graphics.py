@@ -168,7 +168,7 @@ class Graphics(object):
         """draw circle"""
         self._add_instruction(self._arc, x, y, radius, 0, math.pi * 2)
 
-    def ellipse(self, x, y, width, height, edges):
+    def ellipse(self, x, y, width, height, edges = None):
         """draw 'perfect' ellipse, opposed to squashed circle. works also for
            equilateral polygons"""
         steps = edges or max((32, width, height)) / 3 # the automatic edge case is somewhat arbitrary
@@ -177,17 +177,17 @@ class Graphics(object):
         step = math.pi * 2 / steps
         points = []
         while angle < math.pi * 2:
-            points.append((self.width / 2.0 * math.cos(angle),
-                           self.height / 2.0 * math.sin(angle)))
+            points.append((width / 2.0 * math.cos(angle),
+                           height / 2.0 * math.sin(angle)))
             angle += step
 
         min_x = min((point[0] for point in points))
         min_y = min((point[1] for point in points))
 
-        self._move_to(points[0][0] - min_x, points[0][1] - min_y)
-        for x, y in points:
-            self._line_to(x - min_x, y - min_y)
-        self._line_to(points[0][0] - min_x, points[0][1] - min_y)
+        self.move_to(points[0][0] - min_x + x, points[0][1] - min_y + y)
+        for p_x, p_y in points:
+            self.line_to(p_x - min_x + x, p_y - min_y + y)
+        self.line_to(points[0][0] - min_x + x, points[0][1] - min_y + y)
 
 
     def _arc_negative(self, context, x, y, radius, start_angle, end_angle): context.arc_negative(x, y, radius, start_angle, end_angle)
