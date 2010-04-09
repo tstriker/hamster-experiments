@@ -107,6 +107,8 @@ Sprite attributes
 
 **opacity** - sprite opacity
 
+**z_order** - drawing order of siblings. The one with the biggest z_order will be on top.
+
 **sprites** - list of children sprites
 
 **parent** - pointer to parent :class:`Sprite` or :class:`Scene`

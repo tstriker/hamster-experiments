@@ -356,7 +356,11 @@ class Sprite(gtk.Object):
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         #"on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
-    def __init__(self, x = 0, y = 0, opacity = 1, visible = True, rotation = 0, pivot_x = 0, pivot_y = 0, interactive = True, draggable = False):
+    def __init__(self, x = 0, y = 0,
+                 opacity = 1, visible = True,
+                 rotation = 0, pivot_x = 0, pivot_y = 0,
+                 interactive = True, draggable = False,
+                 z_order = 0):
         gtk.Widget.__init__(self)
         self.sprites = []
         self.graphics = Graphics()
@@ -368,12 +372,15 @@ class Sprite(gtk.Object):
         self.parent = None
         self.x, self.y = x, y
         self.rotation = rotation
+        self.z_order = z_order
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
             self.sprites.append(sprite)
             sprite.parent = self
+
+        self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
     def _draw(self, context, opacity = 1):
         if self.visible is False:
@@ -622,6 +629,8 @@ class Scene(gtk.DrawingArea):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
         for sprite in sprites:
             self.sprites.append(sprite)
+
+        self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
     def clear(self):
         """Remove all sprites from scene"""
