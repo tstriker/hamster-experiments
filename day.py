@@ -18,17 +18,58 @@ class Fact(object):
         self.name = name
         self.category = category
 
-class InfoBubble(graphics.Sprite):
-    def __init__(self):
-        graphics.Sprite.__init__(self, opacity = 0, interactive = False)
 
-        self.graphics.rectangle(0, 0.5, 100, 30, 4)
-        self.graphics.fill_preserve("#eee", 0.5)
-        self.graphics.stroke("#999", 0.5)
-        self.fact = None
+class Selection(graphics.Shape):
+    def __init__(self, start_time = None, end_time = None):
+        graphics.Shape.__init__(self, stroke = "#999", fill = "#999")
+        self.start_time, self.end_time  = None, None
+        self.width, self.height = 0, 0
 
-    def update_info(self, fact):
-        self.fact = fact
+        self.start_label = graphics.Label("", 8, "#333", visible = False, z_order = 100)
+        self.end_label = graphics.Label("", 8, "#333", visible = False, z_order = 100)
+        self.duration_label = graphics.Label("", 8, "#FFF", visible = False, z_order = 100)
+
+        self.add_child(self.start_label, self.end_label, self.duration_label)
+
+    def draw_shape(self):
+        self.graphics.rectangle(0, 0, self.width, self.height)
+        self.graphics.fill(self.fill, 0.5)
+
+        self.graphics.move_to(0, 0)
+        self.graphics.line_to(0, self.height)
+        self.graphics.move_to(self.width, 0)
+        self.graphics.line_to(self.width, self.height)
+
+
+        # adjust labels
+        self.start_label.visible = self.start_time is not None
+        if self.start_label.visible:
+            self.start_label.text = self.start_time.strftime("%H:%M")
+            if self.x - self.start_label.width - 5 > 0:
+                self.start_label.x = -self.start_label.width - 5
+            else:
+                self.start_label.x = 5
+
+            self.start_label.y = self.height - self.start_label.height
+
+        self.end_label.visible = self.end_time is not None
+        if self.end_label.visible:
+            self.end_label.text = self.end_time.strftime("%H:%M")
+            self.end_label.x = self.width + 5
+
+
+
+            duration = self.end_time - self.start_time
+            duration = int(duration.seconds / 60)
+            self.duration_label.text =  "%02d:%02d" % (duration / 60, duration % 60)
+
+            self.duration_label.visible = self.duration_label.width < self.width
+            if self.duration_label.visible:
+                self.duration_label.y = (self.height - self.duration_label.height) / 2
+                self.duration_label.x = (self.width - self.duration_label.width) / 2
+        else:
+            self.duration_label.visible = False
+
 
 
 class Scene(graphics.Scene):
@@ -39,8 +80,6 @@ class Scene(graphics.Scene):
         self.view_time = start_time or dt.datetime.combine(dt.date.today(), dt.time(5, 30))
         self.start_time = self.view_time - dt.timedelta(hours=12) # we will work with twice the time we will be displaying
 
-        self.view_minutes = 12 * 60
-
         self.fact_bars = []
         self.categories = []
 
@@ -50,24 +89,24 @@ class Scene(graphics.Scene):
         self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-mouse-down", self.on_mouse_down)
         self.connect("on-mouse-up", self.on_mouse_up)
+        self.connect("on-click", self.on_click)
 
-        self.connect("on-mouse-over", self.on_mouse_over)
-        self.connect("on-mouse-out", self.on_mouse_out)
 
-        self.start_label = graphics.Label("", 8, "#333", visible = False, y = 100, z_order = 100)
-        self.end_label = graphics.Label("", 8, "#333", visible = False, y = 100, z_order = 100)
-        self.duration_label = graphics.Label("", 8, "#FFF", visible = False, y = 55, z_order = 100)
+        self.selection = Selection()
+        self.selection.z_order = 100
 
-        self.info_bubble = InfoBubble()
+        self.chosen_selection = Selection()
+        self.selection.z_order = 100
 
-        self.add_child(self.start_label, self.end_label, self.duration_label, self.info_bubble)
+        self.add_child(self.selection, self.chosen_selection)
 
         self.drag_start = None
         self.current_x = None
 
+
     def add_facts(self, facts):
         for fact in facts:
-            fact_bar = graphics.Rectangle(0, 0, fill = "#aaa", interactive = True) # dimensions will depend on screen situation
+            fact_bar = graphics.Rectangle(0, 0, fill = "#aaa") # dimensions will depend on screen situation
             fact_bar.fact = fact
 
             if fact.category in self.categories:
@@ -79,20 +118,27 @@ class Scene(graphics.Scene):
             self.add_child(fact_bar)
             self.fact_bars.append(fact_bar)
 
-    def on_mouse_over(self, scene, targets):
-        bar = targets[0]
-        pass
-
-    def on_mouse_out(self, scene, event):
-        pass
-
 
     def on_mouse_down(self, scene, event):
         self.drag_start = self.current_x
+        if self.chosen_selection in self.sprites:
+            self.sprites.remove(self.chosen_selection)
 
     def on_mouse_up(self, scene):
-        self.drag_start = None
+        if self.drag_start:
+            self.drag_start = None
+            self.sprites.remove(self.selection)
 
+            self.chosen_selection = self.selection
+            self.selection = Selection()
+            self.selection.z_order = 100
+
+            self.add_child(self.selection, self.chosen_selection)
+
+    def on_click(self, scene, event, targets):
+        print "click"
+        self.drag_start = None
+        self.redraw()
 
     def on_mouse_move(self, scene, event):
         if self.current_x:
@@ -104,22 +150,12 @@ class Scene(graphics.Scene):
                     break
 
             if active_bar:
-                if active_bar.fact != self.info_bubble.fact:
-                    self.info_bubble.update_info(active_bar.fact)
-
-                    self.tweener.kill_tweens(self.info_bubble)
-                    self.animate(self.info_bubble,
-                                 opacity = 1,
-                                 x = active_bar.x + active_bar.width + 5,
-                                 y = active_bar.y + 5,
-                                 duration = 0.3
-                                 )
+                self.set_tooltip_text("%s - %s" % (active_bar.fact.name, active_bar.fact.category))
             else:
-                self.tweener.kill_tweens(self.info_bubble)
-                self.animate(self.info_bubble, opacity = 0)
-                self.info_bubble.fact = None
+                self.set_tooltip_text("")
 
         self.redraw()
+
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
@@ -133,7 +169,7 @@ class Scene(graphics.Scene):
         g.set_line_style(width=1)
 
 
-        self.view_time = self.start_time + dt.timedelta(minutes = self.view_minutes)
+
         for bar in self.fact_bars:
             bar.y = 50 + vertical * bar.category
             bar.height = vertical
@@ -157,12 +193,11 @@ class Scene(graphics.Scene):
 
 
         if self.mouse_x:
-            start_x = self.mouse_x
+            start_x = max(min(self.mouse_x, self.width-1), 0) #mouse, but within screen regions
 
             # check for snap points
             delta, closest_snap = min((abs(start_x - i), i) for i in snap_points)
 
-            start_x = max(min(start_x, self.width-1), 0)
 
             if abs(closest_snap - start_x) < 5 and (not self.drag_start or self.drag_start != closest_snap):
                 start_x = closest_snap
@@ -177,70 +212,30 @@ class Scene(graphics.Scene):
 
             start_time = self.view_time + dt.timedelta(hours = minutes / 60, minutes = minutes % 60)
 
-            g.move_to(start_x, 50)
-            g.line_to(start_x, 50 + vertical * 10)
-            g.stroke("#999")
-
-
             end_time, end_x = None, None
             if self.drag_start:
                 minutes = int(self.drag_start * minute_pixel)
                 end_time =  self.view_time + dt.timedelta(hours = minutes / 60, minutes = minutes % 60)
-
-                end_x = self.drag_start
-
-
-                x, x2 = min(self.drag_start, start_x), max(self.drag_start, start_x)
-                g.rectangle(x, 50, x2-x, vertical * 10)
-                g.set_color("#999", 0.5)
-                g.fill()
+                end_x = round(self.drag_start) + 0.5
 
             if end_time and end_time < start_time:
                 start_time, end_time = end_time, start_time
                 start_x, end_x = end_x, start_x
 
-            self.start_label.text = start_time.strftime("%H:%M")
 
-            if start_x - self.start_label.width - 5 > 0:
-                self.start_label.x = start_x - self.start_label.width - 5
-            else:
-                self.start_label.x = start_x + 5
-            self.start_label.visible = True
+            self.selection.start_time = start_time
+            self.selection.end_time = end_time
 
+            self.selection.x = start_x
+            self.selection.width = 0
             if end_time:
-                self.end_label.text = end_time.strftime("%H:%M")
+                self.selection.width = end_x - start_x
 
-                if end_x + 5 + self.end_label.width < self.width:
-                    self.end_label.x = end_x + 5
-                else:
-                    self.end_label.x = end_x - self.end_label.width - 5
+            self.selection.y = 50
+            self.selection.height = vertical * 10
 
 
-                if self.end_label.x > self.start_label.x + self.start_label.width:
-                    self.end_label.y = 55
-                else:
-                    self.end_label.y = 55 + self.start_label.height + 5
 
-                duration = end_time - start_time
-                duration = int(duration.seconds / 60)
-                self.duration_label.text =  "%02d:%02d" % (duration / 60, duration % 60)
-
-                self.end_label.visible = True
-
-                if self.duration_label.width < end_x - start_x:
-                    self.duration_label.y = 80
-                    self.duration_label.visible = True
-                    self.duration_label.x = start_x + (end_x - start_x - self.duration_label.width) / 2
-                    self.duration_label.visible = True
-                else:
-                    self.duration_label.visible = False
-            else:
-                self.end_label.visible = False
-                self.duration_label.visible = False
-
-        else:
-            self.start_label.visible = False
-            self.end_label.visible = False
 
 
 class BasicWindow:
