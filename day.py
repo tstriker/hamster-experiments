@@ -71,10 +71,8 @@ class Scene(graphics.Scene):
             # check for snap points
             delta, closest_snap = min((abs(start_x - i), i) for i in snap_points)
 
-            if abs(closest_snap - start_x) < 5:
+            if abs(closest_snap - start_x) < horizontal - 1 and (not self._mouse_drag or self._mouse_drag[0] != closest_snap - 0.5):
                 start_x = closest_snap - 0.5
-                print start_x
-
 
             minutes = int(start_x / horizontal) * 15
             start_time = dt.time(minutes / 60, minutes % 60)
