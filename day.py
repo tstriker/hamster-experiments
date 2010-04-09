@@ -15,11 +15,23 @@ class Scene(graphics.Scene):
 
         self.connect("on-enter-frame", self.on_enter_frame)
         self.connect("on-mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-down", self.on_mouse_down)
+        self.connect("on-mouse-up", self.on_mouse_up)
 
         self.start_label = graphics.Label("", 8, "#333", visible = False, y = 55)
         self.end_label = graphics.Label("", 8, "#333", visible = False, y = 55)
 
         self.add_child(self.start_label, self.end_label)
+
+        self.drag_start = None
+        self.current_x = None
+
+    def on_mouse_down(self, scene, event):
+        self.drag_start = self.current_x
+
+    def on_mouse_up(self, scene):
+        self.drag_start = None
+
 
     def on_mouse_move(self, scene, event):
         self.redraw()
@@ -71,26 +83,31 @@ class Scene(graphics.Scene):
             # check for snap points
             delta, closest_snap = min((abs(start_x - i), i) for i in snap_points)
 
-            if abs(closest_snap - start_x) < horizontal - 1 and (not self._mouse_drag or self._mouse_drag[0] != closest_snap - 0.5):
-                start_x = closest_snap - 0.5
+            if abs(closest_snap - start_x) < horizontal - 1 and (not self.drag_start or self.drag_start != closest_snap - 0.5):
+                start_x = closest_snap
+            else:
+                start_x = start_x + 0.5
+
+
+            self.current_x = start_x
 
             minutes = int(start_x / horizontal) * 15
             start_time = dt.time(minutes / 60, minutes % 60)
 
-            g.move_to(start_x + 0.5, 50)
-            g.line_to(start_x + 0.5, 50 + vertical * 10)
+            g.move_to(start_x, 50)
+            g.line_to(start_x, 50 + vertical * 10)
             g.stroke("#999")
 
 
             end_time, end_x = None, None
-            if self._mouse_drag:
-                minutes = int(self._mouse_drag[0] / horizontal) * 15
+            if self.drag_start:
+                minutes = int(self.drag_start / horizontal) * 15
                 end_time = dt.time(minutes / 60, minutes % 60)
 
-                end_x = self._mouse_drag[0]
+                end_x = self.drag_start
 
 
-                x, x2 = min(self._mouse_drag[0], start_x), max(self._mouse_drag[0], start_x)
+                x, x2 = min(self.drag_start, start_x), max(self.drag_start, start_x)
                 g.rectangle(x, 50, x2-x, vertical * 10)
                 g.set_color("#999", 0.5)
                 g.fill()
