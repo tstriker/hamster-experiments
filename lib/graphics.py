@@ -241,9 +241,11 @@ class Graphics(object):
 
         context.show_layout(layout)
 
-    def show_text(self, text):
+    def show_text(self, text, size = None, color = None):
         """display text with system's default font"""
         font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
+        if color: self.set_color(color)
+        if size: font_desc.set_size(size * pango.SCALE)
         self.show_layout(text, font_desc)
 
     def show_layout(self, text, font_desc, alignment = pango.ALIGN_LEFT, width = -1, wrap = None, ellipsize = None):
