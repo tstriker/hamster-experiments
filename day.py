@@ -35,7 +35,7 @@ class Scene(graphics.Scene):
 
         g.fill_area(0, 50, self.width, vertical * 10, "#f6f6f6")
 
-
+        snap_points = []
 
         keys = []
         x = 10
@@ -48,31 +48,43 @@ class Scene(graphics.Scene):
 
             idx += 3
 
-            g.rectangle(x, 50 + idx * vertical, length / 15 * horizontal, vertical)
-            return length / 15 * horizontal
+            w = round(length / 15.0 * horizontal)
+
+            g.rectangle(x + 0.5, 50 + idx * vertical, w, vertical)
+            snap_points.append(x + 0.5)
+            snap_points.append(x + 0.5 + w)
+            return w
 
         x += add_level(1, 30)
         x += add_level(2, 100)
-        x += add_level(3, 10)
+        x += add_level(3, 50)
         x += add_level(1, 20)
-        x += add_level(4, 3)
+        x += add_level(4, 37)
         x += add_level(5, 70)
         x += add_level(1, 70)
 
         g.fill("#aaa", 0.5)
 
         if self.mouse_x:
-            truncated_x = self.mouse_x
-            g.move_to(truncated_x + 0.5, 50)
-            g.line_to(truncated_x + 0.5, 50 + vertical * 10)
-            g.stroke("#999")
+            start_x = self.mouse_x
 
-            minutes = int(self.mouse_x / horizontal) * 15
+            # check for snap points
+            delta, closest_snap = min((abs(start_x - i), i) for i in snap_points)
+
+            if abs(closest_snap - start_x) < 5:
+                start_x = closest_snap - 0.5
+                print start_x
+
+
+            minutes = int(start_x / horizontal) * 15
             start_time = dt.time(minutes / 60, minutes % 60)
 
-            end_time = None
+            g.move_to(start_x + 0.5, 50)
+            g.line_to(start_x + 0.5, 50 + vertical * 10)
+            g.stroke("#999")
 
-            start_x, end_x = self.mouse_x, None
+
+            end_time, end_x = None, None
             if self._mouse_drag:
                 minutes = int(self._mouse_drag[0] / horizontal) * 15
                 end_time = dt.time(minutes / 60, minutes % 60)
@@ -80,7 +92,7 @@ class Scene(graphics.Scene):
                 end_x = self._mouse_drag[0]
 
 
-                x, x2 = min(self._mouse_drag[0], self.mouse_x), max(self._mouse_drag[0], self.mouse_x)
+                x, x2 = min(self._mouse_drag[0], start_x), max(self._mouse_drag[0], start_x)
                 g.rectangle(x, 50, x2-x, vertical * 10)
                 g.set_color("#999", 0.5)
                 g.fill()
