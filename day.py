@@ -2,7 +2,9 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
-"""Base template"""
+"""
+    Duration picker. Following http://colorhat.com/
+"""
 
 
 import gtk
@@ -20,8 +22,9 @@ class Scene(graphics.Scene):
 
         self.start_label = graphics.Label("", 8, "#333", visible = False, y = 55)
         self.end_label = graphics.Label("", 8, "#333", visible = False, y = 55)
+        self.duration_label = graphics.Label("", 8, "#FFF", visible = False, y = 55)
 
-        self.add_child(self.start_label, self.end_label)
+        self.add_child(self.start_label, self.end_label, self.duration_label)
 
         self.drag_start = None
         self.current_x = None
@@ -83,7 +86,7 @@ class Scene(graphics.Scene):
             # check for snap points
             delta, closest_snap = min((abs(start_x - i), i) for i in snap_points)
 
-            if abs(closest_snap - start_x) < horizontal - 1 and (not self.drag_start or self.drag_start != closest_snap - 0.5):
+            if abs(closest_snap - start_x) < horizontal - 1 and (not self.drag_start or self.drag_start != closest_snap):
                 start_x = closest_snap
             else:
                 start_x = start_x + 0.5
@@ -118,15 +121,37 @@ class Scene(graphics.Scene):
 
             self.start_label.text = start_time.strftime("%H:%M")
 
-            self.start_label.x = start_x - self.start_label.width - 5
+            if start_x - self.start_label.width - 5 > 0:
+                self.start_label.x = start_x - self.start_label.width - 5
+            else:
+                self.start_label.x = start_x + 5
             self.start_label.visible = True
 
             if end_time:
                 self.end_label.text = end_time.strftime("%H:%M")
                 self.end_label.x = end_x + 5
+
+                if end_x + 5 > self.start_label.x + self.start_label.width:
+                    self.end_label.y = 55
+                else:
+                    self.end_label.y = 55 + self.start_label.height + 5
+
+                duration = (dt.datetime.combine(dt.date.today(), end_time) - dt.datetime.combine(dt.date.today(), start_time))
+                duration = int(duration.seconds / 60)
+                self.duration_label.text =  "%02d:%02d" % (duration / 60, duration % 60)
+
                 self.end_label.visible = True
+
+                if self.duration_label.width < end_x - start_x:
+                    self.duration_label.y = 80
+                    self.duration_label.visible = True
+                    self.duration_label.x = start_x + (end_x - start_x - self.duration_label.width) / 2
+                    self.duration_label.visible = True
+                else:
+                    self.duration_label.visible = False
             else:
                 self.end_label.visible = False
+                self.duration_label.visible = False
 
         else:
             self.start_label.visible = False
