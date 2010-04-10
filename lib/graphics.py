@@ -241,6 +241,24 @@ class Graphics(object):
 
         context.show_layout(layout)
 
+    def create_layout(self, size):
+        """utility function to create layout with the default font. Size and
+        alignment parameters are shortcuts to according functions of the
+        pango.Layout"""
+        if not self.context:
+            # TODO - this is rather sloppy as far as exception goes
+            #        should explain better
+            raise "Can not create layout without existing context!"
+
+        layout = self.context.create_layout()
+        font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
+        if size: font_desc.set_size(size * pango.SCALE)
+
+        layout.set_font_description(font_desc)
+        return layout
+
+
+
     def show_text(self, text, size = None, color = None):
         """display text with system's default font"""
         font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
@@ -864,7 +882,10 @@ class Scene(gtk.DrawingArea):
 
     def __on_button_release(self, area, event):
         #if the drag is less than 5 pixles, then we have a click
-        click = self._button_press_time and (dt.datetime.now() - self._button_press_time) < dt.timedelta(milliseconds = 300)
+        click = self._button_press_time \
+                and (dt.datetime.now() - self._button_press_time) < dt.timedelta(milliseconds = 200) \
+                and (event.x - self._mouse_drag[0]) ** 2 + (event.y - self._mouse_drag[1]) ** 2 < 60
+
         self._button_press_time = None
         self._mouse_drag = None
         self._drag_x, self._drag_y = None, None
