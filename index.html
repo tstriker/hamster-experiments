@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    '#',
         VERSION:     '0.0.1',
         COLLAPSE_MODINDEX: false,
         FILE_SUFFIX: '.html',
@@ -19,13 +19,13 @@
     </script>
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="hamster graphics v0.0.1 documentation" href="" /> 
+    <link rel="top" title="hamster graphics v0.0.1 documentation" href="#" /> 
   </head>
   <body>
     <div class="related">
       <h3>Navigation</h3>
       <ul>
-        <li><a href="">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="#">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -47,7 +47,7 @@ adding and manipulating sprites.</p>
 <span class="k">class</span> <span class="nc">Scene</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">,</span> <span class="mf">24</span><span class="p">,</span> <span class="s">&quot;#000&quot;</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">5</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="s">&quot;#000&quot;</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="c"># remember to add sprites to the scene</span>
 
 <span class="n">window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
@@ -60,8 +60,7 @@ adding and manipulating sprites.</p>
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Scene">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Widget for displaying sprites.
 Add sprites to the Scene by calling <tt class="xref docutils literal"><span class="pre">add_child()</span></tt>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
@@ -89,7 +88,7 @@ If you would like to add several tweens and only then redraw,
 set <cite>instant</cite> to False.
 Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># tween some_sprite to coordinates (50,100) using default duration and easing</span>
-<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">100</span><span class="p">)</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -144,8 +143,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 <h2><tt class="xref docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>interactive=True</em>, <em>draggable=False</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>interactive=True</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Sprite class is a basic display list building block: a display list
 node that can display graphics and can also contain children.
 Once you have created the sprite, use Scene&#8217;s add_child to add it to
@@ -167,7 +165,8 @@ scene</p>
 <p><strong>interactive</strong> - boolean denoting whether the sprite responds to mouse events</p>
 <p><strong>draggable</strong> - boolean marking if sprite can be automatically dragged</p>
 <p><strong>opacity</strong> - sprite opacity</p>
-<p><strong>child_sprites</strong> - list of children sprites</p>
+<p><strong>z_order</strong> - drawing order of siblings. The one with the biggest z_order will be on top.</p>
+<p><strong>sprites</strong> - list of children sprites</p>
 <p><strong>parent</strong> - pointer to parent <tt class="xref docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref docutils literal"><span class="pre">Scene</span></tt></p>
 </div>
 <div class="section" id="sprite-signals">
@@ -191,8 +190,7 @@ The <tt class="xref docutils literal"><span class="pre">Graphics</span></tt> cla
 <cite>context</cite> into constructor.</p>
 <dl class="class">
 <dt id="graphics.Graphics">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Graphics</tt><big>(</big><em>context=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Graphics</tt><big>(</big><em>context=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics" title="Permalink to this definition">¶</a></dt>
 <dd><p>If context is given upon contruction, will perform drawing
 operations on context instantly. Otherwise queues up the drawing
 instructions and performs them in passed-in order when _draw is called
@@ -200,7 +198,7 @@ with context.</p>
 <p>Most of instructions are mapped to cairo functions by the same name.
 Where there are differences, documenation is provided.</p>
 <p>See <a class="reference external" href="http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context">http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context</a>
-for detailed description of all the functions below.</p>
+for detailed description of the cairo drawing functions.</p>
 <dl class="method">
 <dt id="graphics.Graphics.arc">
 <tt class="descname">arc</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em>, <em>start_angle</em>, <em>end_angle</em><big>)</big><a class="headerlink" href="#graphics.Graphics.arc" title="Permalink to this definition">¶</a></dt>
@@ -227,13 +225,20 @@ for detailed description of all the functions below.</p>
 <dd>connect end with beginning of path</dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.create_layout">
+<tt class="descname">create_layout</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
+<dd>utility function to create layout with the default font. Size and
+alignment parameters are shortcuts to according functions of the
+pango.Layout</dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.curve_to">
 <tt class="descname">curve_to</tt><big>(</big><em>x</em>, <em>y</em>, <em>x2</em>, <em>y2</em>, <em>x3</em>, <em>y3</em><big>)</big><a class="headerlink" href="#graphics.Graphics.curve_to" title="Permalink to this definition">¶</a></dt>
 <dd>draw curve. (x2, y2) is the middle point of the curve</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.ellipse">
-<tt class="descname">ellipse</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>edges</em><big>)</big><a class="headerlink" href="#graphics.Graphics.ellipse" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">ellipse</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>edges=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.ellipse" title="Permalink to this definition">¶</a></dt>
 <dd>draw &#8216;perfect&#8217; ellipse, opposed to squashed circle. works also for
 equilateral polygons</dd></dl>
 
@@ -291,14 +296,14 @@ you can do the same thing in range 0..65535</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.show_layout">
-<tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>width=-1</em>, <em>wrap=None</em>, <em>ellipsize=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
 <dd>display text. font_desc is string of pango font description
-ofter handier than calling this function directly, is to create
+often handier than calling this function directly, is to create
 a class:Label object</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.show_text">
-<tt class="descname">show_text</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">show_text</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
 <dd>display text with system&#8217;s default font</dd></dl>
 
 <dl class="method">
@@ -321,8 +326,7 @@ Implement the draw_shape function (where you can use the .graphics property) to 
 Leave out stroke and fill instructions, as those will be performed automatically by the shape.</p>
 <dl class="class">
 <dt id="graphics.Shape">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Shape</tt><big>(</big><em>stroke=None</em>, <em>fill=None</em>, <em>line_width=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Shape" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Shape</tt><big>(</big><em>stroke=None</em>, <em>fill=None</em>, <em>line_width=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>shape is a simple continuous shape that can have fill and stroke</p>
 <dl class="method">
 <dt id="graphics.Shape.add_child">
@@ -333,8 +337,8 @@ class </em><tt class="descclassname">graphics.</tt><tt class="descname">Shape</t
 <dt id="graphics.Shape.draw_shape">
 <tt class="descname">draw_shape</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Shape.draw_shape" title="Permalink to this definition">¶</a></dt>
 <dd>implement this function in your subclassed object. leave out stroke
-and fill instructions - those will be performed by the shape itself, using
-the stroke and fill attributes</dd></dl>
+and fill instructions - those will be performed by the shape itself,
+using the stroke and fill attributes</dd></dl>
 
 </dd></dl>
 
@@ -344,20 +348,17 @@ the stroke and fill attributes</dd></dl>
 <p>A few shapes to speed up your drawing.</p>
 <dl class="class">
 <dt id="graphics.Circle">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>radius</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>radius</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
 <dd>Attributes: <strong>fill, stroke, radius</strong></dd></dl>
 
 <dl class="class">
 <dt id="graphics.Rectangle">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
 <dd>Attributes: <strong>fill, stroke, width, height, corner_radius</strong></dd></dl>
 
 <dl class="class">
 <dt id="graphics.Polygon">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attributes:</p>
 <p><strong>fill, stroke</strong> - fill and stroke colors of the poligon</p>
 <p><strong>points</strong> - list of (x,y) tuples that the line should go through. Polygon
@@ -366,8 +367,7 @@ will automatically close path.</p>
 
 <dl class="class">
 <dt id="graphics.Label">
-<em class="property">
-class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attributes:</p>
 <p><strong>text</strong> - label text</p>
 <p><strong>color</strong> - color of label either as hex string or an (r,g,b) tuple</p>
@@ -382,8 +382,7 @@ class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</t
 that is an instance of this class.</p>
 <dl class="class">
 <dt id="pytweener.Tweener">
-<em class="property">
-class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tweener</tt><big>(</big><em>default_duration=None</em>, <em>tween=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tweener</tt><big>(</big><em>default_duration=None</em>, <em>tween=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pytweener.Tweener.add_tween">
 <tt class="descname">add_tween</tt><big>(</big><em>obj</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.add_tween" title="Permalink to this definition">¶</a></dt>
@@ -419,8 +418,7 @@ on_complete</dd></dl>
 
 <dl class="class">
 <dt id="pytweener.Tween">
-<em class="property">
-class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tween</tt><big>(</big><em>obj</em>, <em>duration</em>, <em>easing</em>, <em>on_complete</em>, <em>on_update</em>, <em>delay</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tween" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tween</tt><big>(</big><em>obj</em>, <em>duration</em>, <em>easing</em>, <em>on_complete</em>, <em>on_update</em>, <em>delay</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tween" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pytweener.Tween.pause">
 <tt class="descname">pause</tt><big>(</big><em>seconds=-1</em><big>)</big><a class="headerlink" href="#pytweener.Tween.pause" title="Permalink to this definition">¶</a></dt>
@@ -437,8 +435,7 @@ or tween.pause() which pauses indefinitely.</dd></dl>
 
 <dl class="class">
 <dt id="pytweener.Easing">
-<em class="property">
-class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Easing</tt><a class="headerlink" href="#pytweener.Easing" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Easing</tt><a class="headerlink" href="#pytweener.Easing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class containing easing classes to use together with the tweener.
 All of the classes have <tt class="xref docutils literal"><span class="pre">ease_in()</span></tt>, <tt class="xref docutils literal"><span class="pre">ease_out()</span></tt> and
 <tt class="xref docutils literal"><span class="pre">ease_in_out()</span></tt> functions.</p>
@@ -448,7 +445,7 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 <p>Example of tweener usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pytweener</span> <span class="kn">import</span> <span class="n">Easing</span>
 
-<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">my_object</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">100</span><span class="p">,</span> <span class="n">easing</span><span class="o">=</span><span class="n">Easing</span><span class="o">.</span><span class="n">Cubic</span><span class="o">.</span><span class="n">ease_out</span><span class="p">)</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">my_object</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">easing</span><span class="o">=</span><span class="n">Easing</span><span class="o">.</span><span class="n">Cubic</span><span class="o">.</span><span class="n">ease_out</span><span class="p">)</span>
 </pre></div>
 </div>
 </blockquote>
@@ -463,9 +460,9 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h3><a href="">Table Of Contents</a></h3>
+            <h3><a href="#">Table Of Contents</a></h3>
             <ul>
-<li><a class="reference external" href="">hamster.graphics</a><ul>
+<li><a class="reference external" href="#">hamster.graphics</a><ul>
 <li><a class="reference external" href="#the-scene">The Scene</a><ul>
 <li><a class="reference external" href="#scene-attributes">Scene attributes</a></li>
 <li><a class="reference external" href="#scene-signals">Scene signals</a></li>
@@ -509,12 +506,12 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
     <div class="related">
       <h3>Navigation</h3>
       <ul>
-        <li><a href="">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="#">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
       &copy; Copyright 2010, Toms Bauģis.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
     </div>
   </body>
 </html>

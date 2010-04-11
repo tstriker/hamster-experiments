@@ -38,6 +38,7 @@ graphics.Graphics.move_to method index.html
 pytweener.Easing class index.html
 graphics.Scene class index.html
 graphics.Graphics.close_path method index.html
+graphics.Graphics.create_layout method index.html
 graphics.Scene.redraw method index.html
 graphics.Graphics class index.html
 graphics.Graphics.stroke method index.html
