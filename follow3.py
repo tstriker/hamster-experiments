@@ -29,6 +29,9 @@ class Segment(graphics.Sprite):
         self.graphics.rectangle(-5, -5, 10, 10, 3)
         self.graphics.move_to(0, 0)
         self.graphics.line_to(SEGMENT_LENGTH, 0)
+        self.graphics.set_color("#666")
+        self.graphics.fill_preserve()
+        self.graphics.stroke_preserve()
 
 
     def drag(self, x, y):
@@ -62,7 +65,6 @@ class Canvas(graphics.Scene):
             self.add_child(segment)
 
         self.connect("on-mouse-move", self.on_mouse_move)
-        self.connect("on-finish-frame", self.on_finish_frame)
 
 
     def on_mouse_move(self, scene, event):
@@ -73,11 +75,6 @@ class Canvas(graphics.Scene):
             segment.drag(prev.x, prev.y)
 
         self.redraw()
-
-    def on_finish_frame(self, scene, context):
-        context.set_source_rgb(*self.colors.parse("#666"))
-        context.fill_preserve()
-        context.stroke()
 
 
 class BasicWindow:

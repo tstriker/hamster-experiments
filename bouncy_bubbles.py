@@ -26,7 +26,7 @@ FRICTION = -0.9;
 
 class Ball(graphics.Circle):
     def __init__(self, x, y, radius):
-        graphics.Circle.__init__(self, radius, x = x, y = y, pivot_x = radius, pivot_y = radius)
+        graphics.Circle.__init__(self, radius, fill="#aaa", x = x, y = y)
 
         # just for kicks add mass, so bigger balls would not bounce as easy as little ones
         self.mass = float(self.radius) * 2
@@ -35,9 +35,7 @@ class Ball(graphics.Circle):
         self.vx = 0
         self.vy = 0
 
-    def move(self, area_dimensions):
-        width, height = area_dimensions
-
+    def move(self, width, height):
         self.vy += GRAVITY
         self.x += self.vx
         self.y += self.vy
@@ -92,7 +90,6 @@ class Scene(graphics.Scene):
         self.window_pos = None
 
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-finish-frame", self.on_finish_frame)
 
     def on_enter_frame(self, scene, context):
         # render and update positions of the balls
@@ -107,7 +104,7 @@ class Scene(graphics.Scene):
 
 
         for ball in self.balls:
-            ball.move((self.width, self.height))
+            ball.move(self.width, self.height)
             ball.colide(self.balls)
 
 
@@ -122,11 +119,6 @@ class Scene(graphics.Scene):
 
         self.redraw()
 
-    def on_finish_frame(self, scene, context):
-        # save some CPU and do all the filling once at the end
-        g = graphics.Graphics(context)
-        g.set_color("#aaa")
-        g.fill()
 
 class BasicWindow:
     def __init__(self):
