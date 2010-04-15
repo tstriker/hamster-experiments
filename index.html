@@ -1,0 +1,517 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>hamster.graphics &mdash; hamster graphics v0.0.1 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '0.0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="hamster graphics v0.0.1 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li><a href="#">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="hamster-graphics">
+<h1>hamster.graphics<a class="headerlink" href="#hamster-graphics" title="Permalink to this headline">¶</a></h1>
+<p>The hamster graphics library is a sprite-styled abstraction layer on top of
+pygtk and cairo.
+Create a <a title="graphics.Scene" class="reference internal" href="#graphics.Scene"><tt class="xref docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
+adding and manipulating sprites.</p>
+<p><strong>Hello world</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
+<span class="kn">from</span> <span class="nn">lib</span> <span class="kn">import</span> <span class="n">graphics</span>
+
+<span class="k">class</span> <span class="nc">Scene</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="s">&quot;#000&quot;</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="c"># remember to add sprites to the scene</span>
+
+<span class="n">window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Scene</span><span class="p">())</span>
+<span class="n">window</span><span class="o">.</span><span class="n">show_all</span><span class="p">()</span>
+<span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="the-scene">
+<h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="graphics.Scene">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget for displaying sprites.
+Add sprites to the Scene by calling <tt class="xref docutils literal"><span class="pre">add_child()</span></tt>.
+Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
+and thus inherits all it&#8217;s methods and everything.</p>
+<dl class="method">
+<dt id="graphics.Scene.add_child">
+<tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.add_child" title="Permalink to this definition">¶</a></dt>
+<dd>Add one or several <a title="graphics.Sprite" class="reference internal" href="#graphics.Sprite"><tt class="xref docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.all_sprites">
+<tt class="descname">all_sprites</tt><big>(</big><em>sprites=None</em><big>)</big><a class="headerlink" href="#graphics.Scene.all_sprites" title="Permalink to this definition">¶</a></dt>
+<dd>returns flat list of the sprite tree for simplified iteration</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.animate">
+<tt class="descname">animate</tt><big>(</big><em>sprite</em>, <em>instant=True</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Scene.animate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate attributes of the given object using the internal tweener
+and redrawing scene after every tweener update.
+Specify the sprite and sprite&#8217;s attributes that need changing.
+<cite>duration</cite> defaults to 0.4 seconds and <cite>easing</cite> to cubic in-out
+(for others see pytweener.Easing class).</p>
+<p>By default redraw is requested right after creating the animation.
+If you would like to add several tweens and only then redraw,
+set <cite>instant</cite> to False.
+Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># tween some_sprite to coordinates (50,100) using default duration and easing</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.clear" title="Permalink to this definition">¶</a></dt>
+<dd>Remove all sprites from scene</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.redraw">
+<tt class="descname">redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.redraw" title="Permalink to this definition">¶</a></dt>
+<dd>Queue redraw. The redraw will be performed not more often than
+the <cite>framerate</cite> allows</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="scene-attributes">
+<h3>Scene attributes<a class="headerlink" href="#scene-attributes" title="Permalink to this headline">¶</a></h3>
+<p><strong>sprites</strong> - list of sprites in scene</p>
+<p><strong>framerate</strong> - framerate of animation. This will limit how often call for
+redraw will be performed (that is - not more often than the framerate). It will
+also influence the smoothness of tweeners.</p>
+<p><strong>width, height</strong> - width and height of the scene. Will be <cite>None</cite> until first
+expose (that is until first on-enter-frame signal below).</p>
+<p><strong>tweener</strong> - instance of <a title="pytweener.Tweener" class="reference internal" href="#pytweener.Tweener"><tt class="xref docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
+<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
+<p><strong>colors</strong> - instance of <tt class="xref docutils literal"><span class="pre">Colors</span></tt> class for color parsing</p>
+<p><strong>mouse_x, self.mouse_y</strong> - last known coordinates of mouse cursor</p>
+</div>
+<div class="section" id="scene-signals">
+<h3>Scene signals<a class="headerlink" href="#scene-signals" title="Permalink to this headline">¶</a></h3>
+<p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of scene.</p>
+<p><strong>on-enter-frame</strong> <em>(context)</em> - fired before drawing sprites and will pass
+context to the listener</p>
+<p><strong>on-finish-frame</strong> <em>(context)</em> - fired after sprites have been drawn</p>
+<p><strong>on-click</strong> <em>(mouse_event, affected_sprites)</em> fired when user clicks in scene.
+<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">gtk.gdk.Event for BUTTON_PRESS</a>.
+<cite>affected_sprites</cite> is list of sprites that have been affected by the click.</p>
+<p><strong>on-drag</strong> <em>(mouse_event, affected_sprites)</em> - fired when user drags a
+sprite. <cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
+The signal is emitted also for sprites that have <cite>draggable</cite> disabled.
+So you can for example disable automatic dragging but react to the drag motion.</p>
+<p><strong>on-mouse-move</strong> <em>(mouse_event)</em> - fired when user moves the mouse.
+<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.</p>
+<p><strong>on-mouse-over</strong> <em>(affected_sprites)</em> - fired when user moves over any interactive sprite.</p>
+<p><strong>on-mouse-out</strong> <em>(affected_sprites)</em> - fired when user leaves an interactive sprite.</p>
+<p><strong>on-mouse-up</strong> <em>()</em> - fired when user releases mouse button</p>
+</div>
+</div>
+<div class="section" id="sprite-objects">
+<h2><tt class="xref docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="graphics.Sprite">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>interactive=True</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Sprite class is a basic display list building block: a display list
+node that can display graphics and can also contain children.
+Once you have created the sprite, use Scene&#8217;s add_child to add it to
+scene</p>
+<dl class="method">
+<dt id="graphics.Sprite.add_child">
+<tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Sprite.add_child" title="Permalink to this definition">¶</a></dt>
+<dd>Add child sprite. Child will be nested within parent</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="sprite-attributes">
+<h3>Sprite attributes<a class="headerlink" href="#sprite-attributes" title="Permalink to this headline">¶</a></h3>
+<p><strong>graphics</strong> - instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</p>
+<p><strong>x, y</strong> - coordinates</p>
+<p><strong>pivot_x, pivot_y</strong> - coordinates of the sprites anchor and rotation point</p>
+<p><strong>rotation</strong> - rotation of the sprite in radians</p>
+<p><strong>visible</strong> - boolean visibility flag</p>
+<p><strong>interactive</strong> - boolean denoting whether the sprite responds to mouse events</p>
+<p><strong>draggable</strong> - boolean marking if sprite can be automatically dragged</p>
+<p><strong>opacity</strong> - sprite opacity</p>
+<p><strong>z_order</strong> - drawing order of siblings. The one with the biggest z_order will be on top.</p>
+<p><strong>sprites</strong> - list of children sprites</p>
+<p><strong>parent</strong> - pointer to parent <tt class="xref docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref docutils literal"><span class="pre">Scene</span></tt></p>
+</div>
+<div class="section" id="sprite-signals">
+<h3>Sprite signals<a class="headerlink" href="#sprite-signals" title="Permalink to this headline">¶</a></h3>
+<p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of sprite.</p>
+<p><strong>on-mouse-over</strong> <em>()</em> - fired when user moves over the sprite.</p>
+<p><strong>on-mouse-out</strong> <em>()</em> - fired when user leaves the sprite.</p>
+<p><strong>on-click</strong> <em>(mouse_event)</em> fired when user clicks on sprite.
+<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">gtk.gdk.Event for BUTTON_PRESS</a>.</p>
+<p><strong>on-drag</strong> <em>(mouse_event)</em> - fired when user drags the sprite.
+<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
+The signal is emitted also if attribute <cite>draggable</cite> is disabled.</p>
+</div>
+</div>
+<div class="section" id="graphics-class">
+<span id="graphics"></span><h2><tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class<a class="headerlink" href="#graphics-class" title="Permalink to this headline">¶</a></h2>
+<p><tt class="xref docutils literal"><span class="pre">Scene</span></tt> and all <tt class="xref docutils literal"><span class="pre">Sprite</span></tt> objects have a graphics attribute, that
+is an instance of <tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class. All the drawing is performed by
+calling functions of this attribute.
+The <tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class can also be used on it&#8217;s own, by passing in Cairo
+<cite>context</cite> into constructor.</p>
+<dl class="class">
+<dt id="graphics.Graphics">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Graphics</tt><big>(</big><em>context=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics" title="Permalink to this definition">¶</a></dt>
+<dd><p>If context is given upon contruction, will perform drawing
+operations on context instantly. Otherwise queues up the drawing
+instructions and performs them in passed-in order when _draw is called
+with context.</p>
+<p>Most of instructions are mapped to cairo functions by the same name.
+Where there are differences, documenation is provided.</p>
+<p>See <a class="reference external" href="http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context">http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context</a>
+for detailed description of the cairo drawing functions.</p>
+<dl class="method">
+<dt id="graphics.Graphics.arc">
+<tt class="descname">arc</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em>, <em>start_angle</em>, <em>end_angle</em><big>)</big><a class="headerlink" href="#graphics.Graphics.arc" title="Permalink to this definition">¶</a></dt>
+<dd>draw arc going counter-clockwise from start_angle to end_angle</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.arc_negative">
+<tt class="descname">arc_negative</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em>, <em>start_angle</em>, <em>end_angle</em><big>)</big><a class="headerlink" href="#graphics.Graphics.arc_negative" title="Permalink to this definition">¶</a></dt>
+<dd>draw arc going clockwise from start_angle to end_angle</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.circle">
+<tt class="descname">circle</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em><big>)</big><a class="headerlink" href="#graphics.Graphics.circle" title="Permalink to this definition">¶</a></dt>
+<dd>draw circle</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.clear" title="Permalink to this definition">¶</a></dt>
+<dd>clear all instructions</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.close_path">
+<tt class="descname">close_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.close_path" title="Permalink to this definition">¶</a></dt>
+<dd>connect end with beginning of path</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.create_layout">
+<tt class="descname">create_layout</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
+<dd>utility function to create layout with the default font. Size and
+alignment parameters are shortcuts to according functions of the
+pango.Layout</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.curve_to">
+<tt class="descname">curve_to</tt><big>(</big><em>x</em>, <em>y</em>, <em>x2</em>, <em>y2</em>, <em>x3</em>, <em>y3</em><big>)</big><a class="headerlink" href="#graphics.Graphics.curve_to" title="Permalink to this definition">¶</a></dt>
+<dd>draw curve. (x2, y2) is the middle point of the curve</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.ellipse">
+<tt class="descname">ellipse</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>edges=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.ellipse" title="Permalink to this definition">¶</a></dt>
+<dd>draw &#8216;perfect&#8217; ellipse, opposed to squashed circle. works also for
+equilateral polygons</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.fill">
+<tt class="descname">fill</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill" title="Permalink to this definition">¶</a></dt>
+<dd>fill path with given color and opacity</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.fill_area">
+<tt class="descname">fill_area</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>color</em>, <em>opacity=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_area" title="Permalink to this definition">¶</a></dt>
+<dd>fill rectangular area with specified color</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.fill_preserve">
+<tt class="descname">fill_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_preserve" title="Permalink to this definition">¶</a></dt>
+<dd>same as fill, only after filling, don&#8217;t discard the path</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.line_to">
+<tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
+<dd>draw line</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.move_to">
+<tt class="descname">move_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.move_to" title="Permalink to this definition">¶</a></dt>
+<dd>change current position</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.new_path">
+<tt class="descname">new_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.new_path" title="Permalink to this definition">¶</a></dt>
+<dd>discard current path</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.paint">
+<tt class="descname">paint</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.paint" title="Permalink to this definition">¶</a></dt>
+<dd>errrm. paint</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.rectangle">
+<tt class="descname">rectangle</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>corner_radius=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rectangle" title="Permalink to this definition">¶</a></dt>
+<dd>draw a rectangle. if corner_radius is specified, will draw rounded corners</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.set_color">
+<tt class="descname">set_color</tt><big>(</big><em>color</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_color" title="Permalink to this definition">¶</a></dt>
+<dd>set active color. You can use hex colors like &#8220;#aaa&#8221;, or you can use
+normalized RGB tripplets (where every value is in range 0..1), or
+you can do the same thing in range 0..65535</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.set_line_style">
+<tt class="descname">set_line_style</tt><big>(</big><em>width=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_line_style" title="Permalink to this definition">¶</a></dt>
+<dd>change the width of the line</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.show_layout">
+<tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>width=-1</em>, <em>wrap=None</em>, <em>ellipsize=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
+<dd>display text. font_desc is string of pango font description
+often handier than calling this function directly, is to create
+a class:Label object</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.show_text">
+<tt class="descname">show_text</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
+<dd>display text with system&#8217;s default font</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.stroke">
+<tt class="descname">stroke</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke" title="Permalink to this definition">¶</a></dt>
+<dd>stroke the line with given color and opacity</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.stroke_preserve">
+<tt class="descname">stroke_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke_preserve" title="Permalink to this definition">¶</a></dt>
+<dd>same as stroke, only after stroking, don&#8217;t discard the path</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="shape-objects">
+<h2><tt class="xref docutils literal"><span class="pre">Shape</span></tt> objects<a class="headerlink" href="#shape-objects" title="Permalink to this headline">¶</a></h2>
+<p>Shape is an abstract class for simple sprites (like <a class="reference internal" href="#primitives"><em>Primitives</em></a> below) with stroke and fill.
+Implement the draw_shape function (where you can use the .graphics property) to draw the shape.
+Leave out stroke and fill instructions, as those will be performed automatically by the shape.</p>
+<dl class="class">
+<dt id="graphics.Shape">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Shape</tt><big>(</big><em>stroke=None</em>, <em>fill=None</em>, <em>line_width=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>shape is a simple continuous shape that can have fill and stroke</p>
+<dl class="method">
+<dt id="graphics.Shape.add_child">
+<tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Shape.add_child" title="Permalink to this definition">¶</a></dt>
+<dd>Add child sprite. Child will be nested within parent</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Shape.draw_shape">
+<tt class="descname">draw_shape</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Shape.draw_shape" title="Permalink to this definition">¶</a></dt>
+<dd>implement this function in your subclassed object. leave out stroke
+and fill instructions - those will be performed by the shape itself,
+using the stroke and fill attributes</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="primitives">
+<span id="id4"></span><h2>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h2>
+<p>A few shapes to speed up your drawing.</p>
+<dl class="class">
+<dt id="graphics.Circle">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>radius</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
+<dd>Attributes: <strong>fill, stroke, radius</strong></dd></dl>
+
+<dl class="class">
+<dt id="graphics.Rectangle">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
+<dd>Attributes: <strong>fill, stroke, width, height, corner_radius</strong></dd></dl>
+
+<dl class="class">
+<dt id="graphics.Polygon">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attributes:</p>
+<p><strong>fill, stroke</strong> - fill and stroke colors of the poligon</p>
+<p><strong>points</strong> - list of (x,y) tuples that the line should go through. Polygon
+will automatically close path.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="graphics.Label">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attributes:</p>
+<p><strong>text</strong> - label text</p>
+<p><strong>color</strong> - color of label either as hex string or an (r,g,b) tuple</p>
+<p><strong>font_desc</strong> - string with pango font description</p>
+</dd></dl>
+
+</div>
+<div class="section" id="the-tweener">
+<h2>The Tweener<a class="headerlink" href="#the-tweener" title="Permalink to this headline">¶</a></h2>
+<p>You can use the tweener on it&#8217;s own but must convenient is to use the
+<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <cite>Scene.tweener</cite>
+that is an instance of this class.</p>
+<dl class="class">
+<dt id="pytweener.Tweener">
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tweener</tt><big>(</big><em>default_duration=None</em>, <em>tween=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pytweener.Tweener.add_tween">
+<tt class="descname">add_tween</tt><big>(</big><em>obj</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.add_tween" title="Permalink to this definition">¶</a></dt>
+<dd>Add tween for the object to go from current values to set ones.
+Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
+This will move the sprite to coordinates (500, 200) in 0.4 seconds.
+For parameter &#8220;easing&#8221; you can use one of the pytweener.Easing
+functions, or specify your own.</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tweener.finish">
+<tt class="descname">finish</tt><big>(</big><big>)</big><a class="headerlink" href="#pytweener.Tweener.finish" title="Permalink to this definition">¶</a></dt>
+<dd>jump the the last frame of all tweens</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tweener.get_tweens">
+<tt class="descname">get_tweens</tt><big>(</big><em>obj</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.get_tweens" title="Permalink to this definition">¶</a></dt>
+<dd>Get a list of all tweens acting on the specified object
+Useful for manipulating tweens on the fly</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tweener.kill_tweens">
+<tt class="descname">kill_tweens</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.kill_tweens" title="Permalink to this definition">¶</a></dt>
+<dd>Stop tweening an object, without completing the motion or firing the
+on_complete</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tweener.update">
+<tt class="descname">update</tt><big>(</big><em>delta_seconds</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.update" title="Permalink to this definition">¶</a></dt>
+<dd>update tweeners. delta_seconds is time in seconds since last frame</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pytweener.Tween">
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tween</tt><big>(</big><em>obj</em>, <em>duration</em>, <em>easing</em>, <em>on_complete</em>, <em>on_update</em>, <em>delay</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tween" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pytweener.Tween.pause">
+<tt class="descname">pause</tt><big>(</big><em>seconds=-1</em><big>)</big><a class="headerlink" href="#pytweener.Tween.pause" title="Permalink to this definition">¶</a></dt>
+<dd>Pause this tween
+do tween.pause( 2 ) to pause for a specific time
+or tween.pause() which pauses indefinitely.</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tween.resume">
+<tt class="descname">resume</tt><big>(</big><big>)</big><a class="headerlink" href="#pytweener.Tween.resume" title="Permalink to this definition">¶</a></dt>
+<dd>Resume from pause</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pytweener.Easing">
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Easing</tt><a class="headerlink" href="#pytweener.Easing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class containing easing classes to use together with the tweener.
+All of the classes have <tt class="xref docutils literal"><span class="pre">ease_in()</span></tt>, <tt class="xref docutils literal"><span class="pre">ease_out()</span></tt> and
+<tt class="xref docutils literal"><span class="pre">ease_in_out()</span></tt> functions.</p>
+<blockquote>
+<p>Subclasses are: <strong>Back, Bounce, Circ, Cubic, Elastic, Expo, Linear,
+Quad, Quart, Quint, Sine, Strong</strong></p>
+<p>Example of tweener usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pytweener</span> <span class="kn">import</span> <span class="n">Easing</span>
+
+<span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">my_object</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">easing</span><span class="o">=</span><span class="n">Easing</span><span class="o">.</span><span class="n">Cubic</span><span class="o">.</span><span class="n">ease_out</span><span class="p">)</span>
+</pre></div>
+</div>
+</blockquote>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="#">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">hamster.graphics</a><ul>
+<li><a class="reference external" href="#the-scene">The Scene</a><ul>
+<li><a class="reference external" href="#scene-attributes">Scene attributes</a></li>
+<li><a class="reference external" href="#scene-signals">Scene signals</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#sprite-objects"><tt class="docutils literal"><span class="pre">Sprite</span></tt> objects</a><ul>
+<li><a class="reference external" href="#sprite-attributes">Sprite attributes</a></li>
+<li><a class="reference external" href="#sprite-signals">Sprite signals</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
+<li><a class="reference external" href="#shape-objects"><tt class="docutils literal"><span class="pre">Shape</span></tt> objects</a></li>
+<li><a class="reference external" href="#primitives">Primitives</a></li>
+<li><a class="reference external" href="#the-tweener">The Tweener</a></li>
+</ul>
+</li>
+</ul>
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="sources/index.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li><a href="#">hamster graphics v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2010, Toms Bauģis.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+    </div>
+  </body>
+</html>
