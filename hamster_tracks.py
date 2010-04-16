@@ -53,7 +53,6 @@ class Scene(graphics.Scene):
 
         days = (end_date - start_date).days
 
-        day_pixel = self.width / float(days)
 
 
         for i in range(0, self.height, 2):
@@ -61,22 +60,30 @@ class Scene(graphics.Scene):
         g.fill("#fafafa")
 
 
+        full_days = []
         for day in range(days):
             current_date = start_date + dt.timedelta(days=day)
-            cur_x = round(day * day_pixel)
-            pixel_width = max(round(day_pixel), 1)
-
             if not self.day_counts[current_date]:
-                g.rectangle(cur_x, 0, day_pixel, self.height)
-                g.fill("#fff", 0.5)
+                continue
+            full_days.append(self.day_counts[current_date])
 
-            for j, fact in enumerate(self.day_counts[current_date]):
+        day_pixel = float(self.width) / len(full_days)
+
+
+
+        cur_x = 0
+        pixel_width = max(round(day_pixel), 1)
+
+        for day in full_days:
+            cur_x += round(day_pixel)
+
+            for j, fact in enumerate(day):
 
                 #bar per category
                 g.rectangle(cur_x, 27 + self.categories.index(fact['category']) * 3, pixel_width, 3)
 
                 #bar per activity
-                g.rectangle(cur_x, 102 + self.activities.index(fact['name']) * 9, pixel_width, 6)
+                g.rectangle(cur_x, 102 + self.activities.index(fact['name']) * 6, pixel_width, 6)
 
                 #number of activities
                 g.rectangle(cur_x, self.height - 3 * j, pixel_width, 3)
