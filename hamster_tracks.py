@@ -8,26 +8,18 @@
 import gtk
 from lib import graphics
 
-import dbus
 import time, datetime as dt
 from collections import defaultdict
-
-
-HAMSTER_DBUS_PATH = "/org/gnome/Hamster"
-HAMSTER_DBUS_IFACE = "org.gnome.Hamster"
-
+import hamster.client
 
 
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
-        bus = dbus.SessionBus()
-        obj = bus.get_object(HAMSTER_DBUS_IFACE, HAMSTER_DBUS_PATH)
-        self.hamster = dbus.Interface(obj, "org.gnome.Hamster")
+        storage = hamster.client.Storage()
 
-
-        self.facts = self.get_facts()
+        self.facts = storage.get_facts(dt.date(2009,1,1))
 
         self.day_counts = defaultdict(list)
         activities, categories = defaultdict(int), defaultdict(int)
@@ -47,26 +39,6 @@ class Scene(graphics.Scene):
 
         self.connect("on-enter-frame", self.on_enter_frame)
 
-    def get_facts(self):
-        facts = []
-        start_time = time.mktime(dt.datetime(2009, 1, 1).timetuple())
-        for fact in self.hamster.GetFacts(start_time, 0):
-            # run through the facts and convert them to python types so it's easier to operate with
-            res = {}
-            for key in ['name', 'category', 'description']:
-                res[key] = str(fact[key])
-
-            for key in ['start_time', 'end_time', 'date']:
-                res[key] = dt.datetime.utcfromtimestamp(fact[key]) if fact[key] else None
-
-            res['delta'] = dt.timedelta(days = fact['delta'] / (60 * 60 * 24),
-                                        seconds = fact['delta'] % (60 * 60 * 24))
-
-            res['tags'] = [str(tag) for tag in fact['tags']] if fact['tags'] else []
-
-            facts.append(res)
-
-        return facts
 
 
     def on_enter_frame(self, scene, context):
@@ -77,7 +49,7 @@ class Scene(graphics.Scene):
         g.set_line_style(width=1)
 
         start_date = self.facts[0]['start_time'].date()
-        end_date = self.facts[-1]['end_time'].date()
+        end_date = (self.facts[-1]['start_time'] + self.facts[-1]['delta']).date()
 
         days = (end_date - start_date).days
 
