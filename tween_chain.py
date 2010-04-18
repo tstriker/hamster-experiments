@@ -36,8 +36,8 @@ class Canvas(graphics.Scene):
 
             self.tail.append(TailParticle(10, 10, color, previous))
 
-            for tail in reversed(self.tail):
-                self.add_child(tail) # add them to scene other way round
+        for tail in reversed(self.tail):
+            self.add_child(tail) # add them to scene other way round
 
 
         self.mouse_moving = False
