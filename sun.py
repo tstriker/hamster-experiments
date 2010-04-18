@@ -14,16 +14,16 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
         self.connect("on-finish-frame", self.on_enter_frame)
         self.start_angle = 0
-        #self.framerate = 30
+        self.framerate = 120
 
     def on_enter_frame(self, scene, context):
-        self.start_angle += 0.006
+        self.start_angle += 0.01 * 60 / self.framerate # good way to keep the speed constant when overriding frame rate
 
         g = graphics.Graphics(context)
 
         g.fill_area(0, 0, self.width, self.height, "#f00")
         g.set_line_style(width = 0.5)
-        g.set_color("#fff331")
+        g.set_color("#fff")
 
         x, y = self.width / 2, self.height / 2
 
@@ -45,7 +45,6 @@ class Scene(graphics.Scene):
             angle += step * 2
 
         g.fill()
-
         self.redraw()
 
 class BasicWindow:
