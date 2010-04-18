@@ -28,7 +28,8 @@ class Sector(graphics.Shape):
         else:
             self.graphics.line_to(self.outer_radius, 0)
         self.graphics.arc_negative(0, 0, self.outer_radius, 0, angle)
-        self.graphics.close_path()
+        if self.fill:
+            self.graphics.close_path()
 
         # just for fun
         self.graphics.move_to(150, -15)
@@ -68,11 +69,11 @@ class Menu(graphics.Sprite):
 
         current_angle = 0
         angle = math.pi * 2 / len(self.menu)
-        for item in self.menu:
+        for i, item in enumerate(self.menu):
             item.start_angle = current_angle
-            item.end_angle = current_angle + angle
-            item.inner_radius = 25 + len(self.menu) / 2.0
-            item.outer_radius = 50 + len(self.menu) * 2
+            item.end_angle = current_angle + angle #- angle * 0.1
+            item.inner_radius = 25 + len(self.menu) / 2.0 #+ i * 2
+            item.outer_radius = 50 + len(self.menu) * 2 #+ i * 2
 
             current_angle += angle
 
@@ -84,10 +85,11 @@ class Scene(graphics.Scene):
         self.menu = Menu(200, 200)
         self.add_child(self.menu)
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.framerate = 30
 
     def on_enter_frame(self, scene, context):
         # turn the menu a bit and queue redraw
-        self.menu.rotation += 0.002
+        self.menu.rotation += 0.004
         self.redraw()
 
 
