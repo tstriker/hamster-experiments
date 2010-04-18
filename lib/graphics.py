@@ -74,12 +74,12 @@ class Graphics(object):
         self.opacity = 1.0      # opacity get's adjusted by parent - TODO - wrong inheritance?
         self.paths = None       # paths for mouse hit checks
         self._last_matrix = None
-        self._instructions = [] # paths colors and operations
-        self._path_instructions = deque() # instruction set until it is converted into path-based instructions
+        self.__instructions = [] # paths colors and operations
+        self.__path_instructions = deque() # instruction set until it is converted into path-based instructions
 
     def clear(self):
         """clear all instructions"""
-        self._path_instructions = deque()
+        self.__path_instructions = deque()
         self.paths = []
 
     @staticmethod
@@ -309,7 +309,7 @@ class Graphics(object):
                         max(self.extents[2], new_extents[2]),
                         max(self.extents[3], new_extents[3]))
 
-        self.paths.append(context.copy_path_flat())
+        self.paths.append(context.copy_path())
 
         context.restore()
 
@@ -319,26 +319,26 @@ class Graphics(object):
             function(self.context, *params)
         else:
             self.paths = None
-            self._path_instructions.append((function, params))
+            self.__path_instructions.append((function, params))
 
 
     def _draw(self, context, with_extents = False):
         """draw accumulated instructions in context"""
 
-        if self._path_instructions: #new stuff!
-            self._instructions = deque()
+        if self.__path_instructions: #new stuff!
+            self.__instructions = deque()
             current_color = None
             current_line = None
             instruction_cache = []
 
-            while self._path_instructions:
-                instruction, args = self._path_instructions.popleft()
+            while self.__path_instructions:
+                instruction, args = self.__path_instructions.popleft()
 
                 if instruction in (self._set_source_surface, self._paint):
-                    self._instructions.append((None, None, None, instruction, args))
+                    self.__instructions.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
-                    self._instructions.append((None, current_color, None, instruction, args))
+                    self.__instructions.append((None, current_color, None, instruction, args))
 
                 elif instruction == self._set_color:
                     current_color = args
@@ -349,7 +349,7 @@ class Graphics(object):
                 elif instruction in (self._stroke, self._fill,
                                      self._stroke_preserve,
                                      self._fill_preserve):
-                    self._instructions.append((context.copy_path(),
+                    self.__instructions.append((context.copy_path(),
                                                current_color,
                                                current_line,
                                                instruction, ()))
@@ -363,7 +363,7 @@ class Graphics(object):
 
             while instruction_cache: # stroke's missing so we just cache
                 instruction, args = instruction_cache.pop(0)
-                self._instructions.append((None, None, None, instruction, args))
+                self.__instructions.append((None, None, None, instruction, args))
 
 
         # if we have been moved around, we should update bounds
@@ -372,7 +372,7 @@ class Graphics(object):
             self.paths = deque()
             self.extents = None
 
-        for path, color, line, instruction, args in self._instructions:
+        for path, color, line, instruction, args in self.__instructions:
             if color: self._set_color(context, *color)
             if line: self._set_line_width(context, *line)
 
@@ -488,14 +488,14 @@ class Shape(Sprite):
             self._sprite_dirty = True
 
 
-    def _draw(self, *args, **kwargs):
+    def _draw(self, context, opacity = 1):
         if self._sprite_dirty:
             self.graphics.clear()
             self.draw_shape()
             self._color()
             self._sprite_dirty = False
 
-        Sprite._draw(self, *args,  **kwargs)
+        Sprite._draw(self, context, opacity)
 
 
     def draw_shape(self):
@@ -650,6 +650,7 @@ class Scene(gtk.DrawingArea):
 
         self.width, self.height = None, None
 
+        self.tweener = None
         if pytweener:
             self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
@@ -666,6 +667,8 @@ class Scene(gtk.DrawingArea):
 
         self.__drawing_queued = False
         self.__drag_x, self.__drag_y = None, None
+        self._fps = 0 # inner frames per second counter
+        self.__last_expose_time = dt.datetime.now()
 
 
     def add_child(self, *sprites):
@@ -682,7 +685,7 @@ class Scene(gtk.DrawingArea):
     def redraw(self):
         """Queue redraw. The redraw will be performed not more often than
            the `framerate` allows"""
-        if not self.__drawing_queued: #if we are moving, then there is a timeout somewhere already
+        if self.__drawing_queued == False: #if we are moving, then there is a timeout somewhere already
             self.__drawing_queued = True
             self._last_frame_time = dt.datetime.now()
             gobject.timeout_add(1000 / self.framerate, self.__interpolate)
@@ -692,15 +695,13 @@ class Scene(gtk.DrawingArea):
         if not self.window: #will wait until window comes
             return True
 
-        time_since_last_frame = (dt.datetime.now() - self._last_frame_time).microseconds / 1000000.0
-        if pytweener:
-            self.tweener.update(time_since_last_frame)
+        if self.tweener:
+            self.tweener.update((dt.datetime.now() - self._last_frame_time).microseconds / 1000000.0)
 
-        self.__drawing_queued = pytweener and self.tweener.has_tweens()
+        self.__drawing_queued = self.tweener.has_tweens()
+        self._last_frame_time = dt.datetime.now()
 
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
-
-        self._last_frame_time = dt.datetime.now()
         return self.__drawing_queued
 
 
@@ -718,8 +719,8 @@ class Scene(gtk.DrawingArea):
              # tween some_sprite to coordinates (50,100) using default duration and easing
              scene.animate(some_sprite, x = 50, y = 100)
         """
-        if not pytweener: # here we complain
-            raise Exception("pytweener not found. Include it to enable animations")
+        if not self.tweener: # here we complain
+            raise Exception("pytweener was not found. Include it to enable animations")
 
         self.tweener.add_tween(sprite,
                                duration=duration,
@@ -743,12 +744,15 @@ class Scene(gtk.DrawingArea):
                           event.area.width, event.area.height)
         context.clip()
 
+        now = dt.datetime.now()
+        self._fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
+        self.__last_expose_time = now
+
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
 
         self._check_mouse(self.mouse_x, self.mouse_y)
-
         self.emit("on-finish-frame", context)
 
 
