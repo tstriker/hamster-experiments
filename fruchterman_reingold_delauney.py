@@ -262,12 +262,12 @@ class DisplayNode(graphics.Sprite):
     def draw_graphics(self):
         self.graphics.clear()
         self.graphics.set_color(self.fill)
-        self.graphics.arc(5, 5, 5, 0, math.pi * 2)
+        self.graphics.circle(0, 0, 5)
         self.graphics.fill()
 
         # adding invisible circle with bigger radius for easier targeting
         self.graphics.set_color("#000", 0)
-        self.graphics.arc(5, 5, 10, 0, math.pi * 2)
+        self.graphics.circle(0, 0, 10)
         self.graphics.stroke()
 
 
@@ -401,10 +401,10 @@ class Canvas(graphics.Scene):
         self.redraw()
 
     def update_buffer(self):
-        self.edge_buffer = []
+        self.edge_buffer = set()
 
         for edge in self.graph.edges:
-            self.edge_buffer.append((
+            self.edge_buffer.add((
                 self.display_nodes[self.graph.nodes.index(edge[0])],
                 self.display_nodes[self.graph.nodes.index(edge[1])],
             ))
@@ -482,8 +482,7 @@ class Canvas(graphics.Scene):
                              x = mid_x + (self.graph.nodes[i].x - graph_mid_x) * factor,
                              y = mid_y + (self.graph.nodes[i].y - graph_mid_y) * factor,
                              easing = Easing.Expo.ease_out,
-                             duration = 3,
-                             instant = False)
+                             duration = 3)
 
 
             for edge in self.edge_buffer:
