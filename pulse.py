@@ -20,13 +20,15 @@ class Node(graphics.Shape):
 
         self.angle = angle
         self.distance = distance
+        self.base_angle = 0
+        self.distance_scale = 1
         self.radius = 4.0
-
         self.phase = 0
 
+
     def draw_shape(self):
-        self.x = math.cos(self.angle) * self.distance
-        self.y = math.sin(self.angle) * self.distance
+        self.x = math.cos(self.angle + self.base_angle) * self.distance * self.distance_scale
+        self.y = math.sin(self.angle + self.base_angle) * self.distance * self.distance_scale
 
         self.graphics.circle(0, 0, self.radius)
         self.graphics.fill("#aaa")
@@ -43,27 +45,40 @@ class Scene(graphics.Scene):
         self.framerate = 30
 
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-mouse-move", self.on_mouse_move)
+
+    def on_mouse_move(self, scene, event):
+        if gtk.gdk.BUTTON1_MASK & event.state:
+            # rotate and scale on mouse
+            base_angle = math.pi * 2 * ((self.width / 2 - event.x) / self.width) / 3
+            distance_scale = math.sqrt((self.width / 2 - event.x) ** 2 + (self.height / 2 - event.y) ** 2) \
+                             / math.sqrt((self.width / 2) ** 2 + (self.height / 2) ** 2)
+
+            for node in self.nodes:
+                node.base_angle = base_angle
+                node.distance_scale = distance_scale
 
     def on_enter_frame(self, scene, context):
         self.container.x = self.width / 2
         self.container.y = self.height / 2
 
-        if not self.nodes:
-            for i in range(100):
+        if len(self.nodes) < 100:
+            for i in range(100 - len(self.nodes)):
                 angle = random() * math.pi * 2
                 distance = random() * 500
 
                 node = Node(angle, distance)
+                node.phase = self.phase
                 self.container.add_child(node)
                 self.nodes.append(node)
 
         if not self.tick:
             self.phase +=1
             self.animate(self,
-                         tick = 500,
-                         duration = 4,
+                         tick = 550,
+                         duration = 3,
                          on_complete = self.reset_tick,
-                         easing = Easing.Expo.ease_out)
+                         easing = Easing.Expo.ease_in_out)
 
         for node in self.nodes:
             if node.phase < self.phase and node.distance < self.tick:
@@ -72,7 +87,7 @@ class Scene(graphics.Scene):
                 self.animate(node,
                              duration = 0.5,
                              radius = 20,
-                             easing = Easing.Elastic.ease_in,
+                             easing = Easing.Expo.ease_in,
                              on_complete = self.slide_back)
 
 
@@ -82,11 +97,6 @@ class Scene(graphics.Scene):
     def slide_back(self, node):
         self.animate(node,
                      radius = 4,
-                     duration = 0.5,
-                     easing = Easing.Elastic.ease_out)
-        self.animate(node,
-                     angle = node.angle + ((round(random() * 2) - 1) * random() * math.pi / 8),
-                     distance = node.distance + ((round(random() * 2) - 1) * random() * 20),
                      duration = 0.5,
                      easing = Easing.Expo.ease_out)
 
