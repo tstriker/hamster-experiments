@@ -450,8 +450,7 @@ class Canvas(graphics.Scene):
                              x = mid_x + (self.graph.nodes[i].x - graph_mid_x) * factor,
                              y = mid_y + (self.graph.nodes[i].y - graph_mid_y) * factor,
                              easing = Easing.Expo.ease_out,
-                             duration = 3,
-                             instant = False)
+                             duration = 3)
 
 
             self.redraw()

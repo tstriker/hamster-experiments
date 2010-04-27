@@ -72,7 +72,6 @@ class Scene(graphics.Scene):
                 self.animate(node,
                              duration = 0.5,
                              radius = 20,
-                             instant = False,
                              easing = Easing.Elastic.ease_in,
                              on_complete = self.slide_back)
 
@@ -83,13 +82,11 @@ class Scene(graphics.Scene):
     def slide_back(self, node):
         self.animate(node,
                      radius = 4,
-                     instant = False,
                      duration = 0.5,
                      easing = Easing.Elastic.ease_out)
         self.animate(node,
                      angle = node.angle + ((round(random() * 2) - 1) * random() * math.pi / 8),
                      distance = node.distance + ((round(random() * 2) - 1) * random() * 20),
-                     instant = False,
                      duration = 0.5,
                      easing = Easing.Expo.ease_out)
 

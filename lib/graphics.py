@@ -705,16 +705,14 @@ class Scene(gtk.DrawingArea):
         return self.__drawing_queued
 
 
-    def animate(self, sprite, instant = True, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
+    def animate(self, sprite, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
         """Interpolate attributes of the given object using the internal tweener
            and redrawing scene after every tweener update.
            Specify the sprite and sprite's attributes that need changing.
            `duration` defaults to 0.4 seconds and `easing` to cubic in-out
            (for others see pytweener.Easing class).
 
-           By default redraw is requested right after creating the animation.
-           If you would like to add several tweens and only then redraw,
-           set `instant` to False.
+           Redraw is requested right after creating the animation.
            Example::
              # tween some_sprite to coordinates (50,100) using default duration and easing
              scene.animate(some_sprite, x = 50, y = 100)
@@ -729,8 +727,7 @@ class Scene(gtk.DrawingArea):
                                on_update=on_update,
                                delay=delay, **kwargs)
 
-        if instant:
-            self.redraw()
+        self.redraw()
 
     # exposure events
     def do_configure_event(self, event):
