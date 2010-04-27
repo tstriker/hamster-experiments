@@ -138,7 +138,7 @@ class Tween(object):
             self.delta = self.duration
 
         for prop, start_value, delta_value in self.tweenables:
-            self.target.__dict__[prop] = self.ease(self.delta, start_value, delta_value, self.duration)
+            self.target.__setattr__(prop, self.ease(self.delta, start_value, delta_value, self.duration))
 
         if self.delta == self.duration:
             self.complete = True
