@@ -8,7 +8,7 @@
 # Python version by Ben Harling 2009
 # All kinds of slashing and dashing by Toms Baugis 2010
 import math
-import collections, itertools
+import collections
 
 class Tweener(object):
     def __init__(self, default_duration = None, tween = None):
