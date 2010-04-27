@@ -581,8 +581,8 @@ class Label(Shape):
 
 class Rectangle(Shape):
     def __init__(self, w, h, corner_radius = 0, **kwargs):
-        self.width, self.height, self.corner_radius = w, h, corner_radius
         Shape.__init__(self, **kwargs)
+        self.width, self.height, self.corner_radius = w, h, corner_radius
 
     def draw_shape(self):
         self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
@@ -590,8 +590,8 @@ class Rectangle(Shape):
 
 class Polygon(Shape):
     def __init__(self, points, **kwargs):
-        self.points = points
         Shape.__init__(self, **kwargs)
+        self.points = points
 
     def draw_shape(self):
         if not self.points: return
@@ -603,8 +603,8 @@ class Polygon(Shape):
 
 class Circle(Shape):
     def __init__(self, radius, **kwargs):
-        self.radius = radius
         Shape.__init__(self, **kwargs)
+        self.radius = radius
 
     def draw_shape(self):
         self.graphics.move_to(self.radius * 2, self.radius)
