@@ -77,15 +77,13 @@ and thus inherits all it&#8217;s methods and everything.</p>
 
 <dl class="method">
 <dt id="graphics.Scene.animate">
-<tt class="descname">animate</tt><big>(</big><em>sprite</em>, <em>instant=True</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Scene.animate" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">animate</tt><big>(</big><em>sprite</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Scene.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolate attributes of the given object using the internal tweener
 and redrawing scene after every tweener update.
 Specify the sprite and sprite&#8217;s attributes that need changing.
 <cite>duration</cite> defaults to 0.4 seconds and <cite>easing</cite> to cubic in-out
 (for others see pytweener.Easing class).</p>
-<p>By default redraw is requested right after creating the animation.
-If you would like to add several tweens and only then redraw,
-set <cite>instant</cite> to False.
+<p>Redraw is requested right after creating the animation.
 Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># tween some_sprite to coordinates (50,100) using default duration and easing</span>
 <span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
