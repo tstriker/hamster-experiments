@@ -65,10 +65,20 @@ class Scene(graphics.Scene):
 
 
         colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
+        g.set_line_style(width=1)
+
+        for i in range(0, 52*7, 7):
+            angle = i * step
+            g.move_to(self.width / 2 + math.cos(angle) * 50,
+                      self.height / 2 + math.sin(angle) * 50)
+            g.rel_line_to(math.cos(angle) * 500, math.sin(angle) * 500)
+            g.stroke("#aaa")
+
+
 
         for day in self.day_counts:
 
-            year_day = day.timetuple().tm_yday
+            year_day = day.isocalendar()[1] * 7 + day.weekday()
             angle = year_day * step
 
 
@@ -102,6 +112,7 @@ class Scene(graphics.Scene):
 
 
             g.fill("#aaa")
+
 
 
         for i, color in enumerate(colors):
