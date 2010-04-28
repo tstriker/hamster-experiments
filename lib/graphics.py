@@ -141,6 +141,12 @@ class Graphics(object):
         self._add_instruction(self._line_to, x, y)
 
     @staticmethod
+    def _rel_line_to(context, x, y): context.rel_line_to(x, y)
+    def rel_line_to(self, x, y):
+        """draw line"""
+        self._add_instruction(self._rel_line_to, x, y)
+
+    @staticmethod
     def _curve_to(context, x, y, x2, y2, x3, y3):
         context.curve_to(x, y, x2, y2, x3, y3)
     def curve_to(self, x, y, x2, y2, x3, y3):
