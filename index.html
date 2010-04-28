@@ -104,6 +104,11 @@ Example:</p>
 <dd>instance of <tt class="xref py py-class docutils literal"><span class="pre">Colors</span></tt> class for color parsing</dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Scene.fps">
+<tt class="descname">fps</tt><a class="headerlink" href="#graphics.Scene.fps" title="Permalink to this definition">¶</a></dt>
+<dd>read only info about current framerate (frames per second)</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Scene.framerate">
 <tt class="descname">framerate</tt><a class="headerlink" href="#graphics.Scene.framerate" title="Permalink to this definition">¶</a></dt>
 <dd>framerate of animation. This will limit how often call for
@@ -163,22 +168,53 @@ scene</p>
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Sprite.add_child" title="Permalink to this definition">¶</a></dt>
 <dd>Add child sprite. Child will be nested within parent</dd></dl>
 
+<dl class="attribute">
+<dt id="graphics.Sprite.draggable">
+<tt class="descname">draggable</tt><a class="headerlink" href="#graphics.Sprite.draggable" title="Permalink to this definition">¶</a></dt>
+<dd>boolean marking if sprite can be automatically dragged</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.graphics">
+<tt class="descname">graphics</tt><a class="headerlink" href="#graphics.Sprite.graphics" title="Permalink to this definition">¶</a></dt>
+<dd>instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.interactive">
+<tt class="descname">interactive</tt><a class="headerlink" href="#graphics.Sprite.interactive" title="Permalink to this definition">¶</a></dt>
+<dd>boolean denoting whether the sprite responds to mouse events</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.opacity">
+<tt class="descname">opacity</tt><a class="headerlink" href="#graphics.Sprite.opacity" title="Permalink to this definition">¶</a></dt>
+<dd>sprite opacity</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.parent">
+<tt class="descname">parent</tt><a class="headerlink" href="#graphics.Sprite.parent" title="Permalink to this definition">¶</a></dt>
+<dd>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.rotation">
+<tt class="descname">rotation</tt><a class="headerlink" href="#graphics.Sprite.rotation" title="Permalink to this definition">¶</a></dt>
+<dd>rotation of the sprite in radians (use <tt class="xref py py-func docutils literal"><span class="pre">math.degrees()</span></tt> to convert to degrees if necessary)</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.sprites">
+<tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Sprite.sprites" title="Permalink to this definition">¶</a></dt>
+<dd>list of children sprites. Use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.visible">
+<tt class="descname">visible</tt><a class="headerlink" href="#graphics.Sprite.visible" title="Permalink to this definition">¶</a></dt>
+<dd>boolean visibility flag</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.z_order">
+<tt class="descname">z_order</tt><a class="headerlink" href="#graphics.Sprite.z_order" title="Permalink to this definition">¶</a></dt>
+<dd>drawing order between siblings. The one with the highest z_order will be on top.</dd></dl>
+
 </dd></dl>
 
-<div class="section" id="sprite-attributes">
-<h3>Sprite attributes<a class="headerlink" href="#sprite-attributes" title="Permalink to this headline">¶</a></h3>
-<p><strong>graphics</strong> - instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</p>
-<p><strong>x, y</strong> - coordinates</p>
-<p><strong>pivot_x, pivot_y</strong> - coordinates of the sprites anchor and rotation point</p>
-<p><strong>rotation</strong> - rotation of the sprite in radians</p>
-<p><strong>visible</strong> - boolean visibility flag</p>
-<p><strong>interactive</strong> - boolean denoting whether the sprite responds to mouse events</p>
-<p><strong>draggable</strong> - boolean marking if sprite can be automatically dragged</p>
-<p><strong>opacity</strong> - sprite opacity</p>
-<p><strong>z_order</strong> - drawing order of siblings. The one with the biggest z_order will be on top.</p>
-<p><strong>sprites</strong> - list of children sprites</p>
-<p><strong>parent</strong> - pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
-</div>
 <div class="section" id="sprite-signals">
 <h3>Sprite signals<a class="headerlink" href="#sprite-signals" title="Permalink to this headline">¶</a></h3>
 <p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of sprite.</p>
@@ -350,38 +386,113 @@ Leave out stroke and fill instructions, as those will be performed automatically
 and fill instructions - those will be performed by the shape itself,
 using the stroke and fill attributes</dd></dl>
 
+<dl class="attribute">
+<dt id="graphics.Shape.fill">
+<tt class="descname">fill</tt><a class="headerlink" href="#graphics.Shape.fill" title="Permalink to this definition">¶</a></dt>
+<dd>fill color</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Shape.line_width">
+<tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Shape.line_width" title="Permalink to this definition">¶</a></dt>
+<dd>stroke line width</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Shape.stroke">
+<tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Shape.stroke" title="Permalink to this definition">¶</a></dt>
+<dd>stroke color</dd></dl>
+
 </dd></dl>
 
 </div>
 <div class="section" id="primitives">
 <span id="id4"></span><h2>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h2>
-<p>A few shapes to speed up your drawing.</p>
+<p>A few shapes to speed up your drawing. They are full fledged Sprites.</p>
 <dl class="class">
 <dt id="graphics.Circle">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
-<dd>Attributes: <strong>fill, stroke, radius</strong></dd></dl>
+<dd><dl class="attribute">
+<dt id="graphics.Circle.height">
+<tt class="descname">height</tt><a class="headerlink" href="#graphics.Circle.height" title="Permalink to this definition">¶</a></dt>
+<dd>circle height</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Circle.width">
+<tt class="descname">width</tt><a class="headerlink" href="#graphics.Circle.width" title="Permalink to this definition">¶</a></dt>
+<dd>circle width</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="graphics.Rectangle">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
-<dd>Attributes: <strong>fill, stroke, width, height, corner_radius</strong></dd></dl>
+<dd><dl class="attribute">
+<dt id="graphics.Rectangle.corner_radius">
+<tt class="descname">corner_radius</tt><a class="headerlink" href="#graphics.Rectangle.corner_radius" title="Permalink to this definition">¶</a></dt>
+<dd>corner radius. Set bigger than 0 for rounded corners</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Rectangle.height">
+<tt class="descname">height</tt><a class="headerlink" href="#graphics.Rectangle.height" title="Permalink to this definition">¶</a></dt>
+<dd>height</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Rectangle.width">
+<tt class="descname">width</tt><a class="headerlink" href="#graphics.Rectangle.width" title="Permalink to this definition">¶</a></dt>
+<dd>width</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="graphics.Polygon">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attributes:</p>
-<p><strong>fill, stroke</strong> - fill and stroke colors of the poligon</p>
-<p><strong>points</strong> - list of (x,y) tuples that the line should go through. Polygon
-will automatically close path.</p>
+<dd><dl class="attribute">
+<dt id="graphics.Polygon.points">
+<tt class="descname">points</tt><a class="headerlink" href="#graphics.Polygon.points" title="Permalink to this definition">¶</a></dt>
+<dd>list of (x,y) tuples that the line should go through. Polygon
+will automatically close path.</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="graphics.Label">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attributes:</p>
-<p><strong>text</strong> - label text</p>
-<p><strong>color</strong> - color of label either as hex string or an (r,g,b) tuple</p>
-<p><strong>font_desc</strong> - string with pango font description</p>
+<dd><dl class="attribute">
+<dt id="graphics.Label.alignment">
+<tt class="descname">alignment</tt><a class="headerlink" href="#graphics.Label.alignment" title="Permalink to this definition">¶</a></dt>
+<dd>alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.color">
+<tt class="descname">color</tt><a class="headerlink" href="#graphics.Label.color" title="Permalink to this definition">¶</a></dt>
+<dd>color of label either as hex string or an (r,g,b) tuple</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.ellipsize">
+<tt class="descname">ellipsize</tt><a class="headerlink" href="#graphics.Label.ellipsize" title="Permalink to this definition">¶</a></dt>
+<dd>Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
+ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.font_desc">
+<tt class="descname">font_desc</tt><a class="headerlink" href="#graphics.Label.font_desc" title="Permalink to this definition">¶</a></dt>
+<dd>string with pango font description</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.size">
+<tt class="descname">size</tt><a class="headerlink" href="#graphics.Label.size" title="Permalink to this definition">¶</a></dt>
+<dd>font size</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.text">
+<tt class="descname">text</tt><a class="headerlink" href="#graphics.Label.text" title="Permalink to this definition">¶</a></dt>
+<dd>label text</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.wrap">
+<tt class="descname">wrap</tt><a class="headerlink" href="#graphics.Label.wrap" title="Permalink to this definition">¶</a></dt>
+<dd>wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
+WRAP_WORD_CHAR]</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -478,7 +589,6 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 </ul>
 </li>
 <li><a class="reference external" href="#sprite-objects"><tt class="docutils literal"><span class="pre">Sprite</span></tt> objects</a><ul>
-<li><a class="reference external" href="#sprite-attributes">Sprite attributes</a></li>
 <li><a class="reference external" href="#sprite-signals">Sprite signals</a></li>
 </ul>
 </li>
