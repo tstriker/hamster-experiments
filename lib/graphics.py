@@ -406,17 +406,40 @@ class Sprite(gtk.Object):
                  interactive = True, draggable = False,
                  z_order = 0):
         gtk.Object.__init__(self)
+
+        #: list of children sprites. Use :func:`add_child` to add sprites
         self.sprites = []
+
+        #: instance of :ref:`graphics` for this sprite
         self.graphics = Graphics()
+
+        #: boolean denoting whether the sprite responds to mouse events
         self.interactive = interactive
+
+        #: boolean marking if sprite can be automatically dragged
         self.draggable = draggable
+
+        #: relative coordinates of the sprites anchor and rotation point
         self.pivot_x, self.pivot_y = pivot_x, pivot_y # rotation point in sprite's coordinates
+
+        #: sprite opacity
         self.opacity = opacity
+
+        #: boolean visibility flag
         self.visible = visible
+
+        #: pointer to parent :class:`Sprite` or :class:`Scene`
         self.parent = None
+
+        #: sprite coordinates
         self.x, self.y = x, y
+
+        #: rotation of the sprite in radians (use :func:`math.degrees` to convert to degrees if necessary)
         self.rotation = rotation
+
+        #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
+
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
@@ -477,9 +500,16 @@ class Shape(Sprite):
     def __init__(self, stroke = None, fill = None, line_width = None, **kwargs):
         kwargs.setdefault("interactive", False)
         Sprite.__init__(self, **kwargs)
-        self.stroke = stroke # stroke color
-        self.fill = fill     # fill color
+
+        #: stroke color
+        self.stroke = stroke
+
+        #: fill color
+        self.fill = fill
+
+        #: stroke line width
         self.line_width = line_width
+
         self._sprite_dirty = True # a dirty shape needs it's graphics regenerated, because params have changed
 
     def __setattr__(self, name, val):
@@ -525,15 +555,31 @@ class Label(Shape):
         Shape.__init__(self, **kwargs)
         self.width, self.height = None, None
 
-        self._bounds_width = -1
-        self.wrap = None      # can be set to pango. [WRAP_WORD, WRAP_CHAR, WRAP_WORD_CHAR]
-        self.ellipsize = None # can be set to pango. [ELLIPSIZE_NONE, ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]
+        #: label text
+        self.text = text
 
+        #: color of label either as hex string or an (r,g,b) tuple
+        self.color = color
+
+        #: string with pango font description
         self.font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.font_desc.set_size(size * pango.SCALE)
-        self.text = text
-        self.color = color
+
+
+        self._bounds_width = -1
+
+        #: wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
+        #: WRAP_WORD_CHAR]
+        self.wrap = None
+
+        #: Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
+        #: ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]
+        self.ellipsize = None
+
+        #: font size
         self.size = size
+
+        #: alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]
         self.alignment = alignment
 
 
@@ -582,7 +628,15 @@ class Label(Shape):
 class Rectangle(Shape):
     def __init__(self, w, h, corner_radius = 0, **kwargs):
         Shape.__init__(self, **kwargs)
-        self.width, self.height, self.corner_radius = w, h, corner_radius
+
+        #: width
+        self.width = w
+
+        #: height
+        self.height = h
+
+        #: corner radius. Set bigger than 0 for rounded corners
+        self.corner_radius = corner_radius
 
     def draw_shape(self):
         self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
@@ -591,6 +645,9 @@ class Rectangle(Shape):
 class Polygon(Shape):
     def __init__(self, points, **kwargs):
         Shape.__init__(self, **kwargs)
+
+        #: list of (x,y) tuples that the line should go through. Polygon
+        #: will automatically close path.
         self.points = points
 
     def draw_shape(self):
@@ -604,7 +661,11 @@ class Polygon(Shape):
 class Circle(Shape):
     def __init__(self, width, height, **kwargs):
         Shape.__init__(self, **kwargs)
+
+        #: circle width
         self.width = width
+
+        #: circle height
         self.height = height
 
     def draw_shape(self):
@@ -673,6 +734,10 @@ class Scene(gtk.DrawingArea):
         #: last known coordinates of mouse cursor
         self.mouse_x, self.mouse_y = None, None
 
+        #: read only info about current framerate (frames per second)
+        self.fps = 0 # inner frames per second counter
+
+
         self._last_frame_time = None
         self._mouse_sprites = set()
         self._mouse_drag = None
@@ -683,9 +748,7 @@ class Scene(gtk.DrawingArea):
 
         self.__drawing_queued = False
         self.__drag_x, self.__drag_y = None, None
-        self._fps = 0 # inner frames per second counter
         self.__last_expose_time = dt.datetime.now()
-
 
     def add_child(self, *sprites):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
@@ -758,7 +821,7 @@ class Scene(gtk.DrawingArea):
         context.clip()
 
         now = dt.datetime.now()
-        self._fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
+        self.fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
         self.__last_expose_time = now
 
         self.emit("on-enter-frame", context)

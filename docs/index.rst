@@ -69,34 +69,6 @@ So you can for example disable automatic dragging but react to the drag motion.
    :members:
 
 
-Sprite attributes
---------------------------
-
-**graphics** - instance of :ref:`graphics` for this sprite
-
-**x, y** - coordinates
-
-**pivot_x, pivot_y** - coordinates of the sprites anchor and rotation point
-
-**rotation** - rotation of the sprite in radians
-
-**visible** - boolean visibility flag
-
-**interactive** - boolean denoting whether the sprite responds to mouse events
-
-**draggable** - boolean marking if sprite can be automatically dragged
-
-**opacity** - sprite opacity
-
-**z_order** - drawing order of siblings. The one with the biggest z_order will be on top.
-
-**sprites** - list of children sprites
-
-**parent** - pointer to parent :class:`Sprite` or :class:`Scene`
-
-
-
-
 Sprite signals
 ----------------------
 
@@ -143,39 +115,20 @@ Leave out stroke and fill instructions, as those will be performed automatically
 
 Primitives
 ==========
-A few shapes to speed up your drawing.
+A few shapes to speed up your drawing. They are full fledged Sprites.
 
 .. autoclass:: graphics.Circle
    :members:
 
-   Attributes: **fill, stroke, radius**
-
 .. autoclass:: graphics.Rectangle
    :members:
 
-   Attributes: **fill, stroke, width, height, corner_radius**
 
 .. autoclass:: graphics.Polygon
    :members:
 
-   Attributes:
-
-   **fill, stroke** - fill and stroke colors of the poligon
-
-   **points** - list of (x,y) tuples that the line should go through. Polygon
-   will automatically close path.
-
 .. autoclass:: graphics.Label
    :members:
-
-   Attributes:
-
-   **text** - label text
-
-   **color** - color of label either as hex string or an (r,g,b) tuple
-
-   **font_desc** - string with pango font description
-
 
 
 
