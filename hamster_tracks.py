@@ -19,10 +19,12 @@ class Scene(graphics.Scene):
 
         storage = hamster.client.Storage()
 
-        self.facts = storage.get_facts(dt.date(2009,1,1))
+        self.facts = storage.get_facts(dt.date(2009,1,1), dt.date.today())
 
         self.day_counts = defaultdict(list)
         activities, categories = defaultdict(int), defaultdict(int)
+
+        print len(self.facts)
 
         for fact in self.facts:
             self.day_counts[fact['start_time'].date()].append(fact)
@@ -55,9 +57,6 @@ class Scene(graphics.Scene):
 
 
 
-        for i in range(0, self.height, 2):
-            g.rectangle(0, i * 3, self.width, 3)
-        g.fill("#fafafa")
 
 
         full_days = []
@@ -80,7 +79,7 @@ class Scene(graphics.Scene):
             for j, fact in enumerate(day):
 
                 #bar per category
-                g.rectangle(cur_x, 27 + self.categories.index(fact['category']) * 3, pixel_width, 3)
+                g.rectangle(cur_x, 27 + self.categories.index(fact['category']) * 6, pixel_width, 6)
 
                 #bar per activity
                 g.rectangle(cur_x, 102 + self.activities.index(fact['name']) * 6, pixel_width, 6)
