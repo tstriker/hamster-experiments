@@ -192,7 +192,7 @@ class Graphics(object):
         """draw 'perfect' ellipse, opposed to squashed circle. works also for
            equilateral polygons"""
         # the automatic edge case is somewhat arbitrary
-        steps = edges or max((32, width, height)) / 3
+        steps = edges or max((32, width, height)) / 2
 
         angle = 0
         step = math.pi * 2 / steps
@@ -602,13 +602,16 @@ class Polygon(Shape):
         self.graphics.close_path()
 
 class Circle(Shape):
-    def __init__(self, radius, **kwargs):
+    def __init__(self, width, height, **kwargs):
         Shape.__init__(self, **kwargs)
-        self.radius = radius
+        self.width = width
+        self.height = height
 
     def draw_shape(self):
-        self.graphics.move_to(self.radius * 2, self.radius)
-        self.graphics.arc(self.radius, self.radius, self.radius, 0, math.pi * 2)
+        if self.width == self.height:
+            self.graphics.circle(self.width, self.width / 2.0, self.width / 2.0)
+        else:
+            self.graphics.ellipse(0, 0, self.width, self.height)
 
 
 
@@ -620,6 +623,7 @@ class Scene(gtk.DrawingArea):
     """
 
     __gsignals__ = {
+        #: yes can haz instance attribute docstring
         "expose-event": "override",
         "configure_event": "override",
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
@@ -645,16 +649,28 @@ class Scene(gtk.DrawingArea):
             self.connect("button_press_event", self.__on_button_press)
             self.connect("button_release_event", self.__on_button_release)
 
+        #: list of sprites in scene. use :func:`add_child` to add sprites
         self.sprites = []
-        self.framerate = framerate # frame rate
 
+        #: framerate of animation. This will limit how often call for
+        #: redraw will be performed (that is - not more often than the framerate). It will
+        #: also influence the smoothness of tweeners.
+        self.framerate = framerate
+
+        #: width and height of the scene. Will be `None` until first
+        #: expose (that is until first on-enter-frame signal below).
         self.width, self.height = None, None
 
+        #: instance of :class:`pytweener.Tweener` that is used by
+        #: :func:`animate` function, but can be also accessed directly for advanced control.
         self.tweener = None
         if pytweener:
             self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
+        #: instance of :class:`Colors` class for color parsing
         self.colors = Colors
+
+        #: last known coordinates of mouse cursor
         self.mouse_x, self.mouse_y = None, None
 
         self._last_frame_time = None

@@ -32,25 +32,6 @@ The Scene
    :members:
    :inherited-members:
 
-Scene attributes
-------------------
-
-**sprites** - list of sprites in scene
-
-**framerate** - framerate of animation. This will limit how often call for
-redraw will be performed (that is - not more often than the framerate). It will
-also influence the smoothness of tweeners.
-
-**width, height** - width and height of the scene. Will be `None` until first
-expose (that is until first on-enter-frame signal below).
-
-**tweener** - instance of :class:`pytweener.Tweener` that is used by
-:func:`animate` function, but can be also accessed directly for advanced control.
-
-**colors** - instance of :class:`Colors` class for color parsing
-
-**mouse_x, self.mouse_y** - last known coordinates of mouse cursor
-
 
 Scene signals
 --------------
