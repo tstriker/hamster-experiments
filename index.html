@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,14 +11,15 @@
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '#',
+        URL_ROOT:    '',
         VERSION:     '0.0.1',
-        COLLAPSE_MODINDEX: false,
+        COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="top" title="hamster graphics v0.0.1 documentation" href="#" /> 
   </head>
@@ -38,7 +40,7 @@
 <h1>hamster.graphics<a class="headerlink" href="#hamster-graphics" title="Permalink to this headline">¶</a></h1>
 <p>The hamster graphics library is a sprite-styled abstraction layer on top of
 pygtk and cairo.
-Create a <a title="graphics.Scene" class="reference internal" href="#graphics.Scene"><tt class="xref docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
+Create a <a title="graphics.Scene" class="reference internal" href="#graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
 adding and manipulating sprites.</p>
 <p><strong>Hello world</strong>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
@@ -62,13 +64,13 @@ adding and manipulating sprites.</p>
 <dt id="graphics.Scene">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Widget for displaying sprites.
-Add sprites to the Scene by calling <tt class="xref docutils literal"><span class="pre">add_child()</span></tt>.
+Add sprites to the Scene by calling <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
 and thus inherits all it&#8217;s methods and everything.</p>
 <dl class="method">
 <dt id="graphics.Scene.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.add_child" title="Permalink to this definition">¶</a></dt>
-<dd>Add one or several <a title="graphics.Sprite" class="reference internal" href="#graphics.Sprite"><tt class="xref docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</dd></dl>
+<dd>Add one or several <a title="graphics.Sprite" class="reference internal" href="#graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.all_sprites">
@@ -96,27 +98,37 @@ Example:</p>
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.clear" title="Permalink to this definition">¶</a></dt>
 <dd>Remove all sprites from scene</dd></dl>
 
+<dl class="attribute">
+<dt id="graphics.Scene.colors">
+<tt class="descname">colors</tt><a class="headerlink" href="#graphics.Scene.colors" title="Permalink to this definition">¶</a></dt>
+<dd>instance of <tt class="xref py py-class docutils literal"><span class="pre">Colors</span></tt> class for color parsing</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.framerate">
+<tt class="descname">framerate</tt><a class="headerlink" href="#graphics.Scene.framerate" title="Permalink to this definition">¶</a></dt>
+<dd>framerate of animation. This will limit how often call for
+redraw will be performed (that is - not more often than the framerate). It will
+also influence the smoothness of tweeners.</dd></dl>
+
 <dl class="method">
 <dt id="graphics.Scene.redraw">
 <tt class="descname">redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.redraw" title="Permalink to this definition">¶</a></dt>
 <dd>Queue redraw. The redraw will be performed not more often than
 the <cite>framerate</cite> allows</dd></dl>
 
+<dl class="attribute">
+<dt id="graphics.Scene.sprites">
+<tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Scene.sprites" title="Permalink to this definition">¶</a></dt>
+<dd>list of sprites in scene. use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.tweener">
+<tt class="descname">tweener</tt><a class="headerlink" href="#graphics.Scene.tweener" title="Permalink to this definition">¶</a></dt>
+<dd>instance of <a title="pytweener.Tweener" class="reference internal" href="#pytweener.Tweener"><tt class="xref py py-class docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
+<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</dd></dl>
+
 </dd></dl>
 
-<div class="section" id="scene-attributes">
-<h3>Scene attributes<a class="headerlink" href="#scene-attributes" title="Permalink to this headline">¶</a></h3>
-<p><strong>sprites</strong> - list of sprites in scene</p>
-<p><strong>framerate</strong> - framerate of animation. This will limit how often call for
-redraw will be performed (that is - not more often than the framerate). It will
-also influence the smoothness of tweeners.</p>
-<p><strong>width, height</strong> - width and height of the scene. Will be <cite>None</cite> until first
-expose (that is until first on-enter-frame signal below).</p>
-<p><strong>tweener</strong> - instance of <a title="pytweener.Tweener" class="reference internal" href="#pytweener.Tweener"><tt class="xref docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
-<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
-<p><strong>colors</strong> - instance of <tt class="xref docutils literal"><span class="pre">Colors</span></tt> class for color parsing</p>
-<p><strong>mouse_x, self.mouse_y</strong> - last known coordinates of mouse cursor</p>
-</div>
 <div class="section" id="scene-signals">
 <h3>Scene signals<a class="headerlink" href="#scene-signals" title="Permalink to this headline">¶</a></h3>
 <p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of scene.</p>
@@ -138,7 +150,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 </div>
 </div>
 <div class="section" id="sprite-objects">
-<h2><tt class="xref docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
+<h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>interactive=True</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
@@ -165,7 +177,7 @@ scene</p>
 <p><strong>opacity</strong> - sprite opacity</p>
 <p><strong>z_order</strong> - drawing order of siblings. The one with the biggest z_order will be on top.</p>
 <p><strong>sprites</strong> - list of children sprites</p>
-<p><strong>parent</strong> - pointer to parent <tt class="xref docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref docutils literal"><span class="pre">Scene</span></tt></p>
+<p><strong>parent</strong> - pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
 </div>
 <div class="section" id="sprite-signals">
 <h3>Sprite signals<a class="headerlink" href="#sprite-signals" title="Permalink to this headline">¶</a></h3>
@@ -180,11 +192,11 @@ The signal is emitted also if attribute <cite>draggable</cite> is disabled.</p>
 </div>
 </div>
 <div class="section" id="graphics-class">
-<span id="graphics"></span><h2><tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class<a class="headerlink" href="#graphics-class" title="Permalink to this headline">¶</a></h2>
-<p><tt class="xref docutils literal"><span class="pre">Scene</span></tt> and all <tt class="xref docutils literal"><span class="pre">Sprite</span></tt> objects have a graphics attribute, that
-is an instance of <tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class. All the drawing is performed by
+<span id="graphics"></span><h2><tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class<a class="headerlink" href="#graphics-class" title="Permalink to this headline">¶</a></h2>
+<p><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt> and all <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects have a graphics attribute, that
+is an instance of <tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class. All the drawing is performed by
 calling functions of this attribute.
-The <tt class="xref docutils literal"><span class="pre">Graphics</span></tt> class can also be used on it&#8217;s own, by passing in Cairo
+The <tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class can also be used on it&#8217;s own, by passing in Cairo
 <cite>context</cite> into constructor.</p>
 <dl class="class">
 <dt id="graphics.Graphics">
@@ -318,7 +330,7 @@ a class:Label object</dd></dl>
 
 </div>
 <div class="section" id="shape-objects">
-<h2><tt class="xref docutils literal"><span class="pre">Shape</span></tt> objects<a class="headerlink" href="#shape-objects" title="Permalink to this headline">¶</a></h2>
+<h2><tt class="xref py py-class docutils literal"><span class="pre">Shape</span></tt> objects<a class="headerlink" href="#shape-objects" title="Permalink to this headline">¶</a></h2>
 <p>Shape is an abstract class for simple sprites (like <a class="reference internal" href="#primitives"><em>Primitives</em></a> below) with stroke and fill.
 Implement the draw_shape function (where you can use the .graphics property) to draw the shape.
 Leave out stroke and fill instructions, as those will be performed automatically by the shape.</p>
@@ -346,7 +358,7 @@ using the stroke and fill attributes</dd></dl>
 <p>A few shapes to speed up your drawing.</p>
 <dl class="class">
 <dt id="graphics.Circle">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>radius</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
 <dd>Attributes: <strong>fill, stroke, radius</strong></dd></dl>
 
 <dl class="class">
@@ -376,7 +388,7 @@ will automatically close path.</p>
 <div class="section" id="the-tweener">
 <h2>The Tweener<a class="headerlink" href="#the-tweener" title="Permalink to this headline">¶</a></h2>
 <p>You can use the tweener on it&#8217;s own but must convenient is to use the
-<tt class="xref docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <cite>Scene.tweener</cite>
+<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <cite>Scene.tweener</cite>
 that is an instance of this class.</p>
 <dl class="class">
 <dt id="pytweener.Tweener">
@@ -435,8 +447,8 @@ or tween.pause() which pauses indefinitely.</dd></dl>
 <dt id="pytweener.Easing">
 <em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Easing</tt><a class="headerlink" href="#pytweener.Easing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class containing easing classes to use together with the tweener.
-All of the classes have <tt class="xref docutils literal"><span class="pre">ease_in()</span></tt>, <tt class="xref docutils literal"><span class="pre">ease_out()</span></tt> and
-<tt class="xref docutils literal"><span class="pre">ease_in_out()</span></tt> functions.</p>
+All of the classes have <tt class="xref py py-func docutils literal"><span class="pre">ease_in()</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">ease_out()</span></tt> and
+<tt class="xref py py-func docutils literal"><span class="pre">ease_in_out()</span></tt> functions.</p>
 <blockquote>
 <p>Subclasses are: <strong>Back, Bounce, Circ, Cubic, Elastic, Expo, Linear,
 Quad, Quart, Quint, Sine, Strong</strong></p>
@@ -458,11 +470,10 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h3><a href="#">Table Of Contents</a></h3>
-            <ul>
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
 <li><a class="reference external" href="#">hamster.graphics</a><ul>
 <li><a class="reference external" href="#the-scene">The Scene</a><ul>
-<li><a class="reference external" href="#scene-attributes">Scene attributes</a></li>
 <li><a class="reference external" href="#scene-signals">Scene signals</a></li>
 </ul>
 </li>
@@ -479,24 +490,24 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 </li>
 </ul>
 
-            <h3>This Page</h3>
-            <ul class="this-page-menu">
-              <li><a href="sources/index.txt"
-                     rel="nofollow">Show Source</a></li>
-            </ul>
-          <div id="searchbox" style="display: none">
-            <h3>Quick search</h3>
-              <form class="search" action="search.html" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="Go" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              Enter search terms or a module, class or function name.
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -508,8 +519,8 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
       </ul>
     </div>
     <div class="footer">
-      &copy; Copyright 2010, Toms Bauģis.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+        &copy; Copyright 2010, Toms Bauģis.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0pre.
     </div>
   </body>
 </html>
