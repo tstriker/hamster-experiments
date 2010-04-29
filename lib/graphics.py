@@ -561,16 +561,12 @@ class Label(Shape):
         Shape.__init__(self, **kwargs)
         self.width, self.height = None, None
 
-        #: label text
-        self.text = text
-
-        #: color of label either as hex string or an (r,g,b) tuple
-        self.color = color
-
-        #: string with pango font description
+        #: pango.FontDescription, default is the system's font
         self.font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.font_desc.set_size(size * pango.SCALE)
 
+        #: color of label either as hex string or an (r,g,b) tuple
+        self.color = color
 
         self._bounds_width = -1
 
@@ -582,11 +578,15 @@ class Label(Shape):
         #: ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]
         self.ellipsize = None
 
+        #: alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]
+        self.alignment = alignment
+
+        #: label text
+        self.text = text
+
         #: font size
         self.size = size
 
-        #: alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]
-        self.alignment = alignment
 
 
     def __setattr__(self, name, val):
