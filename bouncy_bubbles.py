@@ -26,7 +26,7 @@ FRICTION = -0.9;
 
 class Ball(graphics.Circle):
     def __init__(self, x, y, radius):
-        graphics.Circle.__init__(self, radius, fill="#aaa", x = x, y = y)
+        graphics.Circle.__init__(self, radius * 2, radius * 2, fill="#aaa", x = x, y = y)
 
         # just for kicks add mass, so bigger balls would not bounce as easy as little ones
         self.mass = float(self.radius) * 2
