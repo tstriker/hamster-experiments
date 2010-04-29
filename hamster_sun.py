@@ -39,28 +39,11 @@ class Scene(graphics.Scene):
 
                     self.years[year][category].append((day, delta))
 
-        # go through facts and sum up totals per day per category
-        for fact in self.facts:
-            self.day_counts.setdefault(fact['date'], defaultdict(dt.timedelta))
-            self.day_counts[fact['date']][fact['category']] += fact['delta']
+                categories[category] += 1
 
-            categories[fact['category']] += 1
+
 
         self.categories = categories.keys()
-
-
-        # convert delta to hours and keep tabs of max per year per category
-        self.per_year = defaultdict(dict)
-        self.by_year = defaultdict(dict)
-        for day in self.day_counts:
-            for category in self.day_counts[day]:
-                delta = self.day_counts[day][category]
-                hours = delta.seconds / 60 / 60 + delta.days * 24
-                self.day_counts[day][category] = hours
-
-                self.per_year[day.year].setdefault(category, 0)
-
-                self.per_year[day.year][category] = max(hours, self.per_year[day.year][category])
 
 
         self.connect("on-enter-frame", self.on_enter_frame)
@@ -83,37 +66,23 @@ class Scene(graphics.Scene):
 
 
 
-        # find out our total height in max hours
-        total_max_hours = 0
-
-        for year in self.per_year:
-            for category in self.per_year[year]:
-                total_max_hours += self.per_year[year][category]
-
-        hour_step = 300.0 / total_max_hours
-        print hour_step
-
-
+        hour_step = 3
         current_pixel = 30
 
-        for category in self.categories:
-            for year in self.years:
+        for year in sorted(self.years.keys()):
+            for category in self.categories:
 
                 ring_height = hour_step * 3
 
-                color = colors[self.categories.index(category)]
-
-
                 for day, hours in self.years[year][category]:
                     year_day = day.isocalendar()[1] * 7 + day.weekday()
-                    angle = year_day * step
+                    angle = year_day * step - math.pi / 2
 
                     distance = current_pixel
 
                     height = ring_height
 
 
-                    g.set_color(color)
                     #bar per category
                     g.move_to(math.cos(angle) * distance + self.width / 2,
                               math.sin(angle) * distance + self.height / 2)
@@ -126,18 +95,22 @@ class Scene(graphics.Scene):
                     g.line_to(math.cos(angle+step) * distance + self.width / 2,
                               math.sin(angle+step) * distance + self.height / 2)
                     g.close_path()
-                    g.fill_preserve()
-                    g.stroke()
 
-                current_pixel -=2
-                g.set_line_style(width = 1)
-                g.circle(self.width/2, self.height/2, current_pixel)
-                g.stroke("#fff", 0.1)
-                g.set_line_style(width=1)
+                if self.years[year][category]:
+                    current_pixel += ring_height + 7
 
-                current_pixel += ring_height + 7
+                color = colors[self.categories.index(category)]
+                g.set_color(color)
+                g.fill_preserve()
+                g.stroke()
 
-            #current_pixel += 20 * hour_step
+
+            g.set_line_style(width = 1)
+            g.circle(self.width/2, self.height/2, current_pixel - 2)
+            g.stroke("#fff", 0.1)
+            g.set_line_style(width=1)
+
+            current_pixel += 3
 
 
 
