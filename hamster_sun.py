@@ -78,9 +78,7 @@ class Scene(graphics.Scene):
 
 
 
-        colors = ("#ff0000", "#00ff00", "#0000ff",
-                  "#aaa000", "#ffff00", "#ff00ff",
-                  "#f0000f", "#f0f0f0", "#ea0f78")
+        colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
         g.set_line_style(width=0.5)
 
 
@@ -92,22 +90,16 @@ class Scene(graphics.Scene):
             for category in self.per_year[year]:
                 total_max_hours += self.per_year[year][category]
 
-        hour_step = 200.0 / total_max_hours
+        hour_step = 300.0 / total_max_hours
         print hour_step
 
 
-        current_pixel = 80
+        current_pixel = 30
 
         for category in self.categories:
             for year in self.years:
-                if category not in self.per_year[year]:
-                    continue
 
-                ring_height = self.per_year[year][category] * hour_step
-                g.set_line_style(width = ring_height)
-                g.circle(self.width/2, self.height/2, current_pixel + ring_height / 2)
-                g.stroke(colors[self.categories.index(category)], 0.3)
-                g.set_line_style(width=1)
+                ring_height = hour_step * 3
 
                 color = colors[self.categories.index(category)]
 
@@ -118,7 +110,7 @@ class Scene(graphics.Scene):
 
                     distance = current_pixel
 
-                    height = hours * hour_step
+                    height = ring_height
 
 
                     g.set_color(color)
@@ -134,11 +126,16 @@ class Scene(graphics.Scene):
                     g.line_to(math.cos(angle+step) * distance + self.width / 2,
                               math.sin(angle+step) * distance + self.height / 2)
                     g.close_path()
-                    g.fill()
-                    #g.stroke()
+                    g.fill_preserve()
+                    g.stroke()
 
-                if self.years[year][category]:
-                    current_pixel += self.per_year[year][category] * hour_step + 2 * hour_step
+                current_pixel -=2
+                g.set_line_style(width = 1)
+                g.circle(self.width/2, self.height/2, current_pixel)
+                g.stroke("#fff", 0.1)
+                g.set_line_style(width=1)
+
+                current_pixel += ring_height + 7
 
             #current_pixel += 20 * hour_step
 
@@ -156,7 +153,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(700, 700)
+        window.set_size_request(700, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
