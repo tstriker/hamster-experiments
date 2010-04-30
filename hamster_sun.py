@@ -13,6 +13,82 @@ import datetime as dt
 from collections import defaultdict
 import itertools
 
+
+class Chart(graphics.Sprite):
+    def __init__(self):
+        graphics.Sprite.__init__(self, interactive = False);
+
+    def do_stuff(self, years, categories):
+        step = (360.0 / 365) * math.pi / 180.0
+
+        g = self.graphics
+
+
+        g.set_color("#999")
+        g.set_line_style(width = 1)
+
+
+
+        colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
+        g.set_line_style(width=0.5)
+
+
+
+        hour_step = 30
+        current_pixel = 120
+
+        g.set_line_style(width = 1)
+        g.circle(0, 0, current_pixel - 2)
+        g.stroke("#fff", 0.2)
+        g.set_line_style(width=1)
+
+        for year in sorted(years.keys()):
+            for category in categories:
+
+                ring_height = hour_step * 3
+
+                for day, hours in years[year][category]:
+                    year_day = day.isocalendar()[1] * 7 + day.weekday()
+                    angle = year_day * step - math.pi / 2
+
+                    distance = current_pixel
+
+                    height = ring_height
+
+
+                    #bar per category
+                    g.move_to(math.cos(angle) * distance + 0,
+                              math.sin(angle) * distance + 0)
+                    g.line_to(math.cos(angle) * (distance + height),
+                              math.sin(angle) * (distance + height))
+
+                    g.line_to(math.cos(angle+step) * (distance + height),
+                              math.sin(angle+step) * (distance + height))
+
+                    g.line_to(math.cos(angle+step) * distance,
+                              math.sin(angle+step) * distance)
+                    g.close_path()
+
+                if years[year][category]:
+                    current_pixel += ring_height + 7
+
+                color = colors[categories.index(category)]
+                g.set_color(color)
+                g.fill_preserve()
+                g.stroke()
+
+
+            g.set_line_style(width = 1)
+            g.circle(0, 0, current_pixel - 2)
+            g.stroke("#fff", 0.3)
+            g.set_line_style(width=1)
+
+            current_pixel += 3
+
+
+
+
+
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
@@ -41,85 +117,41 @@ class Scene(graphics.Scene):
 
                 categories[category] += 1
 
-
-
         self.categories = categories.keys()
 
 
+        self.chart = Chart()
+
+        self.add_child(self.chart)
+
+        self.chart.do_stuff(self.years, self.categories)
+
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-mouse-move", self.on_mouse_move)
+
+        #self.animate(self.chart, rotation=math.pi * 2, duration = 3)
+
+    def on_mouse_move(self, scene, event):
+        x, y = self.width / 2, self.height / 2
+
+        max_distance = math.sqrt((self.width / 2) ** 2 + (self.height / 2) ** 2)
+
+        distance = math.sqrt((x - event.x) ** 2 + (y - event.y) ** 2)
+
+        #self.chart.scale_x = 2 - 2 * (distance / float(max_distance))
+        #self.chart.scale_y = 2 - 2 * (distance / float(max_distance))
+        #self.redraw()
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
-
         g.fill_area(0, 0, self.width, self.height, "#000")
 
-        step = (360.0 / 365) * math.pi / 180.0
+        self.chart.x = self.width / 2
+        self.chart.y = self.height / 2
+        self.chart.scale_x = 0.18
+        self.chart.scale_y = 0.18
 
 
-        g.set_color("#999")
-        g.set_line_style(width = 1)
-
-
-
-        colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
-        g.set_line_style(width=0.5)
-
-
-
-        hour_step = 3
-        current_pixel = 30
-
-        for year in sorted(self.years.keys()):
-            for category in self.categories:
-
-                ring_height = hour_step * 3
-
-                for day, hours in self.years[year][category]:
-                    year_day = day.isocalendar()[1] * 7 + day.weekday()
-                    angle = year_day * step - math.pi / 2
-
-                    distance = current_pixel
-
-                    height = ring_height
-
-
-                    #bar per category
-                    g.move_to(math.cos(angle) * distance + self.width / 2,
-                              math.sin(angle) * distance + self.height / 2)
-                    g.line_to(math.cos(angle) * (distance + height) + self.width / 2 ,
-                              math.sin(angle) * (distance + height) + self.height / 2)
-
-                    g.line_to(math.cos(angle+step) * (distance + height) + self.width / 2 ,
-                              math.sin(angle+step) * (distance + height) + self.height / 2)
-
-                    g.line_to(math.cos(angle+step) * distance + self.width / 2,
-                              math.sin(angle+step) * distance + self.height / 2)
-                    g.close_path()
-
-                if self.years[year][category]:
-                    current_pixel += ring_height + 7
-
-                color = colors[self.categories.index(category)]
-                g.set_color(color)
-                g.fill_preserve()
-                g.stroke()
-
-
-            g.set_line_style(width = 1)
-            g.circle(self.width/2, self.height/2, current_pixel - 2)
-            g.stroke("#fff", 0.1)
-            g.set_line_style(width=1)
-
-            current_pixel += 3
-
-
-
-        """
-        for i, color in enumerate(colors):
-            g.move_to(0, i * 20)
-            g.set_color(color)
-            g.show_text(self.categories[i])
-        """
 
 
 
