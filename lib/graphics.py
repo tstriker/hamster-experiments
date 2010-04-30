@@ -409,6 +409,7 @@ class Sprite(gtk.Object):
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
                  rotation = 0, pivot_x = 0, pivot_y = 0,
+                 scale_x = 1, scale_y = 1,
                  interactive = True, draggable = False,
                  z_order = 0):
         gtk.Object.__init__(self)
@@ -443,6 +444,12 @@ class Sprite(gtk.Object):
         #: rotation of the sprite in radians (use :func:`math.degrees` to convert to degrees if necessary)
         self.rotation = rotation
 
+        #: scale X
+        self.scale_x = scale_x
+
+        #: scale Y
+        self.scale_y = scale_y
+
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
@@ -471,6 +478,9 @@ class Sprite(gtk.Object):
             if self.pivot_x or self.pivot_y:
                 context.translate(-self.pivot_x, -self.pivot_y)
 
+            if self.scale_x != 1 or self.scale_y != 1:
+                context.scale(self.scale_x, self.scale_y)
+
         self.graphics.opacity = self.opacity * opacity
 
         #self.emit("on-draw") # TODO - this is expensive when doing constant redraw with many frames. maybe we can have a simple callback here?
@@ -481,7 +491,7 @@ class Sprite(gtk.Object):
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
 
-        if self.x or self.y or self.rotation:
+        if any([self.x, self.y, self.rotation, self.scale_x, self.scale_y]):
             context.restore()
 
     def _on_click(self, button_state):
