@@ -14,9 +14,9 @@ from lib.pytweener import Easing
 from random import random
 import math
 
-class Node(graphics.Shape):
+class Node(graphics.Sprite):
     def __init__(self, angle, distance):
-        graphics.Shape.__init__(self, fill = "#aaa")
+        graphics.Sprite.__init__(self)
 
         self.angle = angle
         self.distance = distance
@@ -24,14 +24,16 @@ class Node(graphics.Shape):
         self.distance_scale = 1
         self.radius = 4.0
         self.phase = 0
+        self.connect("on-render", self.on_render)
 
-
-    def draw_shape(self):
+    def on_render(self, sprite):
+        self.graphics.clear()
         self.x = math.cos(self.angle + self.base_angle) * self.distance * self.distance_scale
         self.y = math.sin(self.angle + self.base_angle) * self.distance * self.distance_scale
 
         self.graphics.circle(0, 0, self.radius)
         self.graphics.fill("#aaa")
+
 
 class Scene(graphics.Scene):
     def __init__(self):

@@ -16,7 +16,7 @@ import itertools
 
 class Chart(graphics.Sprite):
     def __init__(self):
-        graphics.Sprite.__init__(self, interactive = False);
+        graphics.Sprite.__init__(self, interactive = False)
 
     def do_stuff(self, years, categories):
         step = (360.0 / 365) * math.pi / 180.0
@@ -28,14 +28,29 @@ class Chart(graphics.Sprite):
         g.set_line_style(width = 1)
 
 
+        # em
+        colors = ["#009966", "#33cc00", "#9933cc", "#aaaaaa", "#ff9999", "#99cccc"]
+        colors.reverse()
 
-        colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
-        g.set_line_style(width=0.5)
+        # em contrast
+        colors = ["#00a05f", "#1ee100", "#a0a000", "#ffa000", "#a01ee1", "#a0a0a0", "#ffa0a0", "#a0e1e1"]
+        colors.reverse()
 
 
+        # tango light
+        colors = ["#fce94f", "#89e034", "#fcaf3e", "#729fcf", "#ad7fa8", "#e9b96e", "#ef2929", "#eeeeec", "#888a85"]
 
-        hour_step = 30
-        current_pixel = 120
+        # tango medium
+        colors =["#edd400", "#73d216", "#f57900", "#3465a4", "#75507b", "#c17d11", "#cc0000", "#d3d7cf", "#555753"]
+        #colors = colors[1:]
+
+
+        #colors = ("#ff0000", "#00ff00", "#0000ff", "#aaa000")
+
+
+        hour_step = 15
+        spacing = 20
+        current_pixel = 1220
 
         g.set_line_style(width = 1)
         g.circle(0, 0, current_pixel - 2)
@@ -44,7 +59,6 @@ class Chart(graphics.Sprite):
 
         for year in sorted(years.keys()):
             for category in categories:
-
                 ring_height = hour_step * 3
 
                 for day, hours in years[year][category]:
@@ -70,18 +84,18 @@ class Chart(graphics.Sprite):
                     g.close_path()
 
                 if years[year][category]:
-                    current_pixel += ring_height + 7
+                    current_pixel += ring_height + 7 + spacing
 
-                color = colors[categories.index(category)]
+                color = "#fff" #colors[categories.index(category)]
                 g.set_color(color)
-                g.fill_preserve()
-                g.stroke()
+                g.fill()
+
+            current_pixel += spacing * 3
 
 
-            g.set_line_style(width = 1)
-            g.circle(0, 0, current_pixel - 2)
-            g.stroke("#fff", 0.3)
-            g.set_line_style(width=1)
+            g.set_line_style(width = 4)
+            g.circle(0, 0, current_pixel - spacing * 2)
+            g.stroke("#fff", 0.5)
 
             current_pixel += 3
 
@@ -96,7 +110,7 @@ class Scene(graphics.Scene):
 
         storage = hamster.client.Storage()
 
-        self.facts = storage.get_facts(dt.date(2007,1,1), dt.date.today())
+        self.facts = storage.get_facts(dt.date(2009,1,1), dt.date(2009,12,31))
         print len(self.facts)
 
         self.day_counts = {}
@@ -144,7 +158,7 @@ class Scene(graphics.Scene):
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
-        g.fill_area(0, 0, self.width, self.height, "#000")
+        g.fill_area(0, 0, self.width, self.height, "#20b6de")
 
         self.chart.x = self.width / 2
         self.chart.y = self.height / 2

@@ -233,9 +233,9 @@ class Graph(object):
 
 
 
-class DisplayNode(graphics.Shape):
+class DisplayNode(graphics.Sprite):
     def __init__(self, x, y, real_node):
-        graphics.Shape.__init__(self, x = x, y = y)
+        graphics.Sprite.__init__(self, x = x, y = y)
 
         self.real_node = real_node
         self.interactive = True
@@ -244,6 +244,7 @@ class DisplayNode(graphics.Shape):
 
         self.connect("on-mouse-over", self.on_mouse_over)
         self.connect("on-mouse-out", self.on_mouse_out)
+        self.connect("on-render", self.on_render)
 
     def on_mouse_over(self, sprite):
         self.fill = "#000"
@@ -251,15 +252,14 @@ class DisplayNode(graphics.Shape):
     def on_mouse_out(self, sprite):
         self.fill = "#999"
 
-    def draw_shape(self):
-        self.graphics.set_color(self.fill)
+    def on_render(self, sprite):
+        self.graphics.clear()
         self.graphics.arc(0, 0, 5, 0, math.pi * 2)
-        self.graphics.fill()
+        self.graphics.fill(self.fill)
 
         # adding invisible circle with bigger radius for easier targeting
-        self.graphics.set_color("#000", 0)
         self.graphics.arc(0, 0, 10, 0, math.pi * 2)
-        self.graphics.stroke()
+        self.graphics.stroke("#000", 0)
 
 
 

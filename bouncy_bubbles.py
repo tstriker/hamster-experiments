@@ -26,7 +26,10 @@ FRICTION = -0.9;
 
 class Ball(graphics.Circle):
     def __init__(self, x, y, radius):
-        graphics.Circle.__init__(self, radius * 2, radius * 2, fill="#aaa", x = x, y = y)
+        self.width = self.height = radius * 2
+        graphics.Circle.__init__(self, self.width, self.height, fill="#aaa", x = x, y = y)
+
+        self.radius = radius
 
         # just for kicks add mass, so bigger balls would not bounce as easy as little ones
         self.mass = float(self.radius) * 2
@@ -40,17 +43,15 @@ class Ball(graphics.Circle):
         self.x += self.vx
         self.y += self.vy
 
-        radius = self.radius
-
         # bounce of the walls
-        if self.x - radius < 0 or self.x + radius > width:
+        if self.x - self.width < 0 or self.x + self.width > width:
             self.vx = self.vx * FRICTION
 
-        if self.y - radius < 0 or self.y + radius > height:
+        if self.y - self.height < 0 or self.y + self.height > height:
             self.vy = self.vy * FRICTION
 
-        self.x = max(radius, min(self.x, width - radius))
-        self.y = max(radius, min(self.y, height - radius))
+        self.x = max(self.width, min(self.x, width - self.width))
+        self.y = max(self.height, min(self.y, height - self.height))
 
 
     def colide(self, others):

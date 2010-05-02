@@ -19,7 +19,7 @@ from lib.proximity import LQProximityStore
 
 class Waypoint(graphics.Sprite):
     def __init__(self, x, y):
-        graphics.Sprite.__init__(self, x, y, draggable = True)
+        graphics.Sprite.__init__(self, x, y, interactive = True, draggable = True)
 
         self.graphics.set_color("#999")
         self.graphics.rectangle(-4, -4, 8, 8, 2)

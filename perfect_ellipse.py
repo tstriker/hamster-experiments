@@ -11,12 +11,14 @@ import gtk
 from lib import graphics
 import math
 
-class Ellipse(graphics.Shape):
+class Ellipse(graphics.Sprite):
     def __init__(self, x, y, width, height):
-        graphics.Shape.__init__(self, stroke = "#666", x = x, y = y)
+        graphics.Sprite.__init__(self, x = x, y = y)
         self.width, self.height = width, height
+        self.connect("on-render", self.on_render)
 
-    def draw_shape(self):
+    def on_render(self, sprite):
+        self.graphics.clear()
         """you can also use graphics.ellipse() here"""
         steps = max((32, self.width, self.height)) / 3
 
@@ -37,7 +39,7 @@ class Ellipse(graphics.Shape):
             self.graphics.line_to(x - min_x, y - min_y)
         self.graphics.line_to(points[0][0] - min_x, points[0][1] - min_y)
 
-        #self.graphics.rectangle(self.pivot_x - 3, self.pivot_y - 3, 6, 6)
+        self.graphics.stroke("#666")
 
 
 class Scene(graphics.Scene):

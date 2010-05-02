@@ -257,6 +257,18 @@ class Graphics(object):
         self.fill(color, opacity)
 
 
+    def fill_stroke(self, fill = None, stroke = None, line_width = None):
+        if line_width: self.set_line_style(line_width)
+
+        if fill and stroke:
+            self.fill_preserve(fill)
+        elif fill:
+            self.fill(fill)
+
+        if stroke:
+            self.stroke(stroke)
+
+
     @staticmethod
     def _show_layout(context, text, font_desc, alignment, width, wrap, ellipsize):
         layout = context.create_layout()
@@ -397,20 +409,22 @@ class Sprite(gtk.Object):
     """The Sprite class is a basic display list building block: a display list
        node that can display graphics and can also contain children.
        Once you have created the sprite, use Scene's add_child to add it to
-       scene"""
+       scene
+    """
 
     __gsignals__ = {
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         #"on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
-                 interactive = True, draggable = False,
+                 interactive = False, draggable = False,
                  z_order = 0):
         gtk.Object.__init__(self)
 
@@ -453,6 +467,13 @@ class Sprite(gtk.Object):
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
+        self._sprite_dirty = True # flag that indicates that the graphics object of the sprite should be rendered
+
+    def __setattr__(self, name, val):
+        self.__dict__[name] = val
+        if name not in ('_sprite_dirty', 'x', 'y', 'rotation', 'scale_x', 'scale_y'):
+            self._sprite_dirty = True
+
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
@@ -466,7 +487,7 @@ class Sprite(gtk.Object):
         if self.visible is False:
             return
 
-        if self.x or self.y or self.rotation:
+        if any([self.x, self.y, self.rotation, self.scale_x, self.scale_y]):
             context.save()
 
             if self.x or self.y or self.pivot_x or self.pivot_y:
@@ -486,6 +507,11 @@ class Sprite(gtk.Object):
         #self.emit("on-draw") # TODO - this is expensive when doing constant redraw with many frames. maybe we can have a simple callback here?
         #self.graphics._move_to(context, 0, 0) # TODO - i'm doing this move because otherwise the currentpoint is pointing to wherever it was left. check if we really need this
         context.new_path()
+
+        if (self._sprite_dirty): # send signal to redo the drawing when sprite's dirty
+            self.emit("on-render")
+            self._sprite_dirty = False
+
         self.graphics._draw(context, self.interactive or self.draggable)
 
         for sprite in self.sprites:
@@ -510,65 +536,11 @@ class Sprite(gtk.Object):
         self.emit("on-drag", (x, y))
 
 
-# a few shapes
-class Shape(Sprite):
-    """shape is a simple continuous shape that can have fill and stroke"""
-    def __init__(self, stroke = None, fill = None, line_width = None, **kwargs):
-        kwargs.setdefault("interactive", False)
-        Sprite.__init__(self, **kwargs)
 
-        #: stroke color
-        self.stroke = stroke
-
-        #: fill color
-        self.fill = fill
-
-        #: stroke line width
-        self.line_width = line_width
-
-        self._sprite_dirty = True # a dirty shape needs it's graphics regenerated, because params have changed
-
-    def __setattr__(self, name, val):
-        self.__dict__[name] = val
-        if name not in ('_sprite_dirty', 'x', 'y', 'rotation'):
-            self._sprite_dirty = True
-
-
-    def _draw(self, context, opacity = 1):
-        if self._sprite_dirty:
-            self.graphics.clear()
-            self.draw_shape()
-            self._color()
-            self._sprite_dirty = False
-
-        Sprite._draw(self, context, opacity)
-
-
-    def draw_shape(self):
-        """implement this function in your subclassed object. leave out stroke
-        and fill instructions - those will be performed by the shape itself,
-        using the stroke and fill attributes"""
-        raise NotImplementedError("expected draw_shape function in the class")
-
-    def _color(self):
-        if self.line_width:
-            self.graphics.set_line_style(self.line_width)
-
-        if self.fill:
-            if self.stroke:
-                self.graphics.fill_preserve(self.fill)
-            else:
-                self.graphics.fill(self.fill)
-
-        if self.stroke:
-            self.graphics.stroke(self.stroke)
-
-
-class Label(Shape):
+class Label(Sprite):
     def __init__(self, text = "", size = 10, color = None,
                  alignment = pango.ALIGN_LEFT, **kwargs):
-        kwargs.setdefault('interactive', False)
-        Shape.__init__(self, **kwargs)
+        Sprite.__init__(self, **kwargs)
         self.width, self.height = None, None
 
         #: pango.FontDescription, default is the system's font
@@ -597,10 +569,11 @@ class Label(Shape):
         #: font size
         self.size = size
 
+        self.connect("on-render", self.on_render)
 
 
     def __setattr__(self, name, val):
-        Shape.__setattr__(self, name, val)
+        Sprite.__setattr__(self, name, val)
         if name == "width":
             # setting width means consumer wants to contrain the label
             if val is None or val == -1:
@@ -611,7 +584,8 @@ class Label(Shape):
             self._set_dimensions()
 
 
-    def draw_shape(self):
+    def on_render(self, sprite):
+        self.graphics.clear()
         if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
             self.graphics.set_color("#000", 0)
             self.graphics.rectangle(0,0, self.width, self.height)
@@ -641,9 +615,9 @@ class Label(Shape):
         self.__dict__['width'], self.height = layout.get_pixel_size()
 
 
-class Rectangle(Shape):
-    def __init__(self, w, h, corner_radius = 0, **kwargs):
-        Shape.__init__(self, **kwargs)
+class Rectangle(Sprite):
+    def __init__(self, w, h, corner_radius = 0, fill = None, stroke = None, **kwargs):
+        Sprite.__init__(self, **kwargs)
 
         #: width
         self.width = w
@@ -651,22 +625,46 @@ class Rectangle(Shape):
         #: height
         self.height = h
 
+        #: fill color
+        self.fill = fill
+
+        #: stroke color
+        self.stroke = stroke
+
+        #: stroke line width
+        self.line_width = 1
+
         #: corner radius. Set bigger than 0 for rounded corners
         self.corner_radius = corner_radius
+        self.connect("on-render", self.on_render)
 
-    def draw_shape(self):
+    def on_render(self, sprite):
+        self.graphics.clear()
         self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
+        self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
 
 
-class Polygon(Shape):
-    def __init__(self, points, **kwargs):
-        Shape.__init__(self, **kwargs)
+class Polygon(Sprite):
+    def __init__(self, points, fill = None, stroke = None, **kwargs):
+        Sprite.__init__(self, **kwargs)
 
         #: list of (x,y) tuples that the line should go through. Polygon
         #: will automatically close path.
         self.points = points
 
-    def draw_shape(self):
+        #: fill color
+        self.fill = fill
+
+        #: stroke color
+        self.stroke = stroke
+
+        #: stroke line width
+        self.line_width = 1
+
+        self.connect("on-render", self.on_render)
+
+    def on_render(self, sprite):
+        self.graphics.clear()
         if not self.points: return
 
         self.graphics.move_to(*self.points[0])
@@ -674,9 +672,12 @@ class Polygon(Shape):
             self.graphics.line_to(*point)
         self.graphics.close_path()
 
-class Circle(Shape):
-    def __init__(self, width, height, **kwargs):
-        Shape.__init__(self, **kwargs)
+        self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
+
+
+class Circle(Sprite):
+    def __init__(self, width, height, fill = None, stroke = None, **kwargs):
+        Sprite.__init__(self, **kwargs)
 
         #: circle width
         self.width = width
@@ -684,13 +685,25 @@ class Circle(Shape):
         #: circle height
         self.height = height
 
-    def draw_shape(self):
+        #: fill color
+        self.fill = fill
+
+        #: stroke color
+        self.stroke = stroke
+
+        #: stroke line width
+        self.line_width = 1
+
+        self.connect("on-render", self.on_render)
+
+    def on_render(self, sprite):
+        self.graphics.clear()
         if self.width == self.height:
             self.graphics.circle(self.width, self.width / 2.0, self.width / 2.0)
         else:
             self.graphics.ellipse(0, 0, self.width, self.height)
 
-
+        self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
 
 class Scene(gtk.DrawingArea):
     """ Widget for displaying sprites.

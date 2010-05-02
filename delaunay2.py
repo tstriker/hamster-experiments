@@ -22,7 +22,7 @@ EPSILON = 0.00001
 
 class Node(graphics.Sprite):
     def __init__(self, x, y, point):
-        graphics.Sprite.__init__(self, x, y)
+        graphics.Sprite.__init__(self, x, y, interactive = True)
 
         self.draw_node()
         self.point = point

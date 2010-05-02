@@ -14,9 +14,10 @@ from lib.euclid import Vector2
 import math
 from random import random, randint
 
-class Boid(graphics.Shape):
+class Boid(graphics.Sprite):
     def __init__(self):
-        graphics.Shape.__init__(self)
+        graphics.Sprite.__init__(self)
+        self.stroke = "#666"
         self.visible = True
         self.radius = 4
         self.acceleration = Vector2()
@@ -26,12 +27,14 @@ class Boid(graphics.Shape):
         self.positions = []
         self.message = None # a message that waypoint has set perhaps
         self.flight_angle = 0
-        self.stroke = "#666"
+
+        self.connect("on-render", self.on_render)
 
     def update_position(self, w, h):
         raise TableSpoon # forgot the name of the real exception, so can as well raise a table spoon
 
-    def draw_shape(self):
+    def on_render(self, sprite):
+        self.graphics.clear()
         #draw boid triangle
         if self.flight_angle:
             theta = self.flight_angle
@@ -47,6 +50,7 @@ class Boid(graphics.Shape):
         self.graphics.line_to(self.radius, self.radius * 2)
         self.graphics.line_to(0, -self.radius*2)
 
+        self.graphics.stroke(self.stroke)
 
 
 class Boid1(Boid):

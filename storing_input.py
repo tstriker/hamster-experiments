@@ -41,18 +41,17 @@ class Scene(graphics.Scene):
         self.segments.insert(0, segment)
 
     def on_enter_frame(self, scene, context):
-        c_graphics = graphics.Graphics(context)
+        g = graphics.Graphics(context)
 
 
         # on expose is called when we are ready to draw
         for i, segment in reversed(list(enumerate(self.segments))):
             if segment.width:
-                c_graphics.set_color(segment.color, 0.5)
-                c_graphics.rectangle(segment.x - segment.width / 2.0,
-                                     segment.y - segment.width / 2.0,
-                                     segment.width,
-                                     segment.width, 3)
-                c_graphics.fill()
+                g.rectangle(segment.x - segment.width / 2.0,
+                            segment.y - segment.width / 2.0,
+                            segment.width,
+                            segment.width, 3)
+                g.fill(segment.color, 0.5)
 
             else:
                 del self.segments[i]

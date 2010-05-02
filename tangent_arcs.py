@@ -12,16 +12,16 @@ from lib.euclid import Vector2
 
 import math
 
-class CenteredCircle(graphics.Shape):
+class CenteredCircle(graphics.Sprite):
     """we don't have alignment yet and the pivot model is such that it does not
        alter anchor so the positioning would be predictable"""
     def __init__(self, x, y, radius):
-        graphics.Shape.__init__(self, "#000", "#ccc", 1, x = x, y = y,
+        graphics.Sprite.__init__(self, x = x, y = y,
                                 interactive = True, draggable=True,)
         self.radius = radius
 
-    def draw_shape(self):
         self.graphics.circle(0, 0, self.radius)
+        self.graphics.fill_stroke("#ccc", "#999", 1)
 
 class Canvas(graphics.Scene):
     def __init__(self):

@@ -14,13 +14,11 @@ import math
 from lib.euclid import Point2
 
 
-class Node(graphics.Shape):
+class Node(graphics.Sprite):
     def __init__(self, x, y):
-        graphics.Shape.__init__(self, x = x, y = y,
-                                interactive = True, draggable = True,
-                                fill = "#999")
-    def draw_shape(self):
+        graphics.Sprite.__init__(self, x = x, y = y, interactive = True, draggable = True)
         self.graphics.rectangle(-5, -5, 10, 10, 3)
+        self.graphics.fill("#999")
 
 class Canvas(graphics.Scene):
     def __init__(self):

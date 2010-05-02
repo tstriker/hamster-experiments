@@ -10,15 +10,21 @@ from lib import graphics
 from lib.euclid import Vector2
 import math
 
-class Sector(graphics.Shape):
-    def __init__(self, inner_radius, outer_radius, start_angle = 0, end_angle = 0, **kwargs):
-        graphics.Shape.__init__(self, **kwargs)
+class Sector(graphics.Sprite):
+    def __init__(self, inner_radius, outer_radius, start_angle = 0, end_angle = 0):
+        graphics.Sprite.__init__(self, interactive = True)
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
         self.start_angle = start_angle
         self.end_angle = end_angle
 
-    def draw_shape(self):
+        self.fill = None
+        self.stroke = "#aaa"
+
+        self.connect("on-render", self.on_render)
+
+    def on_render(self, sprite):
+        self.graphics.clear()
         self.rotation = self.start_angle
         angle = self.start_angle - self.end_angle
 
@@ -34,6 +40,8 @@ class Sector(graphics.Shape):
         # just for fun
         self.graphics.move_to(150, -15)
         self.graphics.rectangle(150,-15,10,10)
+
+        self.graphics.fill_stroke(self.fill, self.stroke)
 
 
 class Menu(graphics.Sprite):
@@ -57,7 +65,7 @@ class Menu(graphics.Sprite):
         self.add_item()
 
     def add_item(self):
-        item = Sector(25, 50, math.pi / 2, 0, interactive = True, stroke = "#aaa")
+        item = Sector(25, 50, math.pi / 2, 0)
         item.connect("on-mouse-over", self.on_mouse_over)
         item.connect("on-mouse-out", self.on_mouse_out)
         item.connect("on-click", self.on_click)
