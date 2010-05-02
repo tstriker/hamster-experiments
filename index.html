@@ -158,7 +158,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 <h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>interactive=True</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Sprite class is a basic display list building block: a display list
 node that can display graphics and can also contain children.
 Once you have created the sprite, use Scene&#8217;s add_child to add it to
@@ -199,6 +199,16 @@ scene</p>
 <dd>rotation of the sprite in radians (use <tt class="xref py py-func docutils literal"><span class="pre">math.degrees()</span></tt> to convert to degrees if necessary)</dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Sprite.scale_x">
+<tt class="descname">scale_x</tt><a class="headerlink" href="#graphics.Sprite.scale_x" title="Permalink to this definition">¶</a></dt>
+<dd>scale X</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.scale_y">
+<tt class="descname">scale_y</tt><a class="headerlink" href="#graphics.Sprite.scale_y" title="Permalink to this definition">¶</a></dt>
+<dd>scale Y</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Sprite.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Sprite.sprites" title="Permalink to this definition">¶</a></dt>
 <dd>list of children sprites. Use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</dd></dl>
@@ -225,6 +235,24 @@ scene</p>
 <p><strong>on-drag</strong> <em>(mouse_event)</em> - fired when user drags the sprite.
 <cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
 The signal is emitted also if attribute <cite>draggable</cite> is disabled.</p>
+<p><strong>on-render</strong> <em>()</em> fired before rendering the sprite, in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
+Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Ball</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+        <span class="n">graphics</span><span class="o">.</span><span class="n">Sprite</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&quot;on-render&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_render</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sprite</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graphics</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span> <span class="c"># clear any previous state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graphics</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graphics</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">)</span> <span class="c"># fill with the whatever color we have at the moment</span>
+</pre></div>
+</div>
+<p>Now, normally if you would change the color attribute of the Ball class nothing
+would happen as the sprite draws whatever there currently is in the instructions.
+But as the on_render will be called whenever a class attribute changes, this will
+trigger redrawal, and so the ball will correctly show the new color.</p>
 </div>
 </div>
 <div class="section" id="graphics-class">
@@ -329,6 +357,11 @@ equilateral polygons</dd></dl>
 <dd>draw a rectangle. if corner_radius is specified, will draw rounded corners</dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.rel_line_to">
+<tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
+<dd>draw line</dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.set_color">
 <tt class="descname">set_color</tt><big>(</big><em>color</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_color" title="Permalink to this definition">¶</a></dt>
 <dd>set active color. You can use hex colors like &#8220;#aaa&#8221;, or you can use
@@ -365,55 +398,31 @@ a class:Label object</dd></dl>
 </dd></dl>
 
 </div>
-<div class="section" id="shape-objects">
-<h2><tt class="xref py py-class docutils literal"><span class="pre">Shape</span></tt> objects<a class="headerlink" href="#shape-objects" title="Permalink to this headline">¶</a></h2>
-<p>Shape is an abstract class for simple sprites (like <a class="reference internal" href="#primitives"><em>Primitives</em></a> below) with stroke and fill.
-Implement the draw_shape function (where you can use the .graphics property) to draw the shape.
-Leave out stroke and fill instructions, as those will be performed automatically by the shape.</p>
-<dl class="class">
-<dt id="graphics.Shape">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Shape</tt><big>(</big><em>stroke=None</em>, <em>fill=None</em>, <em>line_width=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>shape is a simple continuous shape that can have fill and stroke</p>
-<dl class="method">
-<dt id="graphics.Shape.add_child">
-<tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Shape.add_child" title="Permalink to this definition">¶</a></dt>
-<dd>Add child sprite. Child will be nested within parent</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Shape.draw_shape">
-<tt class="descname">draw_shape</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Shape.draw_shape" title="Permalink to this definition">¶</a></dt>
-<dd>implement this function in your subclassed object. leave out stroke
-and fill instructions - those will be performed by the shape itself,
-using the stroke and fill attributes</dd></dl>
-
-<dl class="attribute">
-<dt id="graphics.Shape.fill">
-<tt class="descname">fill</tt><a class="headerlink" href="#graphics.Shape.fill" title="Permalink to this definition">¶</a></dt>
-<dd>fill color</dd></dl>
-
-<dl class="attribute">
-<dt id="graphics.Shape.line_width">
-<tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Shape.line_width" title="Permalink to this definition">¶</a></dt>
-<dd>stroke line width</dd></dl>
-
-<dl class="attribute">
-<dt id="graphics.Shape.stroke">
-<tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Shape.stroke" title="Permalink to this definition">¶</a></dt>
-<dd>stroke color</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="primitives">
 <span id="id4"></span><h2>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h2>
 <p>A few shapes to speed up your drawing. They are full fledged Sprites.</p>
 <dl class="class">
 <dt id="graphics.Circle">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
+<dt id="graphics.Circle.fill">
+<tt class="descname">fill</tt><a class="headerlink" href="#graphics.Circle.fill" title="Permalink to this definition">¶</a></dt>
+<dd>fill color</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Circle.height">
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Circle.height" title="Permalink to this definition">¶</a></dt>
 <dd>circle height</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Circle.line_width">
+<tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Circle.line_width" title="Permalink to this definition">¶</a></dt>
+<dd>stroke line width</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Circle.stroke">
+<tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Circle.stroke" title="Permalink to this definition">¶</a></dt>
+<dd>stroke color</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Circle.width">
@@ -424,16 +433,31 @@ using the stroke and fill attributes</dd></dl>
 
 <dl class="class">
 <dt id="graphics.Rectangle">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="graphics.Rectangle.corner_radius">
 <tt class="descname">corner_radius</tt><a class="headerlink" href="#graphics.Rectangle.corner_radius" title="Permalink to this definition">¶</a></dt>
 <dd>corner radius. Set bigger than 0 for rounded corners</dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Rectangle.fill">
+<tt class="descname">fill</tt><a class="headerlink" href="#graphics.Rectangle.fill" title="Permalink to this definition">¶</a></dt>
+<dd>fill color</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Rectangle.height">
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Rectangle.height" title="Permalink to this definition">¶</a></dt>
 <dd>height</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Rectangle.line_width">
+<tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Rectangle.line_width" title="Permalink to this definition">¶</a></dt>
+<dd>stroke line width</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Rectangle.stroke">
+<tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Rectangle.stroke" title="Permalink to this definition">¶</a></dt>
+<dd>stroke color</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.width">
@@ -444,12 +468,27 @@ using the stroke and fill attributes</dd></dl>
 
 <dl class="class">
 <dt id="graphics.Polygon">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
+<dt id="graphics.Polygon.fill">
+<tt class="descname">fill</tt><a class="headerlink" href="#graphics.Polygon.fill" title="Permalink to this definition">¶</a></dt>
+<dd>fill color</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Polygon.line_width">
+<tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Polygon.line_width" title="Permalink to this definition">¶</a></dt>
+<dd>stroke line width</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Polygon.points">
 <tt class="descname">points</tt><a class="headerlink" href="#graphics.Polygon.points" title="Permalink to this definition">¶</a></dt>
 <dd>list of (x,y) tuples that the line should go through. Polygon
 will automatically close path.</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Polygon.stroke">
+<tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Polygon.stroke" title="Permalink to this definition">¶</a></dt>
+<dd>stroke color</dd></dl>
 
 </dd></dl>
 
@@ -475,7 +514,7 @@ ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]</dd></dl>
 <dl class="attribute">
 <dt id="graphics.Label.font_desc">
 <tt class="descname">font_desc</tt><a class="headerlink" href="#graphics.Label.font_desc" title="Permalink to this definition">¶</a></dt>
-<dd>string with pango font description</dd></dl>
+<dd>pango.FontDescription, default is the system&#8217;s font</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.size">
@@ -593,7 +632,6 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 </ul>
 </li>
 <li><a class="reference external" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
-<li><a class="reference external" href="#shape-objects"><tt class="docutils literal"><span class="pre">Shape</span></tt> objects</a></li>
 <li><a class="reference external" href="#primitives">Primitives</a></li>
 <li><a class="reference external" href="#the-tweener">The Tweener</a></li>
 </ul>

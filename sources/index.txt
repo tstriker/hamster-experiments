@@ -85,6 +85,24 @@ Subscribe to signals using the `connect(signal, callback)` function of sprite.
 `mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_.
 The signal is emitted also if attribute `draggable` is disabled.
 
+**on-render** *()* fired before rendering the sprite, in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
+Example::
+
+    class Ball(graphics.Sprite):
+        def __init__(self, color):
+            graphics.Sprite.__init__(self)
+            self.color = color
+            self.connect("on-render", self.on_render)
+
+        def on_render(self, sprite):
+            self.graphics.clear() # clear any previous state
+            self.graphics.circle(0, 0, 10)
+            self.graphics.fill(self.color) # fill with the whatever color we have at the moment
+
+Now, normally if you would change the color attribute of the Ball class nothing
+would happen as the sprite draws whatever there currently is in the instructions.
+But as the on_render will be called whenever a class attribute changes, this will
+trigger redrawal, and so the ball will correctly show the new color.
 
 .. _graphics:
 
@@ -98,17 +116,6 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 
 .. autoclass:: graphics.Graphics
    :members:
-
-
-:class:`Shape` objects
-========================
-Shape is an abstract class for simple sprites (like :ref:`primitives` below) with stroke and fill.
-Implement the draw_shape function (where you can use the .graphics property) to draw the shape.
-Leave out stroke and fill instructions, as those will be performed automatically by the shape.
-
-.. autoclass:: graphics.Shape
-   :members:
-   :inherited-members:
 
 
 .. _primitives:
