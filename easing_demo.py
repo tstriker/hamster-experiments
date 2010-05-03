@@ -8,6 +8,7 @@ import gtk
 from lib import graphics
 from lib.pytweener import Easing
 from random import randint
+import datetime as dt
 
 
 class EasingBox(graphics.Rectangle):
@@ -54,9 +55,9 @@ class Scene(graphics.Scene):
         easing = clicked.easing_method()
 
         if clicked.left_side:
-            self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"))
+            self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"), fill="#fff000")
         else:
-            self.animate(clicked, x = 90, easing = easing.__getattribute__("ease_in"))
+            self.animate(clicked, x = 90, easing = easing.__getattribute__("ease_in"), fill="#aaa")
 
         clicked.left_side = not clicked.left_side
 
