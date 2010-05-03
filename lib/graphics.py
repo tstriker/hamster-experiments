@@ -736,6 +736,7 @@ class Scene(gtk.DrawingArea):
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
     def __init__(self, interactive = True, framerate = 80):
@@ -743,12 +744,14 @@ class Scene(gtk.DrawingArea):
         if interactive:
             self.set_events(gtk.gdk.POINTER_MOTION_MASK
                             | gtk.gdk.LEAVE_NOTIFY_MASK | gtk.gdk.ENTER_NOTIFY_MASK
-                            | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+                            | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK
+                            | gtk.gdk.SCROLL_MASK)
             self.connect("motion_notify_event", self.__on_mouse_move)
             self.connect("enter_notify_event", self.__on_mouse_enter)
             self.connect("leave_notify_event", self.__on_mouse_leave)
             self.connect("button_press_event", self.__on_button_press)
             self.connect("button_release_event", self.__on_button_release)
+            self.connect("scroll-event", self.__on_scroll)
 
         #: list of sprites in scene. use :func:`add_child` to add sprites
         self.sprites = []
@@ -885,6 +888,8 @@ class Scene(gtk.DrawingArea):
                 for child in self.all_sprites(sprite.sprites):
                     yield child
 
+    def __on_scroll(self, area, event):
+        self.emit("on-scroll", event)
 
     def __on_mouse_move(self, area, event):
         mouse_x = event.x
