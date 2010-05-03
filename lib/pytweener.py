@@ -33,6 +33,7 @@ class Tweener(object):
             This will move the sprite to coordinates (500, 200) in 0.4 seconds.
             For parameter "easing" you can use one of the pytweener.Easing
             functions, or specify your own.
+            The tweener can handle numbers, dates and color strings in hex ("#ffffff")
         """
         duration = duration or self.default_duration
         easing = easing or self.default_easing
