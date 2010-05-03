@@ -9,6 +9,7 @@ import datetime as dt
 import gtk, gobject
 
 import pango, cairo
+import re
 
 try:
     import pytweener
@@ -19,12 +20,20 @@ import colorsys
 from collections import deque
 
 class Colors(object):
+    hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
+    hex_color_short = re.compile("#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])")
+
     def parse(self, color):
         assert color is not None
 
         #parse color into rgb values
-        if isinstance(color, str) or isinstance(color, unicode):
-            color = gtk.gdk.Color(color)
+        if isinstance(color, basestring):
+            match = self.hex_color_normal.match(color)
+            if match:
+                color = [int(color, 16) for color in match.groups()]
+            else:
+                match = self.hex_color_short.match(color)
+                color = [int(color + color, 16) for color in match.groups()]
 
         if isinstance(color, gtk.gdk.Color):
             color = [color.red / 65535.0,
@@ -44,12 +53,14 @@ class Colors(object):
         c = self.parse(color)
         return gtk.gdk.Color(c[0] * 65535.0, c[1] * 65535.0, c[2] * 65535.0)
 
-    def is_light(self, color):
+    @staticmethod
+    def is_light(color):
         # tells you if color is dark or light, so you can up or down the
         # scale for improved contrast
         return colorsys.rgb_to_hls(*self.rgb(color))[1] > 150
 
-    def darker(self, color, step):
+    @staticmethod
+    def darker(color, step):
         # returns color darker by step (where step is in range 0..255)
         hls = colorsys.rgb_to_hls(*self.rgb(color))
         return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
