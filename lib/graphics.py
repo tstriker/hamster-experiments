@@ -22,23 +22,29 @@ from collections import deque
 class Colors(object):
     hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
     hex_color_short = re.compile("#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])")
+    hex_color_long = re.compile("#([a-fA-F0-9]{4})([a-fA-F0-9]{4})([a-fA-F0-9]{4})")
 
     def parse(self, color):
         assert color is not None
 
         #parse color into rgb values
         if isinstance(color, basestring):
-            match = self.hex_color_normal.match(color)
+            match = self.hex_color_long.match(color)
             if match:
-                color = [int(color, 16) for color in match.groups()]
+                color = [int(color, 16) / 65535.0 for color in match.groups()]
             else:
-                match = self.hex_color_short.match(color)
-                color = [int(color + color, 16) for color in match.groups()]
+                match = self.hex_color_normal.match(color)
+                if match:
+                    color = [int(color, 16) / 255.0 for color in match.groups()]
+                else:
+                    match = self.hex_color_short.match(color)
+                    color = [int(color + color, 16) / 255.0 for color in match.groups()]
 
-        if isinstance(color, gtk.gdk.Color):
+        elif isinstance(color, gtk.gdk.Color):
             color = [color.red / 65535.0,
                      color.green / 65535.0,
                      color.blue / 65535.0]
+
         else:
             # otherwise we assume we have color components in 0..255 range
             if color[0] > 1 or color[1] > 1 or color[2] > 1:
@@ -53,14 +59,12 @@ class Colors(object):
         c = self.parse(color)
         return gtk.gdk.Color(c[0] * 65535.0, c[1] * 65535.0, c[2] * 65535.0)
 
-    @staticmethod
-    def is_light(color):
+    def is_light(self, color):
         # tells you if color is dark or light, so you can up or down the
         # scale for improved contrast
         return colorsys.rgb_to_hls(*self.rgb(color))[1] > 150
 
-    @staticmethod
-    def darker(color, step):
+    def darker(self, color, step):
         # returns color darker by step (where step is in range 0..255)
         hls = colorsys.rgb_to_hls(*self.rgb(color))
         return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
@@ -656,7 +660,7 @@ class Rectangle(Sprite):
 
 
 class Polygon(Sprite):
-    def __init__(self, points, fill = None, stroke = None, **kwargs):
+    def __init__(self, points, fill = None, stroke = None, line_width = 1, **kwargs):
         Sprite.__init__(self, **kwargs)
 
         #: list of (x,y) tuples that the line should go through. Polygon
@@ -670,7 +674,7 @@ class Polygon(Sprite):
         self.stroke = stroke
 
         #: stroke line width
-        self.line_width = 1
+        self.line_width = line_width
 
         self.connect("on-render", self.on_render)
 
@@ -687,7 +691,7 @@ class Polygon(Sprite):
 
 
 class Circle(Sprite):
-    def __init__(self, width, height, fill = None, stroke = None, **kwargs):
+    def __init__(self, width, height, fill = None, stroke = None, line_width = 1, **kwargs):
         Sprite.__init__(self, **kwargs)
 
         #: circle width
@@ -703,7 +707,7 @@ class Circle(Sprite):
         self.stroke = stroke
 
         #: stroke line width
-        self.line_width = 1
+        self.line_width = line_width
 
         self.connect("on-render", self.on_render)
 
