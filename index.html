@@ -115,6 +115,13 @@ Example:</p>
 redraw will be performed (that is - not more often than the framerate). It will
 also influence the smoothness of tweeners.</dd></dl>
 
+<dl class="attribute">
+<dt id="graphics.Scene.mouse_cursor">
+<tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Scene.mouse_cursor" title="Permalink to this definition">¶</a></dt>
+<dd>Mouse cursor appearance
+Replace with your own cursor or set to False to have no cursor
+None will revert back the default behavior</dd></dl>
+
 <dl class="method">
 <dt id="graphics.Scene.redraw">
 <tt class="descname">redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.redraw" title="Permalink to this definition">¶</a></dt>
@@ -300,7 +307,7 @@ for detailed description of the cairo drawing functions.</p>
 
 <dl class="method">
 <dt id="graphics.Graphics.create_layout">
-<tt class="descname">create_layout</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_layout</tt><big>(</big><em>size=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
 <dd>utility function to create layout with the default font. Size and
 alignment parameters are shortcuts to according functions of the
 pango.Layout</dd></dl>
@@ -403,7 +410,7 @@ a class:Label object</dd></dl>
 <p>A few shapes to speed up your drawing. They are full fledged Sprites.</p>
 <dl class="class">
 <dt id="graphics.Circle">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Circle</tt><big>(</big><em>width</em>, <em>height</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>line_width=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Circle" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="graphics.Circle.fill">
 <tt class="descname">fill</tt><a class="headerlink" href="#graphics.Circle.fill" title="Permalink to this definition">¶</a></dt>
@@ -468,7 +475,7 @@ a class:Label object</dd></dl>
 
 <dl class="class">
 <dt id="graphics.Polygon">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Polygon</tt><big>(</big><em>points</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>line_width=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Polygon" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="graphics.Polygon.fill">
 <tt class="descname">fill</tt><a class="headerlink" href="#graphics.Polygon.fill" title="Permalink to this definition">¶</a></dt>
@@ -550,7 +557,8 @@ that is an instance of this class.</p>
 Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
 This will move the sprite to coordinates (500, 200) in 0.4 seconds.
 For parameter &#8220;easing&#8221; you can use one of the pytweener.Easing
-functions, or specify your own.</dd></dl>
+functions, or specify your own.
+The tweener can handle numbers, dates and color strings in hex (&#8220;#ffffff&#8221;)</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tweener.finish">
