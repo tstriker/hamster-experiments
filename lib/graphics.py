@@ -798,12 +798,21 @@ class Scene(gtk.DrawingArea):
         #: read only info about current framerate (frames per second)
         self.fps = 0 # inner frames per second counter
 
+        #: Mouse cursor appearance.
+        #: Replace with your own cursor or set to False to have no cursor.
+        #: None will revert back the default behavior
+        self.mouse_cursor = None
+
+        blank_pixmap = gtk.gdk.Pixmap(None, 1, 1, 1)
+        self._blank_cursor = gtk.gdk.Cursor(blank_pixmap, blank_pixmap, gtk.gdk.Color(), gtk.gdk.Color(), 0, 0)
+
 
         self._last_frame_time = None
         self._mouse_sprites = set()
         self._mouse_drag = None
         self._drag_sprite = None
         self._button_press_time = None # to distinguish between click and drag
+
 
         self._mouse_in = False
 
@@ -915,8 +924,6 @@ class Scene(gtk.DrawingArea):
 
         if self._drag_sprite and self._drag_sprite.draggable \
            and gtk.gdk.BUTTON1_MASK & event.state:
-            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
-
             # dragging around
             drag = self._mouse_drag \
                    and (self._mouse_drag[0] - event.x) ** 2 + \
@@ -959,17 +966,25 @@ class Scene(gtk.DrawingArea):
         if mouse_x is None or self._mouse_in == False:
             return
 
-        #check if we have a mouse over
-        over = set()
+        custom_mouse = self.mouse_cursor is not None
 
         cursor = gtk.gdk.ARROW
+        if custom_mouse:
+            if self.mouse_cursor == False:
+                cursor = self._blank_cursor
+            else:
+                cursor = self.mouse_cursor
 
+
+        #check if we have a mouse over
+        over = set()
         for sprite in self.all_sprites():
             if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
-                if sprite.draggable:
-                    cursor = gtk.gdk.FLEUR
-                else:
-                    cursor = gtk.gdk.HAND2
+                if custom_mouse == False:
+                    if sprite.draggable:
+                        cursor = gtk.gdk.FLEUR
+                    else:
+                        cursor = gtk.gdk.HAND2
 
                 over.add(sprite)
 
@@ -992,7 +1007,11 @@ class Scene(gtk.DrawingArea):
 
 
         self._mouse_sprites = over
-        self.window.set_cursor(gtk.gdk.Cursor(cursor))
+
+        if isinstance(cursor, gtk.gdk.Cursor):
+            self.window.set_cursor(cursor)
+        else:
+            self.window.set_cursor(gtk.gdk.Cursor(cursor))
 
 
     def __on_mouse_enter(self, area, event):
