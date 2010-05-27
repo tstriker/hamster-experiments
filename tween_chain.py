@@ -53,7 +53,6 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-        self.tweener.kill_tweens()
         for particle in reversed(self.tail):
             if particle.follow:
                 new_x, new_y = particle.follow.x, particle.follow.y
