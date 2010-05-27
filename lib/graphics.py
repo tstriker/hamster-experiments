@@ -866,14 +866,15 @@ class Scene(gtk.DrawingArea):
         if not self.tweener: # here we complain
             raise Exception("pytweener was not found. Include it to enable animations")
 
-        self.tweener.add_tween(sprite,
-                               duration=duration,
-                               easing=easing,
-                               on_complete=on_complete,
-                               on_update=on_update,
-                               delay=delay, **kwargs)
-
+        tween = self.tweener.add_tween(sprite,
+                                       duration=duration,
+                                       easing=easing,
+                                       on_complete=on_complete,
+                                       on_update=on_update,
+                                       delay=delay, **kwargs)
         self.redraw()
+        return tween
+
 
     # exposure events
     def do_configure_event(self, event):

@@ -40,7 +40,19 @@ class Tweener(object):
         delay = delay or 0
 
         tw = Tween(obj, duration, easing, on_complete, on_update, delay, **kwargs )
+
+        if obj in self.current_tweens:
+            for current_tween in self.current_tweens[obj]:
+                prev_keys = set((tweenable.key for tweenable in current_tween.tweenables))
+                dif = prev_keys & set(kwargs.keys())
+
+                removable = [tweenable for tweenable in current_tween.tweenables if tweenable.key in dif]
+                for tweenable in removable:
+                    current_tween.tweenables.remove(tweenable)
+
+
         self.current_tweens[obj].add(tw)
+        return tw
 
 
     def get_tweens(self, obj):
@@ -58,6 +70,11 @@ class Tweener(object):
                 pass
         else:
             self.current_tweens = collections.defaultdict(set)
+
+    def remove_tween(self, tween):
+        """"remove given tween without completing the motion or firing the on_complete"""
+        if tween.target in self.current_tweens and tween in self.current_tweens[tween.target]:
+            self.current_tweens[tween.target].remove(tween)
 
     def finish(self):
         """jump the the last frame of all tweens"""
