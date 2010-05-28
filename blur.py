@@ -20,25 +20,94 @@ from lib import graphics
 import math
 import random
 import datetime as dt
-import collections
-
+import cairo
+import struct
 
 class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
         self.tile_size = 30
-        self.image = None
 
-        self.colormap = {}
         self.connect("on-enter-frame", self.on_enter_frame)
 
 
     def on_enter_frame(self, scene, context):
+        g = graphics.Graphics(context)
+
         self.two_tile_random(context)
-        self.image = self.window.get_image(0, 0, self.width, self.height)
-        self.blur()
+
+        g.move_to(0,0)
+        g.show_text("Hello", size=48, color="#33a")
+
+        # creating a in-memory image of current context
+        image_surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.width, self.height)
+        image_context = cairo.Context(image_surface)
+
+        # copying
+        image_context.set_source_surface(context.get_target())
+        image_context.paint()
+
+        # buffer allows us to manipulate the pixels directly
+        buffer = image_surface.get_data()
+
+        # blur
+        self.blur(buffer)
+
+        # and paint it back
+        context.set_source_surface(image_surface)
+        context.paint()
+
 
         self.redraw()
+
+
+
+    def blur(self, buffer):
+        t = dt.datetime.now()
+
+        def get_pixel(x, y):
+            pos = (x * self.height + y) * 4
+            (b, g, r, a) = struct.unpack('BBBB', buffer[pos:pos+4])
+            return (r, g, b, a)
+
+        v = 1.0 / 9.0
+        kernel = ((v, v, v),
+                  (v, v, v),
+                  (v, v, v))
+
+        kernel_range = range(-1, 2) # surrounding the pixel
+
+
+
+        height, width = self.height, self.width
+
+
+        # we will need all the pixel colors anyway, so let's grab them once
+        pixel_colors = struct.unpack_from('BBBB' * width * height, buffer)
+
+        new_pixels = [0] * width * height * 4 # target matrix
+
+        for x in range(1, width - 1):
+            for y in range(1, height - 1):
+                r,g,b = 0,0,0
+                pos = (x * height + y) * 4
+
+                for ky in kernel_range:
+                    for kx in kernel_range:
+                        k = kernel[kx][ky]
+                        k_pos = pos + kx * height * 4 + ky * 4
+
+                        pixel_r,pixel_g,pixel_b = pixel_colors[k_pos:k_pos + 3]
+
+                        r += k * pixel_r
+                        g += k * pixel_g
+                        b += k * pixel_b
+
+                new_pixels[pos:pos+3] = (r,g,b)
+
+        struct.pack_into('BBBB' * self.width * self.height, buffer, 0, *new_pixels)
+        print "%d x %d," %(self.width, self.height), dt.datetime.now() - t
+
 
 
     def two_tile_random(self, context):
@@ -71,64 +140,6 @@ class Canvas(graphics.Scene):
 
             context.move_to(x, y2 - arc_radius)
             context.arc(x, y2, arc_radius, math.pi + math.pi / 2, 0);
-
-    def blur(self):
-        t = dt.datetime.now()
-
-        image = self.image
-        colormap = self.image.get_colormap()
-
-        blur_pixmap = gtk.gdk.Pixmap(self.window, self.width, self.height)
-        blur_pixmap.draw_image(self.get_style().black_gc, image, 0, 0, 0, 0, self.width, self.height)
-
-
-        v = 1.0 / 9.0
-        kernel = ((v, v, v),
-                  (v, v, v),
-                  (v, v, v))
-
-        kernel_range = range(-1, 2)
-
-
-
-        height = self.height
-
-
-        # we will need all the colors anyway, so let's grab them once
-        pixels = (image.get_pixel(x, y) for x in range(0, self.width) for y in range (0, self.height))
-
-        pixel_colors, known_colors = {}, {}
-        for i, pixel in enumerate(pixels):
-            try:
-                pixel_colors[i / height, i % height] = known_colors[pixel]
-            except:
-                known_colors[pixel] = colormap.query_color(pixel)
-                pixel_colors[i / height, i % height] = known_colors[pixel]
-
-        by_color = collections.defaultdict(collections.deque)
-        for y in range(1, self.height - 1):
-            for x in range(1, self.width - 1):
-                kernel_sum = 0
-
-                for ky in kernel_range:
-                    for kx in kernel_range:
-                        kernel_sum += kernel[ky + 1][kx + 1] * pixel_colors[(x + kx), y + ky].red_float
-
-                kernel_sum = int(kernel_sum * 65535) + 1
-                if kernel_sum != int(pixel_colors[x, y].red_float * 65535):
-                    by_color[kernel_sum].append(x * height + y)
-
-
-        gc = blur_pixmap.new_gc()
-        for color in by_color:
-            #print color
-            gc.set_foreground(colormap.alloc_color(color, color, color))
-            blur_pixmap.draw_points(gc, [(i / height, i % height) for i in by_color[color]])
-
-
-        self.window.draw_drawable(self.get_style().black_gc, blur_pixmap, 0, 0, 0, 0, -1, -1)
-
-        print "%d x %d," %(self.width, self.height), dt.datetime.now() - t
 
 
 class BasicWindow:
