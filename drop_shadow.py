@@ -142,8 +142,6 @@ class Scene(graphics.Scene):
     def on_sprite_drag(self, scene, sprite, coords):
         extents = sprite.graphics.extents
         width, height = extents[2] - extents[0], extents[3] - extents[1]
-        print height
-
 
         sprite.shadow.x = sprite.x - (sprite.x + (width - self.width) / 2.0) / float(self.width) * 8
         sprite.shadow.y = sprite.y - (sprite.y + (height - self.height) / 2.0) / float(self.height) * 8
