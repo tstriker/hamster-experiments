@@ -128,7 +128,7 @@ class Scene(graphics.Scene):
         self.shape = SomeShape()
 
         shadow = DropShadow(self.shape)
-        shadow.x, shadow.y = 4, 4
+        shadow.x, shadow.y = -4, -4
 
         self.shape.shadow = shadow
 
@@ -143,8 +143,8 @@ class Scene(graphics.Scene):
         extents = sprite.graphics.extents
         width, height = extents[2] - extents[0], extents[3] - extents[1]
 
-        sprite.shadow.x = sprite.x - (sprite.x + (width - self.width) / 2.0) / float(self.width) * 8
-        sprite.shadow.y = sprite.y - (sprite.y + (height - self.height) / 2.0) / float(self.height) * 8
+        sprite.shadow.x = sprite.x + (sprite.x + (width - self.width) / 2.0) / float(self.width) * 8
+        sprite.shadow.y = sprite.y + (sprite.y + (height - self.height) / 2.0) / float(self.height) * 8
 
 
 
