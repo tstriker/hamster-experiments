@@ -483,12 +483,13 @@ class Sprite(gtk.Object):
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
-        self._sprite_dirty = True # flag that indicates that the graphics object of the sprite should be rendered
+        self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
     def __setattr__(self, name, val):
-        self.__dict__[name] = val
-        if name not in ('_sprite_dirty', 'x', 'y', 'rotation', 'scale_x', 'scale_y'):
-            self.__dict__["_sprite_dirty"] = True
+        if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
+            self.__dict__[name] = val
+            if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y'):
+                self.__dict__["_sprite_dirty"] = True
 
 
     def add_child(self, *sprites):
@@ -526,7 +527,7 @@ class Sprite(gtk.Object):
 
         if (self._sprite_dirty): # send signal to redo the drawing when sprite's dirty
             self.emit("on-render")
-            self._sprite_dirty = False
+            self.__dict__["_sprite_dirty"] = False
 
         self.graphics._draw(context, self.interactive or self.draggable)
 
@@ -591,8 +592,6 @@ class Label(Sprite):
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
-        if name == "_sprite_dirty":
-            return
 
         if name == "width":
             # setting width means consumer wants to contrain the label
