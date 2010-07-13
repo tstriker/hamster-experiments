@@ -13,7 +13,7 @@ import re
 
 try:
     import pytweener
-except: # we can also live without tweener. Scene.animate won't work
+except: # we can also live without tweener. Scene.animate will not work
     pytweener = None
 
 import colorsys
@@ -57,7 +57,7 @@ class Colors(object):
 
     def gdk(self, color):
         c = self.parse(color)
-        return gtk.gdk.Color(c[0] * 65535.0, c[1] * 65535.0, c[2] * 65535.0)
+        return gtk.gdk.Color(int(c[0] * 65535.0), int(c[1] * 65535.0), int(c[2] * 65535.0))
 
     def is_light(self, color):
         # tells you if color is dark or light, so you can up or down the
@@ -68,6 +68,16 @@ class Colors(object):
         # returns color darker by step (where step is in range 0..255)
         hls = colorsys.rgb_to_hls(*self.rgb(color))
         return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
+
+    def contrast(self, color, step):
+        """if color is dark, will return a lighter one, otherwise darker"""
+        hls = colorsys.rgb_to_hls(*self.rgb(color))
+        if self.is_light(color):
+            return colorsys.hls_to_rgb(hls[0], hls[1] - step, hls[2])
+        else:
+            return colorsys.hls_to_rgb(hls[0], hls[1] + step, hls[2])
+        # returns color darker by step (where step is in range 0..255)
+
 Colors = Colors() # this is a static class, so an instance will do
 
 class Graphics(object):
@@ -143,6 +153,13 @@ class Graphics(object):
         context.set_source_surface(image, x, y)
     def set_source_surface(self, image, x = 0, y = 0):
         self._add_instruction(self._set_source_surface, image, x, y)
+
+    @staticmethod
+    def _set_source_pixbuf(context, pixbuf, x, y):
+        context.set_source_pixbuf(pixbuf, x, y)
+    def set_source_pixbuf(self, pixbuf, x = 0, y = 0):
+        self._add_instruction(self._set_source_pixbuf, pixbuf, x, y)
+
 
     @staticmethod
     def _move_to(context, x, y): context.move_to(x, y)
@@ -368,7 +385,7 @@ class Graphics(object):
             while self.__path_instructions:
                 instruction, args = self.__path_instructions.popleft()
 
-                if instruction in (self._set_source_surface, self._paint):
+                if instruction in (self._set_source_surface, self._set_source_pixbuf, self._paint):
                     self.__instructions.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
@@ -395,7 +412,7 @@ class Graphics(object):
                     instruction_cache.append((instruction, args))
 
 
-            while instruction_cache: # stroke's missing so we just cache
+            while instruction_cache: # stroke is missing so we just cache
                 instruction, args = instruction_cache.pop(0)
                 self.__instructions.append((None, None, None, instruction, args))
 
@@ -525,7 +542,7 @@ class Sprite(gtk.Object):
         #self.graphics._move_to(context, 0, 0) # TODO - i'm doing this move because otherwise the currentpoint is pointing to wherever it was left. check if we really need this
         context.new_path()
 
-        if (self._sprite_dirty): # send signal to redo the drawing when sprite's dirty
+        if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
             self.emit("on-render")
             self.__dict__["_sprite_dirty"] = False
 
@@ -539,6 +556,8 @@ class Sprite(gtk.Object):
 
     def _on_click(self, button_state):
         self.emit("on-click", button_state)
+        if self.parent and isinstance(self.parent, Sprite):
+            self.parent._on_click(button_state)
 
     def _on_mouse_over(self):
         # scene will call us when there is mouse
@@ -807,7 +826,7 @@ class Scene(gtk.DrawingArea):
 
 
         self._last_frame_time = None
-        self._mouse_sprites = set()
+        self._mouse_sprite = None
         self._mouse_drag = None
         self._drag_sprite = None
         self._button_press_time = None # to distinguish between click and drag
@@ -977,36 +996,31 @@ class Scene(gtk.DrawingArea):
 
 
         #check if we have a mouse over
-        over = set()
+        over = None
         for sprite in self.all_sprites():
-            if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
-                if custom_mouse == False:
-                    if sprite.draggable:
-                        cursor = gtk.gdk.FLEUR
-                    else:
-                        cursor = gtk.gdk.HAND2
+            if sprite.interactive and sprite.visible and self._check_hit(sprite, mouse_x, mouse_y):
+                over = sprite
 
-                over.add(sprite)
+        if over:
+            if custom_mouse == False:
+                if over.draggable:
+                    cursor = gtk.gdk.FLEUR
+                else:
+                    cursor = gtk.gdk.HAND2
 
+            if over != self._mouse_sprite:
+                over._on_mouse_over()
 
-        new_mouse_overs = over - self._mouse_sprites
-        if new_mouse_overs:
-            for sprite in new_mouse_overs:
-                sprite._on_mouse_over()
+                self.emit("on-mouse-over", over)
+                self.redraw()
 
-            self.emit("on-mouse-over", list(new_mouse_overs))
+        if self._mouse_sprite and self._mouse_sprite != over:
+            self._mouse_sprite._on_mouse_out()
+            self.emit("on-mouse-out", self._mouse_sprite)
             self.redraw()
 
 
-        gone_mouse_overs = self._mouse_sprites - over
-        if gone_mouse_overs:
-            for sprite in gone_mouse_overs:
-                sprite._on_mouse_out()
-            self.emit("on-mouse-out", list(gone_mouse_overs))
-            self.redraw()
-
-
-        self._mouse_sprites = over
+        self._mouse_sprite = over
 
         if isinstance(cursor, gtk.gdk.Cursor):
             self.window.set_cursor(cursor)
@@ -1019,9 +1033,9 @@ class Scene(gtk.DrawingArea):
 
     def __on_mouse_leave(self, area, event):
         self._mouse_in = False
-        if self._mouse_sprites:
-            self.emit("on-mouse-out", list(self._mouse_sprites))
-            self._mouse_sprites = set()
+        if self._mouse_sprite:
+            self.emit("on-mouse-out", self._mouse_sprite)
+            self._mouse_sprite = None
             self.redraw()
 
     def _check_hit(self, sprite, x, y):
@@ -1054,7 +1068,7 @@ class Scene(gtk.DrawingArea):
 
         over = None
         for sprite in self.all_sprites():
-            if sprite.interactive and self._check_hit(sprite, event.x, event.y):
+            if sprite.interactive and sprite.visible and self._check_hit(sprite, event.x, event.y):
                 over = sprite # last one will take precedence
         self._drag_sprite = over
         self._button_press_time = dt.datetime.now()
@@ -1072,11 +1086,14 @@ class Scene(gtk.DrawingArea):
         self._drag_sprite = None
 
         if click:
-            targets = []
+            target = None
             for sprite in self.all_sprites():
-                if sprite.interactive and self._check_hit(sprite, event.x, event.y):
-                    targets.append(sprite)
-                    sprite._on_click(event.state)
+                if sprite.interactive and sprite.visible and self._check_hit(sprite, event.x, event.y):
+                    target = sprite
 
-            self.emit("on-click", event, targets)
+            if target:
+                target._on_click(event.state)
+                
+            self.emit("on-click", event, target)
+
         self.emit("on-mouse-up")
