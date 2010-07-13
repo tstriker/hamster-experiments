@@ -35,8 +35,8 @@ class Scene(graphics.Scene):
 
         self.draw_circles = False
 
-    def on_mouse_click(self, area, event, targets):
-        if not targets:
+    def on_mouse_click(self, area, event, target):
+        if not target:
             node = Node(event.x, event.y)
             self.nodes.append(node)
             self.add_child(node)

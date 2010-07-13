@@ -62,6 +62,7 @@ class Menu(graphics.Sprite):
         sprite.fill = ""
 
     def on_click(self, sprite, event):
+        print event, sprite
         self.add_item()
 
     def add_item(self):

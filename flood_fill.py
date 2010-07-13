@@ -27,7 +27,7 @@ class Canvas(graphics.Scene):
         # don't care about anything but spraycan
         self.connect("on-mouse-move", lambda *args: self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.SPRAYCAN)))
 
-    def on_mouse_click(self, area, event, mouse_areas):
+    def on_mouse_click(self, area, event, target):
         x, y = event.x, event.y
 
         colormap = self.image.get_colormap()

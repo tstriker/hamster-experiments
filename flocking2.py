@@ -217,7 +217,7 @@ class Canvas(graphics.Scene):
         context.restore()
 
 
-    def on_mouse_click(self, widget, event, targets):
+    def on_mouse_click(self, widget, event, target):
         self.flock.append(Boid(Vector2(event.x, event.y), 2.0, 0.05))
 
 

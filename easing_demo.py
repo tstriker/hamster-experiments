@@ -47,11 +47,10 @@ class Scene(graphics.Scene):
         self.connect("on-click", self.on_click)
 
 
-    def on_click(self, area, event, targets):
-        if not targets:
+    def on_click(self, area, event, clicked):
+        if not clicked:
             return
 
-        clicked = targets[0]
         easing = clicked.easing_method()
 
         if clicked.left_side:
