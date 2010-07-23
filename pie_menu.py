@@ -46,7 +46,7 @@ class Sector(graphics.Sprite):
 
 class Menu(graphics.Sprite):
     def __init__(self, x, y):
-        graphics.Sprite.__init__(self, x, y, draggable = True)
+        graphics.Sprite.__init__(self, x, y, interactive = True, draggable = True)
 
         self.graphics.arc(0, 0, 10, 0, math.pi * 2)
         self.graphics.fill("#aaa")
@@ -62,7 +62,6 @@ class Menu(graphics.Sprite):
         sprite.fill = ""
 
     def on_click(self, sprite, event):
-        print event, sprite
         self.add_item()
 
     def add_item(self):
