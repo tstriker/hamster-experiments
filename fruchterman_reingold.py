@@ -284,9 +284,7 @@ class Canvas(graphics.Scene):
 
     def on_node_click(self, scene, event,  sprite):
 
-        mouse_node = None
-        if sprite:
-            mouse_node = sprite[0]
+        mouse_node = sprite
 
         if mouse_node:
             if self.mouse_node:
