@@ -226,7 +226,7 @@ class Tween(object):
             self.target.__setattr__(tweenable.key,
                                     tweenable.update(self.ease, self.delta, self.duration))
 
-        if self.delta == self.duration:
+        if self.delta == self.duration or len(self.tweenables) == 0:
             self.complete = True
 
         if self.on_update:
