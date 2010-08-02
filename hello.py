@@ -16,7 +16,7 @@ class Scene(graphics.Scene):
         for i in range(14):
             self.add_child(graphics.Rectangle(40, 40, 3,
                                               y = 420, x = i * 45 + 6,
-                                              fill = "#999", interactive = True))
+                                              fill = "#999", stroke="#444", interactive = True))
 
         self.connect("on-mouse-over", self.on_mouse_over)
 
@@ -27,9 +27,10 @@ class Scene(graphics.Scene):
             return
 
         def bring_back(sprite):
-            self.animate(sprite, y = 420, easing = Easing.Bounce.ease_out)
+            self.animate(sprite, y = 420, scale_x = 1, scale_y = 1, x = sprite.original_x, easing = Easing.Bounce.ease_out)
 
-        self.animate(sprite, y = 150, on_complete = bring_back)
+        sprite.original_x = sprite.x
+        self.animate(sprite, y = 150, scale_x = 2, x = sprite.x - 20, scale_y = 2, on_complete = bring_back)
 
 
 window = gtk.Window()
