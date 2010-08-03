@@ -9,6 +9,22 @@ The graphics helper library is in lib/ folder.
 "Read some docs":http://wiki.github.com/tbaugis/hamster_experiments/,
 "here's the hamster":http://projecthamster.wordpress.com/.
 
+h1. Overview of demo scripts (in a selective order)
+
+* *base.py* - base template for absolute minimum to start drawing. Use it to write your experiments
+* *hello.py* - slightly extended code from the tutorial
+* *easing_demo.py* - demos all the easing functions
+* *pie_menu.py* - perhaps the best of the demos demoing sprite nesting
+* *tween_chain.py* - tweeners chasing each other's tail
+* *waypoints.py* - an experiment with boids (see flocking.py). Let it run for a minute to see how it works. An extended version of this can be found in the waypoints repository
+
+
+* *blur.py* - shows that software blur is a no-go with current Python and get/put pixel bindings
+* *bubblewrap.py* - many strokes and fills result in slow performance
+* *flocking.py, flocking2.py* - flocking algorithm ported from processing. The second iteration optimizes code, but still it's kind of shame how big the performance difference is between this code and the processing's Java one.
+* *drop_shadow.py* - an idea to prerender an effect and then keep it in memory. Pretty much how ActionScript filters work.
+* <b>hamster_*.py</b> - experiments that make use of hamster API
+
 
 h1. License
 
