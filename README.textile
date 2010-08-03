@@ -9,7 +9,7 @@ The graphics helper library is in lib/ folder.
 "Read some docs":http://wiki.github.com/tbaugis/hamster_experiments/,
 "here's the hamster":http://projecthamster.wordpress.com/.
 
-h1. Overview of demo scripts (in a selective order)
+h1. Selective overview of demo scripts (just a few, but be sure to check them all!)
 
 * *base.py* - base template for absolute minimum to start drawing. Use it to write your experiments
 * *hello.py* - slightly extended code from the tutorial
