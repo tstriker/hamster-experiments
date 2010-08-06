@@ -525,6 +525,27 @@ class Sprite(gtk.Object):
 
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
+    def check_hit(self, x, y):
+        """check if the given coordinates are inside the sprite's fill or stroke
+           path"""
+        if not self.graphics.extents:
+            return False
+
+        sprite_x, sprite_y, sprite_x2, sprite_y2 = self.graphics.extents
+
+        if sprite_x <= x <= sprite_x2 and sprite_y <= y <= sprite_y2:
+            paths = self.graphics.paths
+            if not paths:
+                return True
+
+            context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
+            for path in paths:
+                context.append_path(path)
+            return context.in_fill(x, y)
+        else:
+            return False
+
+
     def _draw(self, context, opacity = 1):
         if self.visible is False:
             return
@@ -1050,22 +1071,7 @@ class Scene(gtk.DrawingArea):
         if sprite == self._drag_sprite:
             return True
 
-        if not sprite.graphics.extents:
-            return False
-
-        sprite_x, sprite_y, sprite_x2, sprite_y2 = sprite.graphics.extents
-
-        if sprite_x <= x <= sprite_x2 and sprite_y <= y <= sprite_y2:
-            paths = sprite.graphics.paths
-            if not paths:
-                return True
-
-            context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, self.width, self.height))
-            for path in paths:
-                context.append_path(path)
-            return context.in_fill(x, y)
-        else:
-            return False
+        return sprite.check_hit(x, y)
 
 
     def __on_button_press(self, area, event):
@@ -1078,6 +1084,7 @@ class Scene(gtk.DrawingArea):
         for sprite in self.all_sprites():
             if sprite.interactive and sprite.visible and self._check_hit(sprite, event.x, event.y):
                 over = sprite # last one will take precedence
+
         self._drag_sprite = over
         self._button_press_time = dt.datetime.now()
         self.emit("on-mouse-down", event)
