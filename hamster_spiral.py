@@ -104,13 +104,13 @@ class Scene(graphics.Scene):
         facts_per_category = defaultdict(list)
         categories = defaultdict(int)
 
-        #facts = [fact for fact in facts if fact['category'] in ('work', 'hacking')]
+        #facts = [fact for fact in facts if fact.category in ('work', 'hacking')]
 
-        for category, facts in itertools.groupby(sorted(facts, key=lambda fact:fact['category']), lambda fact:fact['category']):
-            for day, day_facts in itertools.groupby(sorted(facts, key=lambda fact:fact['date']), lambda fact:fact['date']):
+        for category, facts in itertools.groupby(sorted(facts, key=lambda fact:fact.category), lambda fact:fact.category):
+            for day, day_facts in itertools.groupby(sorted(facts, key=lambda fact:fact.date), lambda fact:fact.date):
                 delta = dt.timedelta()
                 for fact in day_facts:
-                    delta += fact['delta']
+                    delta += fact.delta
                 delta = delta.seconds / 60 / 60 + delta.days * 24
 
                 facts_per_category[category].append((day, delta))

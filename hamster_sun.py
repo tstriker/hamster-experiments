@@ -118,13 +118,13 @@ class Scene(graphics.Scene):
 
 
         self.years = {}
-        for year, facts in itertools.groupby(sorted(self.facts, key=lambda fact:fact['date']), lambda fact:fact['date'].year):
+        for year, facts in itertools.groupby(sorted(self.facts, key=lambda fact:fact.date), lambda fact:fact.date.year):
             self.years[year] = defaultdict(list)
-            for category, category_facts in itertools.groupby(sorted(facts, key=lambda fact:fact['category']), lambda fact:fact['category']):
-                for day, day_facts in itertools.groupby(sorted(category_facts, key=lambda fact:fact['date']), lambda fact:fact['date']):
+            for category, category_facts in itertools.groupby(sorted(facts, key=lambda fact:fact.category), lambda fact:fact.category):
+                for day, day_facts in itertools.groupby(sorted(category_facts, key=lambda fact:fact.date), lambda fact:fact.date):
                     delta = dt.timedelta()
                     for fact in day_facts:
-                        delta += fact['delta']
+                        delta += fact.delta
                     delta = delta.seconds / 60 / 60 + delta.days * 24
 
                     self.years[year][category].append((day, delta))

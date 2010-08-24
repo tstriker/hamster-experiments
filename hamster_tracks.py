@@ -27,12 +27,12 @@ class Scene(graphics.Scene):
         print len(self.facts)
 
         for fact in self.facts:
-            self.day_counts[fact['start_time'].date()].append(fact)
-            activities[fact['name']] += 1
-            categories[fact['category']] += 1
+            self.day_counts[fact.start_time.date()].append(fact)
+            activities[fact.activity] += 1
+            categories[fact.category] += 1
 
-            if fact['end_time'] and fact['start_time'].date() != fact['end_time'].date():
-                self.day_counts[fact['end_time'].date()].append(fact)
+            if fact.end_time and fact.start_time.date() != fact.end_time.date():
+                self.day_counts[fact.end_time.date()].append(fact)
 
 
 
@@ -50,8 +50,8 @@ class Scene(graphics.Scene):
         g = graphics.Graphics(context)
         g.set_line_style(width=1)
 
-        start_date = self.facts[0]['start_time'].date()
-        end_date = (self.facts[-1]['start_time'] + self.facts[-1]['delta']).date()
+        start_date = self.facts[0].start_time.date()
+        end_date = (self.facts[-1].start_time + self.facts[-1].delta).date()
 
         days = (end_date - start_date).days
 
@@ -79,10 +79,10 @@ class Scene(graphics.Scene):
             for j, fact in enumerate(day):
 
                 #bar per category
-                g.rectangle(cur_x, 27 + self.categories.index(fact['category']) * 6, pixel_width, 6)
+                g.rectangle(cur_x, 27 + self.categories.index(fact.category) * 6, pixel_width, 6)
 
                 #bar per activity
-                g.rectangle(cur_x, 102 + self.activities.index(fact['name']) * 6, pixel_width, 6)
+                g.rectangle(cur_x, 102 + self.activities.index(fact.activity) * 6, pixel_width, 6)
 
                 #number of activities
                 g.rectangle(cur_x, self.height - 3 * j, pixel_width, 3)
