@@ -2,7 +2,7 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
-"""Base template"""
+"""Punishing cairo for expensive non-pixel-aligned stroking"""
 
 
 import gtk
