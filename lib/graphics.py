@@ -162,6 +162,25 @@ class Graphics(object):
 
 
     @staticmethod
+    def _save_context(context): context.save()
+    def save_context(self):
+        """change current position"""
+        self._add_instruction(self._save_context)
+
+    @staticmethod
+    def _restore_context(context): context.restore()
+    def restore_context(self):
+        """change current position"""
+        self._add_instruction(self._restore_context)
+
+
+    @staticmethod
+    def _translate(context, x, y): context.translate(x, y)
+    def translate(self, x, y):
+        """change current position"""
+        self._add_instruction(self._translate, x, y)
+
+    @staticmethod
     def _move_to(context, x, y): context.move_to(x, y)
     def move_to(self, x, y):
         """change current position"""
@@ -392,7 +411,12 @@ class Graphics(object):
             while self.__path_instructions:
                 instruction, args = self.__path_instructions.popleft()
 
-                if instruction in (self._set_source_surface, self._set_source_pixbuf, self._paint):
+                if instruction in (self._set_source_surface,
+                                   self._set_source_pixbuf,
+                                   self._paint,
+                                   self._translate,
+                                   self._save_context,
+                                   self._restore_context):
                     self.__instructions.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
@@ -550,10 +574,10 @@ class Sprite(gtk.Object):
         if self.visible is False:
             return
 
-        if any([self.x, self.y, self.rotation, self.scale_x, self.scale_y]):
+        if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
             context.save()
 
-            if self.x or self.y or self.pivot_x or self.pivot_y:
+            if any((self.x, self.y, self.pivot_x, self.pivot_y)):
                 context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:
@@ -580,7 +604,7 @@ class Sprite(gtk.Object):
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
 
-        if any([self.x, self.y, self.rotation, self.scale_x, self.scale_y]):
+        if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
             context.restore()
 
     def _on_click(self, button_state):
@@ -960,6 +984,19 @@ class Scene(gtk.DrawingArea):
                 for child in self.all_sprites(sprite.sprites):
                     yield child
 
+    def all_visible_sprites(self, sprites = None):
+        """returns flat list of just the visible sprites - avoid children whos
+        parents are not displayed"""
+        if sprites is None:
+            sprites = self.sprites
+
+        for sprite in sprites:
+            if sprite.visible:
+                yield sprite
+                if sprite.sprites:
+                    for child in self.all_sprites(sprite.sprites):
+                        yield child
+
     def __on_scroll(self, area, event):
         self.emit("on-scroll", event)
 
@@ -1026,8 +1063,8 @@ class Scene(gtk.DrawingArea):
 
         #check if we have a mouse over
         over = None
-        for sprite in self.all_sprites():
-            if sprite.interactive and sprite.visible and self._check_hit(sprite, mouse_x, mouse_y):
+        for sprite in self.all_visible_sprites():
+            if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
                 over = sprite
 
         if over:
@@ -1081,8 +1118,8 @@ class Scene(gtk.DrawingArea):
         self._mouse_drag = (x, y)
 
         over = None
-        for sprite in self.all_sprites():
-            if sprite.interactive and sprite.visible and self._check_hit(sprite, event.x, event.y):
+        for sprite in self.all_visible_sprites():
+            if sprite.interactive and self._check_hit(sprite, event.x, event.y):
                 over = sprite # last one will take precedence
 
         self._drag_sprite = over
@@ -1102,8 +1139,8 @@ class Scene(gtk.DrawingArea):
 
         if click:
             target = None
-            for sprite in self.all_sprites():
-                if sprite.interactive and sprite.visible and self._check_hit(sprite, event.x, event.y):
+            for sprite in self.all_visible_sprites():
+                if sprite.interactive and self._check_hit(sprite, event.x, event.y):
                     target = sprite
 
             if target:
