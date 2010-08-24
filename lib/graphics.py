@@ -890,6 +890,7 @@ class Scene(gtk.DrawingArea):
         self.__drawing_queued = False
         self.__drag_x, self.__drag_y = None, None
         self.__last_expose_time = dt.datetime.now()
+        self.__last_cursor = None
 
     def add_child(self, *sprites):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
@@ -1088,10 +1089,13 @@ class Scene(gtk.DrawingArea):
 
         self._mouse_sprite = over
 
-        if isinstance(cursor, gtk.gdk.Cursor):
-            self.window.set_cursor(cursor)
-        else:
-            self.window.set_cursor(gtk.gdk.Cursor(cursor))
+        if not self.__last_cursor or cursor != self.__last_cursor:
+            if isinstance(cursor, gtk.gdk.Cursor):
+                self.window.set_cursor(cursor)
+            else:
+                self.window.set_cursor(gtk.gdk.Cursor(cursor))
+
+            self.__last_cursor = cursor
 
 
     def __on_mouse_enter(self, area, event):
