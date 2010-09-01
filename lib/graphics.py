@@ -964,6 +964,8 @@ class Scene(gtk.DrawingArea):
         self.fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
         self.__last_expose_time = now
 
+        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
+
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
@@ -1002,10 +1004,7 @@ class Scene(gtk.DrawingArea):
         self.emit("on-scroll", event)
 
     def __on_mouse_move(self, area, event):
-        mouse_x = event.x
-        mouse_y = event.y
         state = event.state
-        self.mouse_x, self.mouse_y = mouse_x, mouse_y
 
 
         if self._drag_sprite and self._drag_sprite.draggable \
@@ -1029,7 +1028,7 @@ class Scene(gtk.DrawingArea):
                     self.__drag_x = self._drag_sprite.x - x1
                     self.__drag_y = self._drag_sprite.y - y1
 
-                mouse_x, mouse_y = matrix.transform_point(mouse_x, mouse_y)
+                mouse_x, mouse_y = matrix.transform_point(event.x, event.y)
                 new_x = mouse_x + self.__drag_x
                 new_y = mouse_y + self.__drag_y
 
@@ -1048,8 +1047,8 @@ class Scene(gtk.DrawingArea):
         self.emit("on-mouse-move", event)
 
 
-    def _check_mouse(self, mouse_x, mouse_y):
-        if mouse_x is None or self._mouse_in == False:
+    def _check_mouse(self, x, y):
+        if x is None or self._mouse_in == False:
             return
 
         custom_mouse = self.mouse_cursor is not None
@@ -1065,7 +1064,7 @@ class Scene(gtk.DrawingArea):
         #check if we have a mouse over
         over = None
         for sprite in self.all_visible_sprites():
-            if sprite.interactive and self._check_hit(sprite, mouse_x, mouse_y):
+            if sprite.interactive and self._check_hit(sprite, x, y):
                 over = sprite
 
         if over:
