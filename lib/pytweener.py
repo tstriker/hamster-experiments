@@ -35,7 +35,9 @@ class Tweener(object):
             functions, or specify your own.
             The tweener can handle numbers, dates and color strings in hex ("#ffffff")
         """
-        duration = duration or self.default_duration
+        if duration is None:
+            duration = self.default_duration
+
         easing = easing or self.default_easing
         delay = delay or 0
 
@@ -103,6 +105,79 @@ class Tweener(object):
                 del self.current_tweens[tween.target]
 
 
+class Tween(object):
+    __slots__ = ('tweenables', 'target', 'delta', 'duration', 'delay',
+                 'ease', 'delta', 'on_complete',
+                 'on_update', 'complete', 'paused')
+
+    def __init__(self, obj, duration, easing, on_complete, on_update, delay, **kwargs):
+        """Tween object use Tweener.add_tween( ... ) to create"""
+        self.duration = duration
+        self.delay = delay
+        self.target = obj
+        self.ease = easing
+
+        # list of (property, start_value, delta)
+        self.tweenables = set()
+        for key, value in kwargs.items():
+            self.tweenables.add(Tweenable(key, self.target.__dict__[key], value))
+
+        self.delta = 0
+        self.on_complete = on_complete
+        self.on_update = on_update
+        self.complete = False
+        self.paused = self.delay > 0
+
+    def pause(self, seconds = -1):
+        """Pause this tween
+            do tween.pause( 2 ) to pause for a specific time
+            or tween.pause() which pauses indefinitely."""
+        self.paused = True
+        self.delay = seconds
+
+    def resume(self):
+        """Resume from pause"""
+        if self.paused:
+            self.paused=False
+
+    def _update(self, ptime):
+        """Update tween with the time since the last frame
+           if there is an update callback, it is always called
+           whether the tween is running or paused"""
+
+        if self.paused:
+            if self.delay > 0:
+                self.delay = max(0, self.delay - ptime)
+                if self.delay == 0:
+                    self.paused = False
+                    self.delay = -1
+                if self.on_update:
+                    self.on_update()
+            return
+
+        self.delta = self.delta + ptime
+        if self.delta > self.duration:
+            self.delta = self.duration
+
+        if self.delta == self.duration:
+            for tweenable in self.tweenables:
+                self.target.__setattr__(tweenable.key, tweenable.target_value)
+        else:
+            for tweenable in self.tweenables:
+                self.target.__setattr__(tweenable.key,
+                                        tweenable.update(self.ease, self.delta, self.duration))
+
+        if self.delta == self.duration or len(self.tweenables) == 0:
+            self.complete = True
+
+        if self.on_update:
+            self.on_update(self.target)
+
+        return self.complete
+
+
+
+
 class Tweenable(object):
     hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
     hex_color_short = re.compile("#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])")
@@ -163,76 +238,6 @@ class Tweenable(object):
         else:
             return self.encode_func(ease(delta, self.start_value, self.change, duration))
 
-
-
-class Tween(object):
-    __slots__ = ('tweenables', 'target', 'delta', 'duration', 'delay',
-                 'ease', 'delta', 'on_complete',
-                 'on_update', 'complete', 'paused')
-
-    def __init__(self, obj, duration, easing, on_complete, on_update, delay, **kwargs):
-        """Tween object use Tweener.add_tween( ... ) to create"""
-        self.duration = duration
-        self.delay = delay
-        self.target = obj
-        self.ease = easing
-
-        # list of (property, start_value, delta)
-        self.tweenables = set()
-        for key, value in kwargs.items():
-            self.tweenables.add(Tweenable(key, self.target.__dict__[key], value))
-
-        self.delta = 0
-        self.on_complete = on_complete
-        self.on_update = on_update
-        self.complete = False
-
-        self.paused = self.delay > 0
-
-    def pause(self, seconds = -1):
-        """Pause this tween
-            do tween.pause( 2 ) to pause for a specific time
-            or tween.pause() which pauses indefinitely."""
-        self.paused = True
-        self.delay = seconds
-
-    def resume(self):
-        """Resume from pause"""
-        if self.paused:
-            self.paused=False
-
-    def _update(self, ptime):
-        """Update tween with the time since the last frame
-           if there is an update callback, it is always called
-           whether the tween is running or paused"""
-
-        if self.complete: return
-
-        if self.paused:
-            if self.delay > 0:
-                self.delay = max(0, self.delay - ptime)
-                if self.delay == 0:
-                    self.paused = False
-                    self.delay = -1
-                if self.on_update:
-                    self.on_update()
-            return
-
-        self.delta = self.delta + ptime
-        if self.delta > self.duration:
-            self.delta = self.duration
-
-        for tweenable in self.tweenables:
-            self.target.__setattr__(tweenable.key,
-                                    tweenable.update(self.ease, self.delta, self.duration))
-
-        if self.delta == self.duration or len(self.tweenables) == 0:
-            self.complete = True
-
-        if self.on_update:
-            self.on_update(self.target)
-
-        return self.complete
 
 
 """Robert Penner's easing classes ported over from actionscript by Toms Baugis (at gmail com).
@@ -575,7 +580,6 @@ class Easing(object):
 
             t = t - 2
             return c * 0.5 * (t * t * t * t * t + 2) + b
-
 
 
 
