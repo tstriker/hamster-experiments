@@ -545,12 +545,17 @@ class Sprite(gtk.Object):
         """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
             if sprite.parent:
-                sprite.parent.sprites.remove(sprite)
+                sprite.parent.remove_child(sprite)
 
             self.sprites.append(sprite)
             sprite.parent = self
 
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
+
+    def remove_child(self, *sprites):
+        for sprite in sprites:
+            self.sprites.remove(sprite)
+            sprite.parent = None
 
     def check_hit(self, x, y):
         """check if the given coordinates are inside the sprite's fill or stroke
@@ -899,15 +904,21 @@ class Scene(gtk.DrawingArea):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
         for sprite in sprites:
             if sprite.parent:
-                sprite.parent.sprites.remove(sprite)
+                sprite.parent.remove_child(sprite)
             self.sprites.append(sprite)
             sprite.parent = self
-
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
+
+    def remove_child(self, *sprites):
+        """Remove one or several :class:`graphics.Sprite` sprites from scene """
+        for sprite in sprites:
+            self.sprites.remove(sprite)
+            sprite.parent = None
 
     def clear(self):
         """Remove all sprites from scene"""
-        self.sprites = []
+        self.remove_child(*self.sprites)
+
 
     def redraw(self):
         """Queue redraw. The redraw will be performed not more often than
@@ -1021,7 +1032,7 @@ class Scene(gtk.DrawingArea):
                        (self._mouse_drag[1] - event.y) ** 2 > 5 ** 2
             if drag:
                 matrix = cairo.Matrix()
-                if self._drag_sprite.parent:
+                if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
                     # TODO - this currently works only until second level
                     #        should take all parents into account
                     matrix.rotate(self._drag_sprite.parent.rotation)
