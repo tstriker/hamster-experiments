@@ -544,6 +544,9 @@ class Sprite(gtk.Object):
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
+            if sprite.parent:
+                sprite.parent.sprites.remove(sprite)
+
             self.sprites.append(sprite)
             sprite.parent = self
 
@@ -895,7 +898,10 @@ class Scene(gtk.DrawingArea):
     def add_child(self, *sprites):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
         for sprite in sprites:
+            if sprite.parent:
+                sprite.parent.sprites.remove(sprite)
             self.sprites.append(sprite)
+            sprite.parent = self
 
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
