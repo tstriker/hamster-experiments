@@ -1017,6 +1017,15 @@ class Scene(gtk.DrawingArea):
                     for child in self.all_sprites(sprite.sprites):
                         yield child
 
+
+    def sprite_at_position(self, x, y):
+        over = None
+        for sprite in self.all_visible_sprites():
+            if sprite.interactive and self._check_hit(sprite, x, y):
+                over = sprite
+
+        return over
+
     def __on_scroll(self, area, event):
         self.emit("on-scroll", event)
 
@@ -1079,10 +1088,7 @@ class Scene(gtk.DrawingArea):
 
 
         #check if we have a mouse over
-        over = None
-        for sprite in self.all_visible_sprites():
-            if sprite.interactive and self._check_hit(sprite, x, y):
-                over = sprite
+        over = self.sprite_at_position(x, y)
 
         if over:
             if custom_mouse == False:
@@ -1137,12 +1143,7 @@ class Scene(gtk.DrawingArea):
         state = event.state
         self._mouse_drag = (x, y)
 
-        over = None
-        for sprite in self.all_visible_sprites():
-            if sprite.interactive and self._check_hit(sprite, event.x, event.y):
-                over = sprite # last one will take precedence
-
-        self._drag_sprite = over
+        self._drag_sprite = self.sprite_at_position(event.x, event.y)
         self._button_press_time = dt.datetime.now()
         self.emit("on-mouse-down", event)
 
@@ -1158,10 +1159,7 @@ class Scene(gtk.DrawingArea):
         self._drag_sprite = None
 
         if click:
-            target = None
-            for sprite in self.all_visible_sprites():
-                if sprite.interactive and self._check_hit(sprite, event.x, event.y):
-                    target = sprite
+            target = self.sprite_at_position(event.x, event.y)
 
             if target:
                 target._on_click(event.state)
