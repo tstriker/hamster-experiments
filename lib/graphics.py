@@ -1021,7 +1021,7 @@ class Scene(gtk.DrawingArea):
                         yield child
 
 
-    def sprite_at_position(self, x, y):
+    def get_sprite_at_position(self, x, y):
         """Returns the topmost visible sprite for given coordinates"""
         over = None
         for sprite in self.all_visible_sprites():
@@ -1053,7 +1053,7 @@ class Scene(gtk.DrawingArea):
 
 
         #check if we have a mouse over
-        over = self.sprite_at_position(x, y)
+        over = self.get_sprite_at_position(x, y)
 
         if over:
             if custom_mouse == False:
@@ -1146,7 +1146,7 @@ class Scene(gtk.DrawingArea):
         state = event.state
         self._mouse_drag = (x, y)
 
-        self._drag_sprite = self.sprite_at_position(event.x, event.y)
+        self._drag_sprite = self.get_sprite_at_position(event.x, event.y)
         self._button_press_time = dt.datetime.now()
         self.emit("on-mouse-down", event)
 
@@ -1162,7 +1162,7 @@ class Scene(gtk.DrawingArea):
         self._drag_sprite = None
 
         if click:
-            target = self.sprite_at_position(event.x, event.y)
+            target = self.get_sprite_at_position(event.x, event.y)
 
             if target:
                 target._on_click(event.state)
