@@ -64,7 +64,7 @@ adding and manipulating sprites.</p>
 <dl class="class">
 <dt id="graphics.Scene">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
-<dd><p>Widget for displaying sprites.
+<dd><p>Drawing area for displaying sprites.
 Add sprites to the Scene by calling <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
 and thus inherits all it&#8217;s methods and everything.</p>
@@ -77,13 +77,13 @@ and thus inherits all it&#8217;s methods and everything.</p>
 <dl class="method">
 <dt id="graphics.Scene.all_sprites">
 <tt class="descname">all_sprites</tt><big>(</big><em>sprites=None</em><big>)</big><a class="headerlink" href="#graphics.Scene.all_sprites" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns flat list of the sprite tree for simplified iteration</p>
+<dd><p>Returns flat list of the sprite tree for simplified iteration</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.all_visible_sprites">
 <tt class="descname">all_visible_sprites</tt><big>(</big><em>sprites=None</em><big>)</big><a class="headerlink" href="#graphics.Scene.all_visible_sprites" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns flat list of just the visible sprites - avoid children whos
+<dd><p>Returns flat list of just the visible sprites - avoid children whos
 parents are not displayed</p>
 </dd></dl>
 
@@ -167,6 +167,12 @@ the <cite>framerate</cite> allows</p>
 <dt id="graphics.Scene.remove_child">
 <tt class="descname">remove_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.remove_child" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites from scene</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.sprite_at_position">
+<tt class="descname">sprite_at_position</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Scene.sprite_at_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the topmost visible sprite for given coordinates</p>
 </dd></dl>
 
 <dl class="attribute">
