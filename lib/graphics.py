@@ -858,9 +858,13 @@ class Scene(gtk.DrawingArea):
         #: also influence the smoothness of tweeners.
         self.framerate = framerate
 
-        #: width and height of the scene. Will be `None` until first
-        #: expose (that is until first on-enter-frame signal below).
-        self.width, self.height = None, None
+        #: Scene width. Will be `None` until first expose (that is until first
+        #: on-enter-frame signal below).
+        self.width = None
+
+        #: Scene height. Will be `None` until first expose (that is until first
+        #: on-enter-frame signal below).
+        self.height = None
 
         #: instance of :class:`pytweener.Tweener` that is used by
         #: :func:`animate` function, but can be also accessed directly for advanced control.
@@ -874,8 +878,11 @@ class Scene(gtk.DrawingArea):
         #: read only info about current framerate (frames per second)
         self.fps = 0 # inner frames per second counter
 
-        #: Last known position of the mouse (set on expose event)
-        self.mouse_x, self.mouse_y = None, None
+        #: Last known x position of the mouse (set on expose event)
+        self.mouse_x = None
+
+        #: Last known y position of the mouse (set on expose event)
+        self.mouse_y = None
 
         #: Mouse cursor appearance.
         #: Replace with your own cursor or set to False to have no cursor.
