@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -40,7 +41,7 @@
 <h1>hamster.graphics<a class="headerlink" href="#hamster-graphics" title="Permalink to this headline">¶</a></h1>
 <p>The hamster graphics library is a sprite-styled abstraction layer on top of
 pygtk and cairo.
-Create a <a title="graphics.Scene" class="reference internal" href="#graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
+Create a <a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
 adding and manipulating sprites.</p>
 <p><strong>Hello world</strong>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
@@ -70,12 +71,21 @@ and thus inherits all it&#8217;s methods and everything.</p>
 <dl class="method">
 <dt id="graphics.Scene.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.add_child" title="Permalink to this definition">¶</a></dt>
-<dd>Add one or several <a title="graphics.Sprite" class="reference internal" href="#graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</dd></dl>
+<dd><p>Add one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.all_sprites">
 <tt class="descname">all_sprites</tt><big>(</big><em>sprites=None</em><big>)</big><a class="headerlink" href="#graphics.Scene.all_sprites" title="Permalink to this definition">¶</a></dt>
-<dd>returns flat list of the sprite tree for simplified iteration</dd></dl>
+<dd><p>returns flat list of the sprite tree for simplified iteration</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.all_visible_sprites">
+<tt class="descname">all_visible_sprites</tt><big>(</big><em>sprites=None</em><big>)</big><a class="headerlink" href="#graphics.Scene.all_visible_sprites" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns flat list of just the visible sprites - avoid children whos
+parents are not displayed</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.animate">
@@ -96,48 +106,68 @@ Example:</p>
 <dl class="method">
 <dt id="graphics.Scene.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.clear" title="Permalink to this definition">¶</a></dt>
-<dd>Remove all sprites from scene</dd></dl>
+<dd><p>Remove all sprites from scene</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.colors">
 <tt class="descname">colors</tt><a class="headerlink" href="#graphics.Scene.colors" title="Permalink to this definition">¶</a></dt>
-<dd>instance of <tt class="xref py py-class docutils literal"><span class="pre">Colors</span></tt> class for color parsing</dd></dl>
+<dd><p>instance of <tt class="xref py py-class docutils literal"><span class="pre">Colors</span></tt> class for color parsing</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.fps">
 <tt class="descname">fps</tt><a class="headerlink" href="#graphics.Scene.fps" title="Permalink to this definition">¶</a></dt>
-<dd>read only info about current framerate (frames per second)</dd></dl>
+<dd><p>read only info about current framerate (frames per second)</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.framerate">
 <tt class="descname">framerate</tt><a class="headerlink" href="#graphics.Scene.framerate" title="Permalink to this definition">¶</a></dt>
-<dd>framerate of animation. This will limit how often call for
+<dd><p>framerate of animation. This will limit how often call for
 redraw will be performed (that is - not more often than the framerate). It will
-also influence the smoothness of tweeners.</dd></dl>
+also influence the smoothness of tweeners.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.get_pointer">
+<tt class="descname">get_pointer</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.get_pointer" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns mouse pointer information: x, y and flags</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.mouse_cursor">
 <tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Scene.mouse_cursor" title="Permalink to this definition">¶</a></dt>
-<dd>Mouse cursor appearance.
+<dd><p>Mouse cursor appearance.
 Replace with your own cursor or set to False to have no cursor.
-None will revert back the default behavior</dd></dl>
+None will revert back the default behavior</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Scene.redraw">
 <tt class="descname">redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Scene.redraw" title="Permalink to this definition">¶</a></dt>
-<dd>Queue redraw. The redraw will be performed not more often than
-the <cite>framerate</cite> allows</dd></dl>
+<dd><p>Queue redraw. The redraw will be performed not more often than
+the <cite>framerate</cite> allows</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Scene.remove_child">
+<tt class="descname">remove_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.remove_child" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites from scene</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Scene.sprites" title="Permalink to this definition">¶</a></dt>
-<dd>list of sprites in scene. use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</dd></dl>
+<dd><p>list of sprites in scene. use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.tweener">
 <tt class="descname">tweener</tt><a class="headerlink" href="#graphics.Scene.tweener" title="Permalink to this definition">¶</a></dt>
-<dd>instance of <a title="pytweener.Tweener" class="reference internal" href="#pytweener.Tweener"><tt class="xref py py-class docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
-<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</dd></dl>
+<dd><p>instance of <a class="reference internal" href="#pytweener.Tweener" title="pytweener.Tweener"><tt class="xref py py-class docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
+<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -173,62 +203,81 @@ scene</p>
 <dl class="method">
 <dt id="graphics.Sprite.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Sprite.add_child" title="Permalink to this definition">¶</a></dt>
-<dd>Add child sprite. Child will be nested within parent</dd></dl>
+<dd><p>Add child sprite. Child will be nested within parent</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.check_hit">
+<tt class="descname">check_hit</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Sprite.check_hit" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if the given coordinates are inside the sprite&#8217;s fill or stroke
+path</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.draggable">
 <tt class="descname">draggable</tt><a class="headerlink" href="#graphics.Sprite.draggable" title="Permalink to this definition">¶</a></dt>
-<dd>boolean marking if sprite can be automatically dragged</dd></dl>
+<dd><p>boolean marking if sprite can be automatically dragged</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.graphics">
 <tt class="descname">graphics</tt><a class="headerlink" href="#graphics.Sprite.graphics" title="Permalink to this definition">¶</a></dt>
-<dd>instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</dd></dl>
+<dd><p>instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.interactive">
 <tt class="descname">interactive</tt><a class="headerlink" href="#graphics.Sprite.interactive" title="Permalink to this definition">¶</a></dt>
-<dd>boolean denoting whether the sprite responds to mouse events</dd></dl>
+<dd><p>boolean denoting whether the sprite responds to mouse events</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.opacity">
 <tt class="descname">opacity</tt><a class="headerlink" href="#graphics.Sprite.opacity" title="Permalink to this definition">¶</a></dt>
-<dd>sprite opacity</dd></dl>
+<dd><p>sprite opacity</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#graphics.Sprite.parent" title="Permalink to this definition">¶</a></dt>
-<dd>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></dd></dl>
+<dd><p>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.rotation">
 <tt class="descname">rotation</tt><a class="headerlink" href="#graphics.Sprite.rotation" title="Permalink to this definition">¶</a></dt>
-<dd>rotation of the sprite in radians (use <tt class="xref py py-func docutils literal"><span class="pre">math.degrees()</span></tt> to convert to degrees if necessary)</dd></dl>
+<dd><p>rotation of the sprite in radians (use <tt class="xref py py-func docutils literal"><span class="pre">math.degrees()</span></tt> to convert to degrees if necessary)</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.scale_x">
 <tt class="descname">scale_x</tt><a class="headerlink" href="#graphics.Sprite.scale_x" title="Permalink to this definition">¶</a></dt>
-<dd>scale X</dd></dl>
+<dd><p>scale X</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.scale_y">
 <tt class="descname">scale_y</tt><a class="headerlink" href="#graphics.Sprite.scale_y" title="Permalink to this definition">¶</a></dt>
-<dd>scale Y</dd></dl>
+<dd><p>scale Y</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Sprite.sprites" title="Permalink to this definition">¶</a></dt>
-<dd>list of children sprites. Use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</dd></dl>
+<dd><p>list of children sprites. Use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.visible">
 <tt class="descname">visible</tt><a class="headerlink" href="#graphics.Sprite.visible" title="Permalink to this definition">¶</a></dt>
-<dd>boolean visibility flag</dd></dl>
+<dd><p>boolean visibility flag</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Sprite.z_order">
 <tt class="descname">z_order</tt><a class="headerlink" href="#graphics.Sprite.z_order" title="Permalink to this definition">¶</a></dt>
-<dd>drawing order between siblings. The one with the highest z_order will be on top.</dd></dl>
+<dd><p>drawing order between siblings. The one with the highest z_order will be on top.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -283,124 +332,165 @@ for detailed description of the cairo drawing functions.</p>
 <dl class="method">
 <dt id="graphics.Graphics.arc">
 <tt class="descname">arc</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em>, <em>start_angle</em>, <em>end_angle</em><big>)</big><a class="headerlink" href="#graphics.Graphics.arc" title="Permalink to this definition">¶</a></dt>
-<dd>draw arc going counter-clockwise from start_angle to end_angle</dd></dl>
+<dd><p>draw arc going counter-clockwise from start_angle to end_angle</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.arc_negative">
 <tt class="descname">arc_negative</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em>, <em>start_angle</em>, <em>end_angle</em><big>)</big><a class="headerlink" href="#graphics.Graphics.arc_negative" title="Permalink to this definition">¶</a></dt>
-<dd>draw arc going clockwise from start_angle to end_angle</dd></dl>
+<dd><p>draw arc going clockwise from start_angle to end_angle</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.circle">
 <tt class="descname">circle</tt><big>(</big><em>x</em>, <em>y</em>, <em>radius</em><big>)</big><a class="headerlink" href="#graphics.Graphics.circle" title="Permalink to this definition">¶</a></dt>
-<dd>draw circle</dd></dl>
+<dd><p>draw circle</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.clear" title="Permalink to this definition">¶</a></dt>
-<dd>clear all instructions</dd></dl>
+<dd><p>clear all instructions</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.close_path">
 <tt class="descname">close_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.close_path" title="Permalink to this definition">¶</a></dt>
-<dd>connect end with beginning of path</dd></dl>
+<dd><p>connect end with beginning of path</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.create_layout">
 <tt class="descname">create_layout</tt><big>(</big><em>size=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
-<dd>utility function to create layout with the default font. Size and
+<dd><p>utility function to create layout with the default font. Size and
 alignment parameters are shortcuts to according functions of the
-pango.Layout</dd></dl>
+pango.Layout</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.curve_to">
 <tt class="descname">curve_to</tt><big>(</big><em>x</em>, <em>y</em>, <em>x2</em>, <em>y2</em>, <em>x3</em>, <em>y3</em><big>)</big><a class="headerlink" href="#graphics.Graphics.curve_to" title="Permalink to this definition">¶</a></dt>
-<dd>draw curve. (x2, y2) is the middle point of the curve</dd></dl>
+<dd><p>draw curve. (x2, y2) is the middle point of the curve</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.ellipse">
 <tt class="descname">ellipse</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>edges=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.ellipse" title="Permalink to this definition">¶</a></dt>
-<dd>draw &#8216;perfect&#8217; ellipse, opposed to squashed circle. works also for
-equilateral polygons</dd></dl>
+<dd><p>draw &#8216;perfect&#8217; ellipse, opposed to squashed circle. works also for
+equilateral polygons</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.fill">
 <tt class="descname">fill</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill" title="Permalink to this definition">¶</a></dt>
-<dd>fill path with given color and opacity</dd></dl>
+<dd><p>fill path with given color and opacity</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.fill_area">
 <tt class="descname">fill_area</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>color</em>, <em>opacity=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_area" title="Permalink to this definition">¶</a></dt>
-<dd>fill rectangular area with specified color</dd></dl>
+<dd><p>fill rectangular area with specified color</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.fill_preserve">
 <tt class="descname">fill_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_preserve" title="Permalink to this definition">¶</a></dt>
-<dd>same as fill, only after filling, don&#8217;t discard the path</dd></dl>
+<dd><p>same as fill, only after filling, don&#8217;t discard the path</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.line_to">
 <tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
-<dd>draw line</dd></dl>
+<dd><p>draw line</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.move_to">
 <tt class="descname">move_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.move_to" title="Permalink to this definition">¶</a></dt>
-<dd>change current position</dd></dl>
+<dd><p>change current position</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.new_path">
 <tt class="descname">new_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.new_path" title="Permalink to this definition">¶</a></dt>
-<dd>discard current path</dd></dl>
+<dd><p>discard current path</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.paint">
 <tt class="descname">paint</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.paint" title="Permalink to this definition">¶</a></dt>
-<dd>errrm. paint</dd></dl>
+<dd><p>errrm. paint</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.rectangle">
 <tt class="descname">rectangle</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>corner_radius=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rectangle" title="Permalink to this definition">¶</a></dt>
-<dd>draw a rectangle. if corner_radius is specified, will draw rounded corners</dd></dl>
+<dd><p>draw a rectangle. if corner_radius is specified, will draw rounded corners</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.rel_line_to">
 <tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
-<dd>draw line</dd></dl>
+<dd><p>draw line</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.restore_context">
+<tt class="descname">restore_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.restore_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>change current position</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.save_context">
+<tt class="descname">save_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.save_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>change current position</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.set_color">
 <tt class="descname">set_color</tt><big>(</big><em>color</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_color" title="Permalink to this definition">¶</a></dt>
-<dd>set active color. You can use hex colors like &#8220;#aaa&#8221;, or you can use
+<dd><p>set active color. You can use hex colors like &#8220;#aaa&#8221;, or you can use
 normalized RGB tripplets (where every value is in range 0..1), or
-you can do the same thing in range 0..65535</dd></dl>
+you can do the same thing in range 0..65535</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.set_line_style">
-<tt class="descname">set_line_style</tt><big>(</big><em>width=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_line_style" title="Permalink to this definition">¶</a></dt>
-<dd>change the width of the line</dd></dl>
+<tt class="descname">set_line_style</tt><big>(</big><em>width=None</em>, <em>dash=None</em>, <em>dash_offset=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_line_style" title="Permalink to this definition">¶</a></dt>
+<dd><p>change the width of the line</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.show_layout">
 <tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>width=-1</em>, <em>wrap=None</em>, <em>ellipsize=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
-<dd>display text. font_desc is string of pango font description
+<dd><p>display text. font_desc is string of pango font description
 often handier than calling this function directly, is to create
-a class:Label object</dd></dl>
+a class:Label object</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.show_text">
 <tt class="descname">show_text</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
-<dd>display text with system&#8217;s default font</dd></dl>
+<dd><p>display text with system&#8217;s default font</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.stroke">
 <tt class="descname">stroke</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke" title="Permalink to this definition">¶</a></dt>
-<dd>stroke the line with given color and opacity</dd></dl>
+<dd><p>stroke the line with given color and opacity</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.stroke_preserve">
 <tt class="descname">stroke_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke_preserve" title="Permalink to this definition">¶</a></dt>
-<dd>same as stroke, only after stroking, don&#8217;t discard the path</dd></dl>
+<dd><p>same as stroke, only after stroking, don&#8217;t discard the path</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.translate">
+<tt class="descname">translate</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>change current position</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -414,27 +504,32 @@ a class:Label object</dd></dl>
 <dd><dl class="attribute">
 <dt id="graphics.Circle.fill">
 <tt class="descname">fill</tt><a class="headerlink" href="#graphics.Circle.fill" title="Permalink to this definition">¶</a></dt>
-<dd>fill color</dd></dl>
+<dd><p>fill color</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Circle.height">
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Circle.height" title="Permalink to this definition">¶</a></dt>
-<dd>circle height</dd></dl>
+<dd><p>circle height</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Circle.line_width">
 <tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Circle.line_width" title="Permalink to this definition">¶</a></dt>
-<dd>stroke line width</dd></dl>
+<dd><p>stroke line width</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Circle.stroke">
 <tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Circle.stroke" title="Permalink to this definition">¶</a></dt>
-<dd>stroke color</dd></dl>
+<dd><p>stroke color</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Circle.width">
 <tt class="descname">width</tt><a class="headerlink" href="#graphics.Circle.width" title="Permalink to this definition">¶</a></dt>
-<dd>circle width</dd></dl>
+<dd><p>circle width</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -444,32 +539,38 @@ a class:Label object</dd></dl>
 <dd><dl class="attribute">
 <dt id="graphics.Rectangle.corner_radius">
 <tt class="descname">corner_radius</tt><a class="headerlink" href="#graphics.Rectangle.corner_radius" title="Permalink to this definition">¶</a></dt>
-<dd>corner radius. Set bigger than 0 for rounded corners</dd></dl>
+<dd><p>corner radius. Set bigger than 0 for rounded corners</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.fill">
 <tt class="descname">fill</tt><a class="headerlink" href="#graphics.Rectangle.fill" title="Permalink to this definition">¶</a></dt>
-<dd>fill color</dd></dl>
+<dd><p>fill color</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.height">
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Rectangle.height" title="Permalink to this definition">¶</a></dt>
-<dd>height</dd></dl>
+<dd><p>height</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.line_width">
 <tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Rectangle.line_width" title="Permalink to this definition">¶</a></dt>
-<dd>stroke line width</dd></dl>
+<dd><p>stroke line width</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.stroke">
 <tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Rectangle.stroke" title="Permalink to this definition">¶</a></dt>
-<dd>stroke color</dd></dl>
+<dd><p>stroke color</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Rectangle.width">
 <tt class="descname">width</tt><a class="headerlink" href="#graphics.Rectangle.width" title="Permalink to this definition">¶</a></dt>
-<dd>width</dd></dl>
+<dd><p>width</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -479,23 +580,27 @@ a class:Label object</dd></dl>
 <dd><dl class="attribute">
 <dt id="graphics.Polygon.fill">
 <tt class="descname">fill</tt><a class="headerlink" href="#graphics.Polygon.fill" title="Permalink to this definition">¶</a></dt>
-<dd>fill color</dd></dl>
+<dd><p>fill color</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Polygon.line_width">
 <tt class="descname">line_width</tt><a class="headerlink" href="#graphics.Polygon.line_width" title="Permalink to this definition">¶</a></dt>
-<dd>stroke line width</dd></dl>
+<dd><p>stroke line width</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Polygon.points">
 <tt class="descname">points</tt><a class="headerlink" href="#graphics.Polygon.points" title="Permalink to this definition">¶</a></dt>
-<dd>list of (x,y) tuples that the line should go through. Polygon
-will automatically close path.</dd></dl>
+<dd><p>list of (x,y) tuples that the line should go through. Polygon
+will automatically close path.</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Polygon.stroke">
 <tt class="descname">stroke</tt><a class="headerlink" href="#graphics.Polygon.stroke" title="Permalink to this definition">¶</a></dt>
-<dd>stroke color</dd></dl>
+<dd><p>stroke color</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -505,39 +610,46 @@ will automatically close path.</dd></dl>
 <dd><dl class="attribute">
 <dt id="graphics.Label.alignment">
 <tt class="descname">alignment</tt><a class="headerlink" href="#graphics.Label.alignment" title="Permalink to this definition">¶</a></dt>
-<dd>alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]</dd></dl>
+<dd><p>alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.color">
 <tt class="descname">color</tt><a class="headerlink" href="#graphics.Label.color" title="Permalink to this definition">¶</a></dt>
-<dd>color of label either as hex string or an (r,g,b) tuple</dd></dl>
+<dd><p>color of label either as hex string or an (r,g,b) tuple</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.ellipsize">
 <tt class="descname">ellipsize</tt><a class="headerlink" href="#graphics.Label.ellipsize" title="Permalink to this definition">¶</a></dt>
-<dd>Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
-ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]</dd></dl>
+<dd><p>Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
+ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.font_desc">
 <tt class="descname">font_desc</tt><a class="headerlink" href="#graphics.Label.font_desc" title="Permalink to this definition">¶</a></dt>
-<dd>pango.FontDescription, default is the system&#8217;s font</dd></dl>
+<dd><p>pango.FontDescription, default is the system&#8217;s font</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.size">
 <tt class="descname">size</tt><a class="headerlink" href="#graphics.Label.size" title="Permalink to this definition">¶</a></dt>
-<dd>font size</dd></dl>
+<dd><p>font size</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.text">
 <tt class="descname">text</tt><a class="headerlink" href="#graphics.Label.text" title="Permalink to this definition">¶</a></dt>
-<dd>label text</dd></dl>
+<dd><p>label text</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Label.wrap">
 <tt class="descname">wrap</tt><a class="headerlink" href="#graphics.Label.wrap" title="Permalink to this definition">¶</a></dt>
-<dd>wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
-WRAP_WORD_CHAR]</dd></dl>
+<dd><p>wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
+WRAP_WORD_CHAR]</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -553,34 +665,45 @@ that is an instance of this class.</p>
 <dd><dl class="method">
 <dt id="pytweener.Tweener.add_tween">
 <tt class="descname">add_tween</tt><big>(</big><em>obj</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.add_tween" title="Permalink to this definition">¶</a></dt>
-<dd>Add tween for the object to go from current values to set ones.
+<dd><p>Add tween for the object to go from current values to set ones.
 Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
 This will move the sprite to coordinates (500, 200) in 0.4 seconds.
 For parameter &#8220;easing&#8221; you can use one of the pytweener.Easing
 functions, or specify your own.
-The tweener can handle numbers, dates and color strings in hex (&#8220;#ffffff&#8221;)</dd></dl>
+The tweener can handle numbers, dates and color strings in hex (&#8220;#ffffff&#8221;)</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tweener.finish">
 <tt class="descname">finish</tt><big>(</big><big>)</big><a class="headerlink" href="#pytweener.Tweener.finish" title="Permalink to this definition">¶</a></dt>
-<dd>jump the the last frame of all tweens</dd></dl>
+<dd><p>jump the the last frame of all tweens</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tweener.get_tweens">
 <tt class="descname">get_tweens</tt><big>(</big><em>obj</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.get_tweens" title="Permalink to this definition">¶</a></dt>
-<dd>Get a list of all tweens acting on the specified object
-Useful for manipulating tweens on the fly</dd></dl>
+<dd><p>Get a list of all tweens acting on the specified object
+Useful for manipulating tweens on the fly</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tweener.kill_tweens">
 <tt class="descname">kill_tweens</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.kill_tweens" title="Permalink to this definition">¶</a></dt>
-<dd>Stop tweening an object, without completing the motion or firing the
-on_complete</dd></dl>
+<dd><p>Stop tweening an object, without completing the motion or firing the
+on_complete</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytweener.Tweener.remove_tween">
+<tt class="descname">remove_tween</tt><big>(</big><em>tween</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.remove_tween" title="Permalink to this definition">¶</a></dt>
+<dd><p>&#8220;remove given tween without completing the motion or firing the on_complete</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tweener.update">
 <tt class="descname">update</tt><big>(</big><em>delta_seconds</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.update" title="Permalink to this definition">¶</a></dt>
-<dd>update tweeners. delta_seconds is time in seconds since last frame</dd></dl>
+<dd><p>update tweeners. delta_seconds is time in seconds since last frame</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -590,14 +713,16 @@ on_complete</dd></dl>
 <dd><dl class="method">
 <dt id="pytweener.Tween.pause">
 <tt class="descname">pause</tt><big>(</big><em>seconds=-1</em><big>)</big><a class="headerlink" href="#pytweener.Tween.pause" title="Permalink to this definition">¶</a></dt>
-<dd>Pause this tween
+<dd><p>Pause this tween
 do tween.pause( 2 ) to pause for a specific time
-or tween.pause() which pauses indefinitely.</dd></dl>
+or tween.pause() which pauses indefinitely.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pytweener.Tween.resume">
 <tt class="descname">resume</tt><big>(</big><big>)</big><a class="headerlink" href="#pytweener.Tween.resume" title="Permalink to this definition">¶</a></dt>
-<dd>Resume from pause</dd></dl>
+<dd><p>Resume from pause</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -630,18 +755,18 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference external" href="#">hamster.graphics</a><ul>
-<li><a class="reference external" href="#the-scene">The Scene</a><ul>
-<li><a class="reference external" href="#scene-signals">Scene signals</a></li>
+<li><a class="reference internal" href="#">hamster.graphics</a><ul>
+<li><a class="reference internal" href="#the-scene">The Scene</a><ul>
+<li><a class="reference internal" href="#scene-signals">Scene signals</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#sprite-objects"><tt class="docutils literal"><span class="pre">Sprite</span></tt> objects</a><ul>
-<li><a class="reference external" href="#sprite-signals">Sprite signals</a></li>
+<li><a class="reference internal" href="#sprite-objects"><tt class="docutils literal"><span class="pre">Sprite</span></tt> objects</a><ul>
+<li><a class="reference internal" href="#sprite-signals">Sprite signals</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
-<li><a class="reference external" href="#primitives">Primitives</a></li>
-<li><a class="reference external" href="#the-tweener">The Tweener</a></li>
+<li><a class="reference internal" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
+<li><a class="reference internal" href="#primitives">Primitives</a></li>
+<li><a class="reference internal" href="#the-tweener">The Tweener</a></li>
 </ul>
 </li>
 </ul>
@@ -676,7 +801,7 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
     </div>
     <div class="footer">
         &copy; Copyright 2010, Toms Bauģis.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0pre.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.3.
     </div>
   </body>
 </html>
