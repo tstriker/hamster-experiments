@@ -130,11 +130,30 @@ also influence the smoothness of tweeners.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Scene.height">
+<tt class="descname">height</tt><a class="headerlink" href="#graphics.Scene.height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scene height. Will be <cite>None</cite> until first expose (that is until first
+on-enter-frame signal below).</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Scene.mouse_cursor">
 <tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Scene.mouse_cursor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mouse cursor appearance.
 Replace with your own cursor or set to False to have no cursor.
 None will revert back the default behavior</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.mouse_x">
+<tt class="descname">mouse_x</tt><a class="headerlink" href="#graphics.Scene.mouse_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last known x position of the mouse (set on expose event)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.mouse_y">
+<tt class="descname">mouse_y</tt><a class="headerlink" href="#graphics.Scene.mouse_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last known y position of the mouse (set on expose event)</p>
 </dd></dl>
 
 <dl class="method">
@@ -161,6 +180,13 @@ the <cite>framerate</cite> allows</p>
 <tt class="descname">tweener</tt><a class="headerlink" href="#graphics.Scene.tweener" title="Permalink to this definition">¶</a></dt>
 <dd><p>instance of <a class="reference internal" href="#pytweener.Tweener" title="pytweener.Tweener"><tt class="xref py py-class docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
 <tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.width">
+<tt class="descname">width</tt><a class="headerlink" href="#graphics.Scene.width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scene width. Will be <cite>None</cite> until first expose (that is until first
+on-enter-frame signal below).</p>
 </dd></dl>
 
 </dd></dl>
