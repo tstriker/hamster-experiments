@@ -168,11 +168,12 @@ class Scene(graphics.Scene):
         self.start_date_label.x = self.width / 2 - self.start_date_label.width
         self.start_date_label.y = self.height / 2
 
-        if self.mouse_x:
-            g.move_to(self.width / 2, self.height / 2)
-            g.line_to(self.mouse_x, self.mouse_y)
-            g.set_line_style(width=0.5)
-            g.stroke("#fff")
+        x, y, mods = self.get_pointer()
+
+        g.move_to(self.width / 2, self.height / 2)
+        g.line_to(x, y)
+        g.set_line_style(width=0.5)
+        g.stroke("#fff")
 
 
 

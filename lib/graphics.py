@@ -871,9 +871,6 @@ class Scene(gtk.DrawingArea):
         #: instance of :class:`Colors` class for color parsing
         self.colors = Colors
 
-        #: last known coordinates of mouse cursor
-        self.mouse_x, self.mouse_y = None, None
-
         #: read only info about current framerate (frames per second)
         self.fps = 0 # inner frames per second counter
 
@@ -981,13 +978,12 @@ class Scene(gtk.DrawingArea):
         self.fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
         self.__last_expose_time = now
 
-        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
-
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
 
-        self._check_mouse(self.mouse_x, self.mouse_y)
+        mouse_x, mouse_y, mods = self.get_window().get_pointer()
+        self._check_mouse(mouse_x, mouse_y)
         self.emit("on-finish-frame", context)
 
 
@@ -1017,6 +1013,10 @@ class Scene(gtk.DrawingArea):
                     for child in self.all_sprites(sprite.sprites):
                         yield child
 
+
+    def get_pointer(self):
+        """returns mouse pointer information: x, y and flags"""
+        return self.get_window().get_pointer()
 
     def sprite_at_position(self, x, y):
         over = None

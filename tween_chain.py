@@ -43,21 +43,21 @@ class Canvas(graphics.Scene):
 
         self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.mouse_x, self.mouse_y = 0, 0
 
 
     def on_mouse_move(self, area, event):
         # oh i know this should not be performed using tweeners, but hey - a demo!
-        self.mouse_x, self.mouse_y = event.x, event.y
         self.redraw()
 
 
     def on_enter_frame(self, scene, context):
+
+        mouse_x, mouse_y, flags = self.get_pointer()
         for particle in reversed(self.tail):
             if particle.follow:
                 new_x, new_y = particle.follow.x, particle.follow.y
             else:
-                new_x, new_y = self.mouse_x, self.mouse_y
+                new_x, new_y = mouse_x, mouse_y
 
             if abs(particle.x - new_x) + abs(particle.y - new_y) > 0.01:
                 self.animate(particle, x = new_x, y = new_y, duration = 0.3, easing = Easing.Expo.ease_out)

@@ -94,7 +94,6 @@ class Scene(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
 
         self.particles = []
-        self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()
 
         self.particle_count = 40 # these are the flies

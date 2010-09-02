@@ -59,19 +59,13 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
 
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-mouse-move", self.on_mouse_move)
         self.particles = []
-        self.mouse_x, self.mouse_y = 0, 0
         self.paths = collections.deque()
 
         self.particle_count = 50 # these are the flies
         self.max_path_count = 10   # set this bigger to get longer tails and fry your computer
         self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
 
-
-
-    def on_mouse_move(self, scene, event):
-        self.mouse_x, self.mouse_y = event.x, event.y
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
@@ -89,8 +83,9 @@ class Scene(graphics.Scene):
                 g.set_color("#000", i / float(len(self.paths)))
             context.stroke()
 
+        mouse_x, mouse_y, mods = self.get_pointer()
         for particle in self.particles:
-            particle.update(self.mouse_x, self.mouse_y)
+            particle.update(mouse_x, mouse_y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
 
