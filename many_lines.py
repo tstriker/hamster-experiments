@@ -83,9 +83,8 @@ class Scene(graphics.Scene):
                 g.set_color("#000", i / float(len(self.paths)))
             context.stroke()
 
-        mouse_x, mouse_y, mods = self.get_pointer()
         for particle in self.particles:
-            particle.update(mouse_x, mouse_y)
+            particle.update(self.mouse_x, self.mouse_y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
 

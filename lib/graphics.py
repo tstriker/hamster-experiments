@@ -830,7 +830,7 @@ class Scene(gtk.DrawingArea):
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -873,6 +873,9 @@ class Scene(gtk.DrawingArea):
 
         #: read only info about current framerate (frames per second)
         self.fps = 0 # inner frames per second counter
+
+        #: Last known position of the mouse (set on expose event)
+        self.mouse_x, self.mouse_y = None, None
 
         #: Mouse cursor appearance.
         #: Replace with your own cursor or set to False to have no cursor.
@@ -978,12 +981,13 @@ class Scene(gtk.DrawingArea):
         self.fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
         self.__last_expose_time = now
 
+        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
+
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
 
-        mouse_x, mouse_y, mods = self.get_window().get_pointer()
-        self._check_mouse(mouse_x, mouse_y)
+        self._check_mouse(self.mouse_x, self.mouse_y)
         self.emit("on-finish-frame", context)
 
 
@@ -1013,10 +1017,6 @@ class Scene(gtk.DrawingArea):
                     for child in self.all_sprites(sprite.sprites):
                         yield child
 
-
-    def get_pointer(self):
-        """returns mouse pointer information: x, y and flags"""
-        return self.get_window().get_pointer()
 
     def sprite_at_position(self, x, y):
         over = None
@@ -1166,4 +1166,4 @@ class Scene(gtk.DrawingArea):
 
             self.emit("on-click", event, target)
 
-        self.emit("on-mouse-up")
+        self.emit("on-mouse-up", event)

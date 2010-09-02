@@ -51,13 +51,11 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-
-        mouse_x, mouse_y, flags = self.get_pointer()
         for particle in reversed(self.tail):
             if particle.follow:
                 new_x, new_y = particle.follow.x, particle.follow.y
             else:
-                new_x, new_y = mouse_x, mouse_y
+                new_x, new_y = self.mouse_x, self.mouse_y
 
             if abs(particle.x - new_x) + abs(particle.y - new_y) > 0.01:
                 self.animate(particle, x = new_x, y = new_y, duration = 0.3, easing = Easing.Expo.ease_out)
