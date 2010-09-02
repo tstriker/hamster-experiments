@@ -483,7 +483,6 @@ class Sprite(gtk.Object):
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        #"on-draw": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
@@ -599,8 +598,6 @@ class Sprite(gtk.Object):
 
         self.graphics.opacity = self.opacity * opacity
 
-        #self.emit("on-draw") # TODO - this is expensive when doing constant redraw with many frames. maybe we can have a simple callback here?
-        #self.graphics._move_to(context, 0, 0) # TODO - i'm doing this move because otherwise the currentpoint is pointing to wherever it was left. check if we really need this
         context.new_path()
 
         if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
@@ -813,15 +810,15 @@ class Circle(Sprite):
 
         self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
 
+
 class Scene(gtk.DrawingArea):
-    """ Widget for displaying sprites.
+    """ Drawing area for displaying sprites.
         Add sprites to the Scene by calling :func:`add_child`.
         Scene is descendant of `gtk.DrawingArea <http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html>`_
         and thus inherits all it's methods and everything.
     """
 
     __gsignals__ = {
-        #: yes can haz instance attribute docstring
         "expose-event": "override",
         "configure_event": "override",
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
@@ -994,13 +991,12 @@ class Scene(gtk.DrawingArea):
         for sprite in self.sprites:
             sprite._draw(context)
 
-        self._check_mouse(self.mouse_x, self.mouse_y)
+        self.__check_mouse(self.mouse_x, self.mouse_y)
         self.emit("on-finish-frame", context)
 
 
-    """ mouse events """
     def all_sprites(self, sprites = None):
-        """returns flat list of the sprite tree for simplified iteration"""
+        """Returns flat list of the sprite tree for simplified iteration"""
 
         if sprites is None:
             sprites = self.sprites
@@ -1012,7 +1008,7 @@ class Scene(gtk.DrawingArea):
                     yield child
 
     def all_visible_sprites(self, sprites = None):
-        """returns flat list of just the visible sprites - avoid children whos
+        """Returns flat list of just the visible sprites - avoid children whos
         parents are not displayed"""
         if sprites is None:
             sprites = self.sprites
@@ -1021,66 +1017,28 @@ class Scene(gtk.DrawingArea):
             if sprite.visible:
                 yield sprite
                 if sprite.sprites:
-                    for child in self.all_sprites(sprite.sprites):
+                    for child in self.all_visible_sprites(sprite.sprites):
                         yield child
 
 
     def sprite_at_position(self, x, y):
+        """Returns the topmost visible sprite for given coordinates"""
         over = None
         for sprite in self.all_visible_sprites():
-            if sprite.interactive and self._check_hit(sprite, x, y):
+            if sprite.interactive and self.__check_hit(sprite, x, y):
                 over = sprite
 
         return over
 
-    def __on_scroll(self, area, event):
-        self.emit("on-scroll", event)
 
-    def __on_mouse_move(self, area, event):
-        state = event.state
+    def __check_hit(self, sprite, x, y):
+        if sprite == self._drag_sprite:
+            return True
 
-
-        if self._drag_sprite and self._drag_sprite.draggable \
-           and gtk.gdk.BUTTON1_MASK & event.state:
-            # dragging around
-            drag = self._mouse_drag \
-                   and (self._mouse_drag[0] - event.x) ** 2 + \
-                       (self._mouse_drag[1] - event.y) ** 2 > 5 ** 2
-            if drag:
-                matrix = cairo.Matrix()
-                if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
-                    # TODO - this currently works only until second level
-                    #        should take all parents into account
-                    matrix.rotate(self._drag_sprite.parent.rotation)
-                    matrix.invert()
-
-                if not self.__drag_x:
-                    x1,y1 = matrix.transform_point(self._mouse_drag[0],
-                                                   self._mouse_drag[1])
-
-                    self.__drag_x = self._drag_sprite.x - x1
-                    self.__drag_y = self._drag_sprite.y - y1
-
-                mouse_x, mouse_y = matrix.transform_point(event.x, event.y)
-                new_x = mouse_x + self.__drag_x
-                new_y = mouse_y + self.__drag_y
+        return sprite.check_hit(x, y)
 
 
-                self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
-                self._drag_sprite._on_drag(new_x, new_y)
-                self.emit("on-drag", self._drag_sprite, (new_x, new_y))
-                self.redraw()
-
-                return
-        else:
-            # avoid double mouse checks - the redraw will also check for mouse!
-            if not self.__drawing_queued:
-                self._check_mouse(event.x, event.y)
-
-        self.emit("on-mouse-move", event)
-
-
-    def _check_mouse(self, x, y):
+    def __check_mouse(self, x, y):
         if x is None or self._mouse_in == False:
             return
 
@@ -1127,6 +1085,50 @@ class Scene(gtk.DrawingArea):
             self.__last_cursor = cursor
 
 
+    """ mouse events """
+    def __on_mouse_move(self, area, event):
+        state = event.state
+
+
+        if self._drag_sprite and self._drag_sprite.draggable \
+           and gtk.gdk.BUTTON1_MASK & event.state:
+            # dragging around
+            drag = self._mouse_drag \
+                   and (self._mouse_drag[0] - event.x) ** 2 + \
+                       (self._mouse_drag[1] - event.y) ** 2 > 5 ** 2
+            if drag:
+                matrix = cairo.Matrix()
+                if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
+                    # TODO - this currently works only until second level
+                    #        should take all parents into account
+                    matrix.rotate(self._drag_sprite.parent.rotation)
+                    matrix.invert()
+
+                if not self.__drag_x:
+                    x1,y1 = matrix.transform_point(self._mouse_drag[0],
+                                                   self._mouse_drag[1])
+
+                    self.__drag_x = self._drag_sprite.x - x1
+                    self.__drag_y = self._drag_sprite.y - y1
+
+                mouse_x, mouse_y = matrix.transform_point(event.x, event.y)
+                new_x = mouse_x + self.__drag_x
+                new_y = mouse_y + self.__drag_y
+
+
+                self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
+                self._drag_sprite._on_drag(new_x, new_y)
+                self.emit("on-drag", self._drag_sprite, (new_x, new_y))
+                self.redraw()
+
+                return
+        else:
+            # avoid double mouse checks - the redraw will also check for mouse!
+            if not self.__drawing_queued:
+                self.__check_mouse(event.x, event.y)
+
+        self.emit("on-mouse-move", event)
+
     def __on_mouse_enter(self, area, event):
         self._mouse_in = True
 
@@ -1136,12 +1138,6 @@ class Scene(gtk.DrawingArea):
             self.emit("on-mouse-out", self._mouse_sprite)
             self._mouse_sprite = None
             self.redraw()
-
-    def _check_hit(self, sprite, x, y):
-        if sprite == self._drag_sprite:
-            return True
-
-        return sprite.check_hit(x, y)
 
 
     def __on_button_press(self, area, event):
@@ -1174,3 +1170,6 @@ class Scene(gtk.DrawingArea):
             self.emit("on-click", event, target)
 
         self.emit("on-mouse-up", event)
+
+    def __on_scroll(self, area, event):
+        self.emit("on-scroll", event)
