@@ -191,15 +191,25 @@ class Graphics(object):
 
     @staticmethod
     def _line_to(context, x, y): context.line_to(x, y)
-    def line_to(self, x, y):
+    def line_to(self, x, y = None):
         """draw line"""
-        self._add_instruction(self._line_to, x, y)
+        if x and y is not None:
+            self._add_instruction(self._line_to, x, y)
+        elif isinstance(x, list) and y is None:
+            for x2, y2 in x:
+                self._add_instruction(self._line_to, x2, y2)
+
 
     @staticmethod
     def _rel_line_to(context, x, y): context.rel_line_to(x, y)
-    def rel_line_to(self, x, y):
+    def rel_line_to(self, x, y = None):
         """draw line"""
-        self._add_instruction(self._rel_line_to, x, y)
+        if x and y:
+            self._add_instruction(self._rel_line_to, x, y)
+        elif isinstance(x, list) and y is None:
+            for x2, y2 in x:
+                self._add_instruction(self._rel_line_to, x2, y2)
+
 
     @staticmethod
     def _curve_to(context, x, y, x2, y2, x3, y3):
@@ -764,16 +774,18 @@ class Label(Sprite):
         if not self.text:
             return
 
+        if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
+            self.graphics.set_color("#000", 0)
+            self.graphics.rectangle(0,0, self.width, self.height)
+            self.graphics.stroke()
+
         self.graphics.set_color(self.color)
         self.graphics.show_layout(self.text, self.font_desc,
                                   self.alignment,
                                   self._bounds_width,
                                   self.wrap,
                                   self.ellipsize)
-
-        # draw a rectangle so that the label gets extents
-        self.graphics.rectangle(0,0, self.width, self.height)
-        self.graphics.stroke("#000", 0)
+        self.graphics.rectangle(0, 0, self.width, self.height)
 
 
     def _set_dimensions(self):
