@@ -102,6 +102,9 @@ class Graphics(object):
         self.__instructions = deque() # paths colors and operations
         self.__path_instructions = deque() # instruction set until it is converted into path-based instructions
 
+        self._instruction_cache = None
+        self.surface = None
+
     def clear(self):
         """clear all instructions"""
         self.__path_instructions = deque()
@@ -375,11 +378,15 @@ class Graphics(object):
         """
         self._add_instruction(self._show_layout, text, font_desc, alignment, width, wrap, ellipsize)
 
-    def _remember_path(self, context):
+    def _remember_path(self, context, instruction):
         context.save()
         context.identity_matrix()
 
-        new_extents = context.path_extents()
+        if instruction in (self._fill, self._fill_preserve):
+            new_extents = context.path_extents()
+        else:
+            new_extents = context.stroke_extents()
+
         self.extents = self.extents or new_extents
         self.extents = (min(self.extents[0], new_extents[0]),
                         min(self.extents[1], new_extents[1]),
@@ -461,13 +468,69 @@ class Graphics(object):
             if path:
                 context.append_path(path)
                 if check_extents:
-                    self._remember_path(context)
+                    self._remember_path(context, self._fill)
 
 
             if instruction:
                 instruction(context, *args)
 
         self._last_matrix = context.get_matrix()
+
+
+    def _draw_as_bitmap(self, context):
+        """
+            instead of caching paths, this function caches the whole drawn thing
+            use cache_as_bitmap on sprite to enable this mode
+        """
+
+        matrix = context.get_matrix()
+
+
+        if self.__path_instructions or matrix != self._last_matrix:
+            # new stuff! (taking the first 4 params of matrix because we don't care about position)
+            if self.__path_instructions:
+                self._instruction_cache = list(self.__path_instructions)
+
+
+            self.paths = deque()
+            self.extents = None
+
+
+            # just to measure the path
+            d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+            d_context.transform(matrix)
+            for instruction, args in self._instruction_cache:
+                if instruction in (self._stroke, self._fill,
+                                     self._stroke_preserve,
+                                     self._fill_preserve):
+
+                    self._remember_path(d_context, instruction)
+                instruction(d_context, *args)
+
+
+            w = int(self.extents[2] - self.extents[0]) + 1
+            h = int(self.extents[3] - self.extents[1]) + 1
+            self.surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
+            ctx = cairo.Context(self.surface)
+            ctx.translate(-self.extents[0], -self.extents[1])
+
+            ctx.transform(matrix)
+            for instruction, args in self._instruction_cache:
+                instruction(ctx, *args)
+
+            self.__path_instructions = deque()
+
+            self._last_matrix = matrix
+
+        context.save()
+        context.identity_matrix()
+        context.translate(self.extents[0], self.extents[1])
+        context.set_source_surface(self.surface)
+        context.paint()
+        context.restore()
+
+
+
 
 
 class Sprite(gtk.Object):
@@ -489,7 +552,7 @@ class Sprite(gtk.Object):
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
-                 z_order = 0):
+                 z_order = 0, cache_as_bitmap = False):
         gtk.Object.__init__(self)
 
         #: list of children sprites. Use :func:`add_child` to add sprites
@@ -530,6 +593,10 @@ class Sprite(gtk.Object):
 
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
+
+        #: Whether the sprite should be cached as a bitmap.
+        #: Set to true to get a serious boost on complex sprites that don't change that often
+        self.cache_as_bitmap = cache_as_bitmap
 
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
@@ -604,7 +671,10 @@ class Sprite(gtk.Object):
             self.emit("on-render")
             self.__dict__["_sprite_dirty"] = False
 
-        self.graphics._draw(context, self.interactive or self.draggable)
+        if self.cache_as_bitmap:
+            self.graphics._draw_as_bitmap(context)
+        else:
+            self.graphics._draw(context, self.interactive or self.draggable)
 
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
