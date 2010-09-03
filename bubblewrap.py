@@ -93,8 +93,8 @@ class BasicWindow:
 
         def on_click(event):
             self.scene.cache_as_bitmap = not self.scene.cache_as_bitmap
-            self.scene.remove_child(*self.bubbles)
-            self.bubbles = []
+            self.scene.remove_child(*self.scene.bubbles)
+            self.scene.bubbles = []
             self.button.set_label("Cache as bitmap = %s" % str(self.scene.cache_as_bitmap))
             self.scene.redraw()
 
