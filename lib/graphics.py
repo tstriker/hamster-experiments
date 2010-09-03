@@ -487,14 +487,12 @@ class Graphics(object):
 
 
         if self.__path_instructions or matrix != self._last_matrix:
-            # new stuff! (taking the first 4 params of matrix because we don't care about position)
             if self.__path_instructions:
                 self._instruction_cache = list(self.__path_instructions)
 
 
             self.paths = deque()
             self.extents = None
-
 
             # just to measure the path
             d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
@@ -506,6 +504,8 @@ class Graphics(object):
 
                     self._remember_path(d_context, instruction)
                 instruction(d_context, *args)
+            if self._instruction_cache and instruction not in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
+                self._remember_path(d_context, self._fill)
 
 
             w = int(self.extents[2] - self.extents[0]) + 1
@@ -516,7 +516,12 @@ class Graphics(object):
 
             ctx.transform(matrix)
             for instruction, args in self._instruction_cache:
-                instruction(ctx, *args)
+                if instruction == self._set_source_pixbuf:
+                    pass
+                elif instruction == self._show_layout:
+                    pass
+                else:
+                    instruction(ctx, *args)
 
             self.__path_instructions = deque()
 
@@ -594,8 +599,8 @@ class Sprite(gtk.Object):
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
-        #: Whether the sprite should be cached as a bitmap.
-        #: Set to true to get a serious boost on complex sprites that don't change that often
+        #: Whether the sprite should be cached as a bitmap. Default: true
+        #: Generally good when you have many static sprites
         self.cache_as_bitmap = cache_as_bitmap
 
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
@@ -759,17 +764,16 @@ class Label(Sprite):
         if not self.text:
             return
 
-        if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
-            self.graphics.set_color("#000", 0)
-            self.graphics.rectangle(0,0, self.width, self.height)
-            self.graphics.stroke()
-
         self.graphics.set_color(self.color)
         self.graphics.show_layout(self.text, self.font_desc,
                                   self.alignment,
                                   self._bounds_width,
                                   self.wrap,
                                   self.ellipsize)
+
+        # draw a rectangle so that the label gets extents
+        self.graphics.rectangle(0,0, self.width, self.height)
+        self.graphics.stroke("#000", 0)
 
 
     def _set_dimensions(self):
@@ -1218,6 +1222,10 @@ class Scene(gtk.DrawingArea):
         self._mouse_drag = (x, y)
 
         self._drag_sprite = self.get_sprite_at_position(event.x, event.y)
+        if self._drag_sprite and self._drag_sprite.draggable == False:
+            self._drag_sprite = None
+
+
         self._button_press_time = dt.datetime.now()
         self.emit("on-mouse-down", event)
 
