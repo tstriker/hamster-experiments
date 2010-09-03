@@ -648,6 +648,13 @@ class Sprite(gtk.Object):
         if self.visible is False:
             return
 
+        context.new_path()
+
+        if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
+            self.emit("on-render")
+            self.__dict__["_sprite_dirty"] = False
+
+
         if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
             context.save()
 
@@ -664,12 +671,6 @@ class Sprite(gtk.Object):
                 context.scale(self.scale_x, self.scale_y)
 
         self.graphics.opacity = self.opacity * opacity
-
-        context.new_path()
-
-        if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
-            self.emit("on-render")
-            self.__dict__["_sprite_dirty"] = False
 
         if self.cache_as_bitmap:
             self.graphics._draw_as_bitmap(context)
