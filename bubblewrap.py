@@ -34,7 +34,7 @@ class Scene(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
         self.cache_as_bitmap = True
         self.paint_color = None
-        self.add_child(graphics.Rectangle(150, 40, 4, "#666", opacity = 0.8, z_order = 98))
+        self.add_child(graphics.Rectangle(600, 40, 4, "#666", opacity = 0.8, z_order = 98))
         self.fps_label = graphics.Label(size = 20, color = "#fff", z_order=99, x = 10, y = 4)
         self.add_child(self.fps_label)
         self.bubbles = []
@@ -55,14 +55,14 @@ class Scene(graphics.Scene):
 
     def on_mouse_over(self, scene, sprite):
         sprite.original_radius = sprite.radius
-        self.animate(sprite, radius = sprite.radius * 1.3, easing = Easing.Elastic.ease_out)
+        self.animate(sprite, radius = sprite.radius * 1.3, easing = Easing.Elastic.ease_out, duration = 1)
 
 
     def on_mouse_out(self, scene, sprite):
         self.animate(sprite, radius = sprite.original_radius, easing = Easing.Elastic.ease_out)
 
     def on_enter_frame(self, scene, context):
-        self.fps_label.text = "%.2f FPS" % self.fps
+        self.fps_label.text = "Hold mouse down and drag to paint. FPS: %.2f" % self.fps
 
         if not self.bubbles:
             for x in range(30, self.width, 50):
