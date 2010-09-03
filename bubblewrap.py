@@ -25,23 +25,33 @@ class Wonky(graphics.Sprite):
 
 class Scene(graphics.Scene):
     def __init__(self):
-        graphics.Scene.__init__(self, framerate=30)
+        graphics.Scene.__init__(self)
 
         self.connect("on-mouse-over", self.on_mouse_over)
         self.connect("on-mouse-out", self.on_mouse_out)
+        self.connect("on-mouse-up", self.on_mouse_up)
         self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
         self.cache_as_bitmap = True
+        self.paint_color = None
+        self.add_child(graphics.Rectangle(150, 40, 4, "#666", opacity = 0.8, z_order = 98))
+        self.fps_label = graphics.Label(size = 20, color = "#fff", z_order=99, x = 10, y = 4)
+        self.add_child(self.fps_label)
+        self.bubbles = []
 
     def on_mouse_move(self, scene, event):
         sprite = self.get_sprite_at_position(event.x, event.y)
 
-        if gtk.gdk.BUTTON1_MASK & event.state:
-            if sprite.fill == "#f00":
-                self.animate(sprite, fill="#aaa")
-            else:
-                self.animate(sprite, fill="#f00")
+        if sprite and gtk.gdk.BUTTON1_MASK & event.state:
+            if self.paint_color is None:
+                if sprite.fill == "#f00":
+                    self.paint_color =  "#aaa"
+                elif sprite.fill == "#aaa":
+                    self.paint_color = "#f00"
+            self.animate(sprite, fill=self.paint_color)
 
+    def on_mouse_up(self, scene, event):
+        self.paint_color = None
 
     def on_mouse_over(self, scene, sprite):
         sprite.original_radius = sprite.radius
@@ -52,11 +62,13 @@ class Scene(graphics.Scene):
         self.animate(sprite, radius = sprite.original_radius, easing = Easing.Elastic.ease_out)
 
     def on_enter_frame(self, scene, context):
-        print self.fps
-        if not self.sprites:
+        self.fps_label.text = "%.2f FPS" % self.fps
+
+        if not self.bubbles:
             for x in range(30, self.width, 50):
                 for y in range(30, self.height, 50):
                     wonky = Wonky(x, y, 20, self.cache_as_bitmap)
+                    self.bubbles.append(wonky)
                     self.add_child(wonky)
                     self.animate(wonky,
                                  radius = wonky.radius * 1.3,
@@ -81,7 +93,8 @@ class BasicWindow:
 
         def on_click(event):
             self.scene.cache_as_bitmap = not self.scene.cache_as_bitmap
-            self.scene.clear()
+            self.scene.remove_child(*self.bubbles)
+            self.bubbles = []
             self.button.set_label("Cache as bitmap = %s" % str(self.scene.cache_as_bitmap))
             self.scene.redraw()
 
