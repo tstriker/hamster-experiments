@@ -2,7 +2,10 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
-"""Guess what, haha"""
+"""Guess what, haha. Oh and the math is way wrong here
+   Morale of the story though is that the coordinates are given even when
+   outside the window
+"""
 
 
 import gtk
@@ -11,7 +14,7 @@ import math
 
 class Eye(graphics.Sprite):
     def __init__(self, x, y, width, height):
-        graphics.Sprite.__init__(self, x = x, y = y)
+        graphics.Sprite.__init__(self, x = x, y = y, interactive = True, draggable = True)
         self.angle = 0
         self.pupil_distance = 0
         self.width = width
