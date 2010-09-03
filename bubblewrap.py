@@ -11,8 +11,8 @@ from lib.pytweener import Easing
 import random
 
 class Wonky(graphics.Sprite):
-    def __init__(self, x, y, radius):
-        graphics.Sprite.__init__(self, x=x, y=y, interactive=True)
+    def __init__(self, x, y, radius, cache_as_bitmap):
+        graphics.Sprite.__init__(self, x=x, y=y, interactive=True, cache_as_bitmap = cache_as_bitmap)
         self.radius = radius
         self.fill = "#aaa"
         self.connect("on-render", self.on_render)
@@ -29,8 +29,19 @@ class Scene(graphics.Scene):
 
         self.connect("on-mouse-over", self.on_mouse_over)
         self.connect("on-mouse-out", self.on_mouse_out)
-        self.connect("on-click", self.on_click)
+        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.cache_as_bitmap = True
+
+    def on_mouse_move(self, scene, event):
+        sprite = self.get_sprite_at_position(event.x, event.y)
+
+        if gtk.gdk.BUTTON1_MASK & event.state:
+            if sprite.fill == "#f00":
+                self.animate(sprite, fill="#aaa")
+            else:
+                self.animate(sprite, fill="#f00")
+
 
     def on_mouse_over(self, scene, sprite):
         sprite.original_radius = sprite.radius
@@ -40,20 +51,17 @@ class Scene(graphics.Scene):
     def on_mouse_out(self, scene, sprite):
         self.animate(sprite, radius = sprite.original_radius, easing = Easing.Elastic.ease_out)
 
-    def on_click(self, scene, event, sprite):
-        if sprite.fill == "#ff0000":
-            self.animate(sprite, fill="#aaa")
-        else:
-            self.animate(sprite, fill="#f00")
-
     def on_enter_frame(self, scene, context):
         print self.fps
         if not self.sprites:
             for x in range(30, self.width, 50):
                 for y in range(30, self.height, 50):
-                    wonky = Wonky(x, y, 20)
+                    wonky = Wonky(x, y, 20, self.cache_as_bitmap)
                     self.add_child(wonky)
-                    self.animate(wonky, radius = wonky.radius * 1.3, easing = Easing.Elastic.ease_out, duration=3)
+                    self.animate(wonky,
+                                 radius = wonky.radius * 1.3,
+                                 easing = Easing.Elastic.ease_out,
+                                 duration=2)
 
 
 
@@ -63,7 +71,25 @@ class BasicWindow:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_size_request(800, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-        window.add(Scene())
+
+        vbox = gtk.VBox()
+
+        self.scene = Scene()
+        vbox.pack_start(self.scene, True)
+
+        self.button = gtk.Button("Cache as bitmap = True")
+
+        def on_click(event):
+            self.scene.cache_as_bitmap = not self.scene.cache_as_bitmap
+            self.scene.clear()
+            self.button.set_label("Cache as bitmap = %s" % str(self.scene.cache_as_bitmap))
+            self.scene.redraw()
+
+
+        self.button.connect("clicked", on_click)
+        vbox.pack_start(self.button, False)
+
+        window.add(vbox)
         window.show_all()
 
 example = BasicWindow()
