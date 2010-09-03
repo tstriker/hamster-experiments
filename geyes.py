@@ -22,10 +22,8 @@ class Eye(graphics.Sprite):
         self.connect("on-render", self.on_render)
 
     def update(self, mouse_x, mouse_y):
-        width, height = (mouse_x - self.x), (mouse_y - self.y)
-
-        self.pupil_rotation = math.atan2(height, width)
-        self.pointer_distance = math.sqrt(width**2 + height**2)
+        distance_x, distance_y = (mouse_x - self.x), (mouse_y - self.y)
+        self.pupil_rotation = math.atan2(distance_x, distance_y)
 
 
 
@@ -36,10 +34,13 @@ class Eye(graphics.Sprite):
 
         rotation = self.pupil_rotation
 
-        pupil_x = min(math.cos(rotation) * width * self.pointer_distance / 1000, width * 0.2)
-        pupil_y = min(math.sin(rotation) * height * self.pointer_distance / 1000, height * 0.2)
+        pupil_radius = min(width / 4.0, height / 4.0)
 
-        self.graphics.circle(pupil_x, pupil_y, min(width / 4.0, height / 4.0))
+        pupil_x = min((width / 2.0 - pupil_radius), self.pointer_distance) * math.cos(rotation)
+        pupil_y = min((height / 2.0 - pupil_radius), self.pointer_distance) * math.sin(rotation)
+
+
+        self.graphics.circle(pupil_x, pupil_y, pupil_radius)
         self.graphics.fill("#000")
 
 
