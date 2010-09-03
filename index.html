@@ -129,6 +129,12 @@ redraw will be performed (that is - not more often than the framerate). It will
 also influence the smoothness of tweeners.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="graphics.Scene.get_sprite_at_position">
+<tt class="descname">get_sprite_at_position</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Scene.get_sprite_at_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the topmost visible sprite for given coordinates</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="graphics.Scene.height">
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Scene.height" title="Permalink to this definition">¶</a></dt>
@@ -167,12 +173,6 @@ the <cite>framerate</cite> allows</p>
 <dt id="graphics.Scene.remove_child">
 <tt class="descname">remove_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.remove_child" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites from scene</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Scene.sprite_at_position">
-<tt class="descname">sprite_at_position</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Scene.sprite_at_position" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the topmost visible sprite for given coordinates</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -221,7 +221,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 <h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>cache_as_bitmap=False</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Sprite class is a basic display list building block: a display list
 node that can display graphics and can also contain children.
 Once you have created the sprite, use Scene&#8217;s add_child to add it to
@@ -230,6 +230,13 @@ scene</p>
 <dt id="graphics.Sprite.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Sprite.add_child" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add child sprite. Child will be nested within parent</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.cache_as_bitmap">
+<tt class="descname">cache_as_bitmap</tt><a class="headerlink" href="#graphics.Sprite.cache_as_bitmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the sprite should be cached as a bitmap.
+Set to true to get a serious boost on complex sprites that don&#8217;t change that often</p>
 </dd></dl>
 
 <dl class="method">
