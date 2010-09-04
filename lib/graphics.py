@@ -152,6 +152,12 @@ class Graphics(object):
         self._add_instruction(self._paint,)
 
     @staticmethod
+    def _set_source(context, image):
+        context.set_source(image)
+    def set_source(self, image, x = 0, y = 0):
+        self._add_instruction(self._set_source, image)
+
+    @staticmethod
     def _set_source_surface(context, image, x, y):
         context.set_source_surface(image, x, y)
     def set_source_surface(self, image, x = 0, y = 0):
@@ -428,7 +434,8 @@ class Graphics(object):
             while self.__path_instructions:
                 instruction, args = self.__path_instructions.popleft()
 
-                if instruction in (self._set_source_surface,
+                if instruction in (self._set_source,
+                                   self._set_source_surface,
                                    self._set_source_pixbuf,
                                    self._paint,
                                    self._translate,
