@@ -158,17 +158,19 @@ class Graphics(object):
         self._add_instruction(self._set_source, image)
 
     @staticmethod
-    def _set_source_surface(context, image, x, y):
-        context.set_source_surface(image, x, y)
-    def set_source_surface(self, image, x = 0, y = 0):
-        self._add_instruction(self._set_source_surface, image, x, y)
+    def _set_source_surface(context, surface, x, y):
+        context.set_source_surface(surface, x, y)
+    def set_source_surface(self, surface, x = 0, y = 0):
+        self._add_instruction(self._set_source_surface, surface, x, y)
 
     @staticmethod
     def _set_source_pixbuf(context, pixbuf, x, y):
         context.set_source_pixbuf(pixbuf, x, y)
     def set_source_pixbuf(self, pixbuf, x = 0, y = 0):
+        w, h = pixbuf.get_width(), pixbuf.get_height()
+        self._add_instruction(self._rectangle, x, y, w, h) # i wonder if this will add problems down the road
         self._add_instruction(self._set_source_pixbuf, pixbuf, x, y)
-
+        self._add_instruction(self._new_path)
 
     @staticmethod
     def _save_context(context): context.save()
@@ -452,7 +454,7 @@ class Graphics(object):
                 elif instruction == self._set_line_width:
                     current_line = args
 
-                elif instruction in (self._stroke, self._fill,
+                elif instruction in (self._new_path, self._stroke, self._fill,
                                      self._stroke_preserve,
                                      self._fill_preserve):
                     self.__instructions.append((context.copy_path(),
@@ -515,11 +517,11 @@ class Graphics(object):
             d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
             d_context.transform(matrix)
             for instruction, args in self._instruction_cache:
-                if instruction in (self._stroke, self._fill,
+                if instruction in (self._new_path, self._stroke, self._fill,
                                      self._stroke_preserve,
                                      self._fill_preserve):
-
                     self._remember_path(d_context, instruction)
+
                 instruction(d_context, *args)
             if self._instruction_cache and instruction not in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
                 self._remember_path(d_context, self._fill)
@@ -528,17 +530,13 @@ class Graphics(object):
             w = int(self.extents[2] - self.extents[0]) + 1
             h = int(self.extents[3] - self.extents[1]) + 1
             self.surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
-            ctx = cairo.Context(self.surface)
+            ctx = gtk.gdk.CairoContext(cairo.Context(self.surface))
             ctx.translate(-self.extents[0], -self.extents[1])
 
             ctx.transform(matrix)
             for instruction, args in self._instruction_cache:
-                if instruction == self._set_source_pixbuf:
-                    pass
-                elif instruction == self._show_layout:
-                    pass
-                else:
-                    instruction(ctx, *args)
+                instruction(ctx, *args)
+
 
             self.__path_instructions = deque()
 
@@ -756,6 +754,8 @@ class Label(Sprite):
         #: font size
         self.size = size
 
+        self.__surface = None
+
 
         self.connect("on-render", self.on_render)
 
@@ -780,11 +780,6 @@ class Label(Sprite):
         self.graphics.clear()
         if not self.text:
             return
-
-        if self.interactive: #if label is interactive, draw invisible bounding box for simple hit calculations
-            self.graphics.set_color("#000", 0)
-            self.graphics.rectangle(0,0, self.width, self.height)
-            self.graphics.stroke()
 
         self.graphics.set_color(self.color)
         self.graphics.show_layout(self.text, self.font_desc,
@@ -838,7 +833,6 @@ class Rectangle(Sprite):
         self.connect("on-render", self.on_render)
 
     def on_render(self, sprite):
-        self.graphics.clear()
         self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
         self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
 
@@ -863,12 +857,10 @@ class Polygon(Sprite):
         self.connect("on-render", self.on_render)
 
     def on_render(self, sprite):
-        self.graphics.clear()
         if not self.points: return
 
         self.graphics.move_to(*self.points[0])
-        for point in self.points:
-            self.graphics.line_to(*point)
+        self.graphics.line_to(*self.points)
         self.graphics.close_path()
 
         self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
@@ -896,7 +888,6 @@ class Circle(Sprite):
         self.connect("on-render", self.on_render)
 
     def on_render(self, sprite):
-        self.graphics.clear()
         if self.width == self.height:
             self.graphics.circle(self.width, self.width / 2.0, self.width / 2.0)
         else:
