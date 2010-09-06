@@ -41,7 +41,7 @@ class Canvas(graphics.Scene):
         self.connect("on-drag", self.on_drag_circle)
 
 
-    def on_drag_circle(self, scene, event, targets):
+    def on_drag_circle(self, scene, drag_sprite, event):
         self.draw_tangent()
 
     def draw_tangent(self):

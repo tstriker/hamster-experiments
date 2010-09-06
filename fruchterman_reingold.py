@@ -330,8 +330,8 @@ class Canvas(graphics.Scene):
 
             self.queue_relayout()
 
-    def on_node_drag(self, scene, node, coords):
-        node.real_node.x, node.real_node.y = self.screen_to_graph(*coords)
+    def on_node_drag(self, scene, node, event):
+        node.real_node.x, node.real_node.y = self.screen_to_graph(event.x, event.y)
         node.real_node.fixed = True
         self.redraw()
 

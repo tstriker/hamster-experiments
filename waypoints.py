@@ -30,9 +30,8 @@ class Waypoint(graphics.Sprite):
         self.location = Vector2(x, y)
         self.debug = False
 
-    def on_drag(self, sprite, coords):
-        self.location.x = coords[0]
-        self.location.y = coords[1]
+    def on_drag(self, sprite, event):
+        self.location.x, self.location.y  = event.x, event.y
 
 
     def see_you(self, boid):

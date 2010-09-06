@@ -44,7 +44,7 @@ class Scene(graphics.Scene):
             self.redraw()
 
 
-    def on_node_drag(self, scene, node, coords):
+    def on_node_drag(self, scene, node, event):
         self.redraw()
 
 

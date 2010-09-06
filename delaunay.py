@@ -47,7 +47,7 @@ class Canvas(graphics.Scene):
             self.redraw()
 
 
-    def on_node_drag(self, scene, node, coords):
+    def on_node_drag(self, scene, node, event):
         self.centres = []
         self.redraw()
 

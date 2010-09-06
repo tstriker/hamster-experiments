@@ -139,7 +139,7 @@ class Scene(graphics.Scene):
         #self.animate(self.shape, opacity=1, duration=1.0)
         self.redraw()
 
-    def on_sprite_drag(self, scene, sprite, coords):
+    def on_sprite_drag(self, scene, sprite, event):
         extents = sprite.graphics.extents
         width, height = extents[2] - extents[0], extents[3] - extents[1]
 

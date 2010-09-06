@@ -29,7 +29,7 @@ class Node(graphics.Sprite):
         self.connect("on-drag", self.on_drag)
         self.draggable = True
 
-    def on_drag(self, event, targets):
+    def on_drag(self, event):
         self.point.x = event.x
         self.point.y = event.y
         self.draw_node()
@@ -131,7 +131,7 @@ class Canvas(graphics.Scene):
 
             self.redraw()
 
-    def on_node_drag(self, scene, node, coords):
+    def on_node_drag(self, scene, node, event):
         self.centres = []
         self.redraw()
 
