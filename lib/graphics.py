@@ -721,6 +721,40 @@ class Sprite(gtk.Object):
         self.emit("on-drag", (x, y))
 
 
+class Image(Sprite):
+    """Displays image from file"""
+    def __init__(self, path, cache_as_bitmap = True, **kwargs):
+        Sprite.__init__(self, **kwargs)
+
+        #: path to the image
+        self.path = path
+        self.connect("on-render", self.on_render)
+
+    def on_render(self, sprite):
+        image = cairo.ImageSurface.create_from_png(self.path)
+        self.graphics.set_source_surface(image)
+        self.graphics.paint()
+
+
+class Icon(Sprite):
+    """Displays icon by name and size in the theme"""
+    def __init__(self, name, size=24, cache_as_bitmap = True, **kwargs):
+        Sprite.__init__(self, **kwargs)
+        self.theme = gtk.icon_theme_get_default()
+
+        #: icon name from theme
+        self.name = name
+
+        #: icon size in pixels
+        self.size = size
+
+        self.connect("on-render", self.on_render)
+
+    def on_render(self, sprite):
+        icon = self.theme.load_icon(self.name, self.size, 0)
+        self.graphics.set_source_pixbuf(icon)
+        self.graphics.paint()
+
 
 class Label(Sprite):
     def __init__(self, text = "", size = 10, color = None,
