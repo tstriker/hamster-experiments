@@ -167,10 +167,7 @@ class Graphics(object):
     def _set_source_pixbuf(context, pixbuf, x, y):
         context.set_source_pixbuf(pixbuf, x, y)
     def set_source_pixbuf(self, pixbuf, x = 0, y = 0):
-        w, h = pixbuf.get_width(), pixbuf.get_height()
-        self._add_instruction(self._rectangle, x, y, w, h) # i wonder if this will add problems down the road
         self._add_instruction(self._set_source_pixbuf, pixbuf, x, y)
-        self._add_instruction(self._new_path)
 
     @staticmethod
     def _save_context(context): context.save()
@@ -513,17 +510,25 @@ class Graphics(object):
             self.paths = deque()
             self.extents = None
 
+            # instructions that end path
+            path_end_instructions = (self._new_path, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
+
             # just to measure the path
             d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
             d_context.transform(matrix)
             for instruction, args in self._instruction_cache:
-                if instruction in (self._new_path, self._stroke, self._fill,
-                                     self._stroke_preserve,
-                                     self._fill_preserve):
+                if instruction in path_end_instructions:
                     self._remember_path(d_context, instruction)
 
+                elif instruction in (self._set_source_pixbuf, self._set_source_surface):
+                    # draw a rectangle around the pathless instructions so that the extents are correct
+                    pixbuf = args[0]
+                    x = args[1] if len(args) > 1 else 0
+                    y = args[2] if len(args) > 2 else 0
+                    self._rectangle(d_context, x, y, pixbuf.get_width(), pixbuf.get_height())
+
                 instruction(d_context, *args)
-            if self._instruction_cache and instruction not in (self._stroke, self._fill, self._stroke_preserve, self._fill_preserve):
+            if self._instruction_cache and instruction not in path_end_instructions:
                 self._remember_path(d_context, self._fill)
 
 
@@ -728,7 +733,7 @@ class Sprite(gtk.Object):
 class Image(Sprite):
     """Displays image from file"""
     def __init__(self, path, cache_as_bitmap = True, **kwargs):
-        Sprite.__init__(self, **kwargs)
+        Sprite.__init__(self, cache_as_bitmap = cache_as_bitmap, **kwargs)
 
         #: path to the image
         self.path = path
@@ -743,7 +748,7 @@ class Image(Sprite):
 class Icon(Sprite):
     """Displays icon by name and size in the theme"""
     def __init__(self, name, size=24, cache_as_bitmap = True, **kwargs):
-        Sprite.__init__(self, **kwargs)
+        Sprite.__init__(self, cache_as_bitmap = cache_as_bitmap, **kwargs)
         self.theme = gtk.icon_theme_get_default()
 
         #: icon name from theme
