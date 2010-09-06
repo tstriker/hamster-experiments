@@ -565,6 +565,7 @@ class Sprite(gtk.Object):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, x = 0, y = 0,
@@ -716,10 +717,13 @@ class Sprite(gtk.Object):
         # scene will call us when there is mouse
         self.emit("on-mouse-out")
 
-    def _on_drag(self, x, y):
+    def _on_drag(self, event):
         # scene will call us when there is mouse
-        self.emit("on-drag", (x, y))
+        self.emit("on-drag", event)
 
+    def _on_drag_finish(self, event):
+        # scene will call us when there is mouse
+        self.emit("on-drag-finish", event)
 
 class Image(Sprite):
     """Displays image from file"""
@@ -944,6 +948,7 @@ class Scene(gtk.DrawingArea):
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -1009,10 +1014,14 @@ class Scene(gtk.DrawingArea):
         self._blank_cursor = gtk.gdk.Cursor(blank_pixmap, blank_pixmap, gtk.gdk.Color(), gtk.gdk.Color(), 0, 0)
 
 
+        #: Miminum distance in pixels for a drag to occur
+        self.drag_distance = 1
+
         self._last_frame_time = None
         self._mouse_sprite = None
-        self._mouse_drag = None
         self._drag_sprite = None
+        self.__drag_started = False
+        self.__drag_start_position = None
         self._button_press_time = None # to distinguish between click and drag
 
 
@@ -1212,10 +1221,11 @@ class Scene(gtk.DrawingArea):
         if self._drag_sprite and self._drag_sprite.draggable \
            and gtk.gdk.BUTTON1_MASK & event.state:
             # dragging around
-            drag = self._mouse_drag \
-                   and (self._mouse_drag[0] - event.x) ** 2 + \
-                       (self._mouse_drag[1] - event.y) ** 2 > 5 ** 2
-            if drag:
+            self.__drag_started = self.__drag_started or \
+                                  (self.__drag_start_position  and \
+                                  (self.__drag_start_position[0] - event.x) ** 2 + \
+                                  (self.__drag_start_position[1] - event.y) ** 2 > self.drag_distance ** 2)
+            if self.__drag_started:
                 matrix = cairo.Matrix()
                 if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
                     # TODO - this currently works only until second level
@@ -1224,8 +1234,8 @@ class Scene(gtk.DrawingArea):
                     matrix.invert()
 
                 if not self.__drag_x:
-                    x1,y1 = matrix.transform_point(self._mouse_drag[0],
-                                                   self._mouse_drag[1])
+                    x1,y1 = matrix.transform_point(self.__drag_start_position[0],
+                                                   self.__drag_start_position[1])
 
                     self.__drag_x = self._drag_sprite.x - x1
                     self.__drag_y = self._drag_sprite.y - y1
@@ -1236,8 +1246,8 @@ class Scene(gtk.DrawingArea):
 
 
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
-                self._drag_sprite._on_drag(new_x, new_y)
-                self.emit("on-drag", self._drag_sprite, (new_x, new_y))
+                self._drag_sprite._on_drag(event)
+                self.emit("on-drag", self._drag_sprite, event)
                 self.redraw()
 
                 return
@@ -1263,7 +1273,7 @@ class Scene(gtk.DrawingArea):
         x = event.x
         y = event.y
         state = event.state
-        self._mouse_drag = (x, y)
+        self.__drag_start_position = (x, y)
 
         self._drag_sprite = self.get_sprite_at_position(event.x, event.y)
         if self._drag_sprite and self._drag_sprite.draggable == False:
@@ -1274,13 +1284,19 @@ class Scene(gtk.DrawingArea):
         self.emit("on-mouse-down", event)
 
     def __on_button_release(self, area, event):
-        #if the drag is less than 5 pixles, then we have a click
+        # we have a click if the drag is less than 5 pixels
         click = self._button_press_time \
                 and (dt.datetime.now() - self._button_press_time) < dt.timedelta(milliseconds = 200) \
-                and (event.x - self._mouse_drag[0]) ** 2 + (event.y - self._mouse_drag[1]) ** 2 < 60
+                and (event.x - self.__drag_start_position[0]) ** 2 + (event.y - self.__drag_start_position[1]) ** 2 < 60
 
         self._button_press_time = None
-        self._mouse_drag = None
+        self.__drag_start_position = None
+        self.__drag_started = False
+
+        if self._drag_sprite:
+            self._drag_sprite._on_drag_finish(event)
+            self.emit("on-drag-finish", self._drag_sprite, event)
+
         self.__drag_x, self.__drag_y = None, None
         self._drag_sprite = None
 
