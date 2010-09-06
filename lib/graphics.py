@@ -517,23 +517,21 @@ class Graphics(object):
             path_end_instructions = (self._new_path, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
 
             # measure the path in a dummy context so we know the size of surface
-            d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
-            d_context.transform(matrix)
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
-                    self._remember_path(d_context, instruction)
+                    self._remember_path(context, instruction)
 
                 if instruction in (self._set_source_pixbuf, self._set_source_surface):
                     # draw a rectangle around the pathless instructions so that the extents are correct
                     pixbuf = args[0]
                     x = args[1] if len(args) > 1 else 0
                     y = args[2] if len(args) > 2 else 0
-                    self._rectangle(d_context, x, y, pixbuf.get_width(), pixbuf.get_height())
-                else:
-                    instruction(d_context, *args)
+                    self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
+
+                instruction(context, *args)
 
             if instruction not in path_end_instructions: # last one
-                self._remember_path(d_context, self._fill)
+                self._remember_path(context, self._fill)
 
             # now draw the instructions on the caching surface
             w = int(self.extents[2] - self.extents[0]) + 1
@@ -546,15 +544,14 @@ class Graphics(object):
             for instruction, args in self.__instruction_cache:
                 instruction(ctx, *args)
 
-
             self._last_matrix = matrix
-
-        context.save()
-        context.identity_matrix()
-        context.translate(self.extents[0], self.extents[1])
-        context.set_source_surface(self.__cache_surface)
-        context.paint()
-        context.restore()
+        else:
+            context.save()
+            context.identity_matrix()
+            context.translate(self.extents[0], self.extents[1])
+            context.set_source_surface(self.__cache_surface)
+            context.paint()
+            context.restore()
 
 
 
