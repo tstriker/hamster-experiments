@@ -99,16 +99,14 @@ class Graphics(object):
         self.opacity = 1.0      # opacity get's adjusted by parent - TODO - wrong inheritance?
         self.paths = None       # paths for mouse hit checks
         self._last_matrix = None
-        self.__instructions = deque() # paths colors and operations
-        self.__path_instructions = deque() # instruction set until it is converted into path-based instructions
-
-        self._instruction_cache = None
-        self.surface = None
+        self.__new_instructions = deque() # instruction set until it is converted into path-based instructions
+        self.__instruction_cache = None
+        self.__cache_surface = None
 
     def clear(self):
         """clear all instructions"""
-        self.__path_instructions = deque()
-        self.__instructions = deque()
+        self.__new_instructions = deque()
+        self.__instruction_cache = None
         self.paths = []
 
     @staticmethod
@@ -418,20 +416,20 @@ class Graphics(object):
             function(self.context, *params)
         else:
             self.paths = None
-            self.__path_instructions.append((function, params))
+            self.__new_instructions.append((function, params))
 
 
     def _draw(self, context, with_extents = False):
         """draw accumulated instructions in context"""
 
-        if self.__path_instructions: #new stuff!
-            self.__instructions = deque()
+        if self.__new_instructions: #new stuff!
+            self.__instruction_cache = deque()
             current_color = None
             current_line = None
             instruction_cache = []
 
-            while self.__path_instructions:
-                instruction, args = self.__path_instructions.popleft()
+            while self.__new_instructions:
+                instruction, args = self.__new_instructions.popleft()
 
                 if instruction in (self._set_source,
                                    self._set_source_surface,
@@ -440,10 +438,10 @@ class Graphics(object):
                                    self._translate,
                                    self._save_context,
                                    self._restore_context):
-                    self.__instructions.append((None, None, None, instruction, args))
+                    self.__instruction_cache.append((None, None, None, instruction, args))
 
                 elif instruction == self._show_layout:
-                    self.__instructions.append((None, current_color, None, instruction, args))
+                    self.__instruction_cache.append((None, current_color, None, instruction, args))
 
                 elif instruction == self._set_color:
                     current_color = args
@@ -454,7 +452,7 @@ class Graphics(object):
                 elif instruction in (self._new_path, self._stroke, self._fill,
                                      self._stroke_preserve,
                                      self._fill_preserve):
-                    self.__instructions.append((context.copy_path(),
+                    self.__instruction_cache.append((context.copy_path(),
                                                current_color,
                                                current_line,
                                                instruction, ()))
@@ -468,7 +466,7 @@ class Graphics(object):
 
             while instruction_cache: # stroke is missing so we just cache
                 instruction, args = instruction_cache.pop(0)
-                self.__instructions.append((None, None, None, instruction, args))
+                self.__instruction_cache.append((None, None, None, instruction, args))
 
 
         # if we have been moved around, we should update bounds
@@ -477,7 +475,10 @@ class Graphics(object):
             self.paths = deque()
             self.extents = None
 
-        for path, color, line, instruction, args in self.__instructions:
+        if not self.__instruction_cache:
+            return
+
+        for path, color, line, instruction, args in self.__instruction_cache:
             if color: self._set_color(context, *color)
             if line: self._set_line_width(context, *line)
 
@@ -498,59 +499,60 @@ class Graphics(object):
             instead of caching paths, this function caches the whole drawn thing
             use cache_as_bitmap on sprite to enable this mode
         """
-
         matrix = context.get_matrix()
 
-
-        if self.__path_instructions or matrix != self._last_matrix:
-            if self.__path_instructions:
-                self._instruction_cache = list(self.__path_instructions)
-
+        if self.__new_instructions or matrix != self._last_matrix:
+            if self.__new_instructions:
+                self.__instruction_cache = list(self.__new_instructions)
+                self.__new_instructions = deque()
 
             self.paths = deque()
             self.extents = None
 
+            if not self.__instruction_cache:
+                # no instructions - nothing to do
+                return
+
             # instructions that end path
             path_end_instructions = (self._new_path, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
 
-            # just to measure the path
+            # measure the path in a dummy context so we know the size of surface
             d_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
             d_context.transform(matrix)
-            for instruction, args in self._instruction_cache:
+            for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self._remember_path(d_context, instruction)
 
-                elif instruction in (self._set_source_pixbuf, self._set_source_surface):
+                if instruction in (self._set_source_pixbuf, self._set_source_surface):
                     # draw a rectangle around the pathless instructions so that the extents are correct
                     pixbuf = args[0]
                     x = args[1] if len(args) > 1 else 0
                     y = args[2] if len(args) > 2 else 0
                     self._rectangle(d_context, x, y, pixbuf.get_width(), pixbuf.get_height())
+                else:
+                    instruction(d_context, *args)
 
-                instruction(d_context, *args)
-            if self._instruction_cache and instruction not in path_end_instructions:
+            if instruction not in path_end_instructions: # last one
                 self._remember_path(d_context, self._fill)
 
-
+            # now draw the instructions on the caching surface
             w = int(self.extents[2] - self.extents[0]) + 1
             h = int(self.extents[3] - self.extents[1]) + 1
-            self.surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
-            ctx = gtk.gdk.CairoContext(cairo.Context(self.surface))
+            self.__cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
+            ctx = gtk.gdk.CairoContext(cairo.Context(self.__cache_surface))
             ctx.translate(-self.extents[0], -self.extents[1])
 
             ctx.transform(matrix)
-            for instruction, args in self._instruction_cache:
+            for instruction, args in self.__instruction_cache:
                 instruction(ctx, *args)
 
-
-            self.__path_instructions = deque()
 
             self._last_matrix = matrix
 
         context.save()
         context.identity_matrix()
         context.translate(self.extents[0], self.extents[1])
-        context.set_source_surface(self.surface)
+        context.set_source_surface(self.__cache_surface)
         context.paint()
         context.restore()
 
