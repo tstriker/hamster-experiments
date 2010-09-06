@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+# - coding: utf-8 -
+# Copyright (C) 2010 Erik Blankinship <jedierikb at gmail.com>
+# Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
+
+"""
+ An example of slice9 scaling where the center rows and columns get stretched.
+ As seen in CSS3 and all other good frameworks.
+ This most probably will go into graphics.py eventually.
+"""
 
 import gtk, cairo
 
