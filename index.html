@@ -116,6 +116,12 @@ Example:</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Scene.drag_distance">
+<tt class="descname">drag_distance</tt><a class="headerlink" href="#graphics.Scene.drag_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Miminum distance in pixels for a drag to occur</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Scene.fps">
 <tt class="descname">fps</tt><a class="headerlink" href="#graphics.Scene.fps" title="Permalink to this definition">¶</a></dt>
 <dd><p>read only info about current framerate (frames per second)</p>
@@ -235,8 +241,8 @@ scene</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.cache_as_bitmap">
 <tt class="descname">cache_as_bitmap</tt><a class="headerlink" href="#graphics.Sprite.cache_as_bitmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Whether the sprite should be cached as a bitmap.
-Set to true to get a serious boost on complex sprites that don&#8217;t change that often</p>
+<dd><p>Whether the sprite should be cached as a bitmap. Default: true
+Generally good when you have many static sprites</p>
 </dd></dl>
 
 <dl class="method">
@@ -433,7 +439,7 @@ equilateral polygons</p>
 
 <dl class="method">
 <dt id="graphics.Graphics.line_to">
-<tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
 <dd><p>draw line</p>
 </dd></dl>
 
@@ -463,7 +469,7 @@ equilateral polygons</p>
 
 <dl class="method">
 <dt id="graphics.Graphics.rel_line_to">
-<tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
 <dd><p>draw line</p>
 </dd></dl>
 
