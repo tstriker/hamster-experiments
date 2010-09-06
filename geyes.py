@@ -23,9 +23,8 @@ class Eye(graphics.Sprite):
 
     def update(self, mouse_x, mouse_y):
         distance_x, distance_y = (mouse_x - self.x), (mouse_y - self.y)
+        self.pointer_distance = math.sqrt(distance_x**2 + distance_y**2)
         self.pupil_rotation = math.atan2(distance_x, distance_y)
-
-
 
     def on_render(self, sprite):
         width, height = self.width, self.height
@@ -36,8 +35,8 @@ class Eye(graphics.Sprite):
 
         pupil_radius = min(width / 4.0, height / 4.0)
 
-        pupil_x = min((width / 2.0 - pupil_radius), self.pointer_distance) * math.cos(rotation)
-        pupil_y = min((height / 2.0 - pupil_radius), self.pointer_distance) * math.sin(rotation)
+        pupil_x = min((width / 2.0 - pupil_radius), self.pointer_distance) * math.sin(rotation)
+        pupil_y = min((height / 2.0 - pupil_radius), self.pointer_distance) * math.cos(rotation)
 
 
         self.graphics.circle(pupil_x, pupil_y, pupil_radius)
