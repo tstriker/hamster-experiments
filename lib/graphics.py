@@ -101,7 +101,7 @@ class Graphics(object):
         self._last_matrix = None
         self.__new_instructions = deque() # instruction set until it is converted into path-based instructions
         self.__instruction_cache = None
-        self.__cache_surface = None
+        self.cache_surface = None
 
     def clear(self):
         """clear all instructions"""
@@ -491,6 +491,10 @@ class Graphics(object):
             if instruction:
                 instruction(context, *args)
 
+        if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
+            # last one
+            self._remember_path(context, self._fill)
+
         self._last_matrix = context.get_matrix()
 
 
@@ -536,8 +540,8 @@ class Graphics(object):
             # now draw the instructions on the caching surface
             w = int(self.extents[2] - self.extents[0]) + 1
             h = int(self.extents[3] - self.extents[1]) + 1
-            self.__cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
-            ctx = gtk.gdk.CairoContext(cairo.Context(self.__cache_surface))
+            self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
+            ctx = gtk.gdk.CairoContext(cairo.Context(self.cache_surface))
             ctx.translate(-self.extents[0], -self.extents[1])
 
             ctx.transform(matrix)
@@ -549,7 +553,7 @@ class Graphics(object):
             context.save()
             context.identity_matrix()
             context.translate(self.extents[0], self.extents[1])
-            context.set_source_surface(self.__cache_surface)
+            context.set_source_surface(self.cache_surface)
             context.paint()
             context.restore()
 
@@ -731,17 +735,41 @@ class Sprite(gtk.Object):
 
 class Image(Sprite):
     """Displays image from file"""
-    def __init__(self, path, cache_as_bitmap = True, **kwargs):
-        Sprite.__init__(self, cache_as_bitmap = cache_as_bitmap, **kwargs)
+    def __init__(self, path, **kwargs):
+        Sprite.__init__(self, **kwargs)
 
         #: path to the image
         self.path = path
         self.connect("on-render", self.on_render)
+        self.cache_surface = None
+        self.width, self.height = None, None
+
+    def __setattr__(self, name, val):
+        Sprite.__setattr__(self, name, val)
+        if name == 'path': # no other reason to discard cache than just on path change
+            self.cache_surface = None
+
+    def _draw(self, context, opacity = 1):
+        if self.cache_surface == None and self.__dict__['cache_as_bitmap'] == False:
+            self.__dict__['cache_as_bitmap'] = True
+        elif self.cache_surface and self.__dict__['cache_as_bitmap']:
+            self.__dict__['cache_as_bitmap'] = False
+
+        Sprite._draw(self,  context, opacity)
+        if self.cache_surface == None:
+            self.cache_surface = self.graphics.cache_surface
 
     def on_render(self, sprite):
-        image = cairo.ImageSurface.create_from_png(self.path)
-        self.graphics.set_source_surface(image)
-        self.graphics.paint()
+        if self.cache_surface:
+            self.graphics.set_source_surface(self.cache_surface)
+            # TODO - drawing rectangle just to get the extents right - there might be a better way
+            self.graphics.rectangle(0, 0, self.width, self.height)
+            self.graphics.paint()
+        else:
+            image = cairo.ImageSurface.create_from_png(self.path)
+            self.width, self.height = image.get_width(), image.get_height()
+            self.graphics.set_source_surface(image)
+            self.graphics.paint()
 
 
 class Icon(Sprite):
@@ -758,10 +786,35 @@ class Icon(Sprite):
 
         self.connect("on-render", self.on_render)
 
+        self.cache_surface = None
+        self.width, self.height = None, None
+
+    def __setattr__(self, name, val):
+        Sprite.__setattr__(self, name, val)
+        if name == 'path': # no other reason to discard cache than just on path change
+            self.cache_surface = None
+
+    def _draw(self, context, opacity = 1):
+        if self.cache_surface == None and self.__dict__['cache_as_bitmap'] == False:
+            self.__dict__['cache_as_bitmap'] = True
+        elif self.cache_surface and self.__dict__['cache_as_bitmap']:
+            self.__dict__['cache_as_bitmap'] = False
+
+        Sprite._draw(self,  context, opacity)
+        if self.cache_surface == None:
+            self.cache_surface = self.graphics.cache_surface
+
     def on_render(self, sprite):
-        icon = self.theme.load_icon(self.name, self.size, 0)
-        self.graphics.set_source_pixbuf(icon)
-        self.graphics.paint()
+        if self.cache_surface:
+            self.graphics.set_source_surface(self.cache_surface)
+            # TODO - drawing rectangle just to get the extents right - there might be a better way
+            self.graphics.rectangle(0, 0, self.width, self.height)
+            self.graphics.paint()
+        else:
+            icon = self.theme.load_icon(self.name, self.size, 0)
+            self.width, self.height = icon.get_width(), icon.get_height()
+            self.graphics.set_source_pixbuf(icon)
+            self.graphics.paint()
 
 
 class Label(Sprite):
