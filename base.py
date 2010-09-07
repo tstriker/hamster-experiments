@@ -12,13 +12,16 @@ class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
+
+
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 500)
+        window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
 
-example = BasicWindow()
-gtk.main()
+if __name__ == '__main__':
+    window = BasicWindow()
+    gtk.main()
