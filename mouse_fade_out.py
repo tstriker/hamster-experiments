@@ -2,7 +2,7 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 """
-    this was the first attempt to achieve motion blur
+    this was an attempt to achieve motion blur
     hoping that fading out will do the job.
     this is not quite motion blur - to see what i mean, try moving the mouse
     around for a longer while - instead of motion blur what you get is motion
@@ -18,8 +18,7 @@ from lib import graphics
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
-
-        self.mouse_moving = False
+        self.mouse_cursor = False
 
         self.coords = []
         self.x, self.y = 0, 0
@@ -34,7 +33,7 @@ class Scene(graphics.Scene):
         self.coords = self.coords[:10]  # limit trail length
 
     def on_enter_frame(self, scene, context):
-        c_graphics = graphics.Graphics(context)
+        g = graphics.Graphics(context)
 
         for i, coords in enumerate(reversed(self.coords)):
             x, y = coords
@@ -44,12 +43,11 @@ class Scene(graphics.Scene):
             else:
                 alpha = float(i+1) / len(self.coords) / 2
 
-            c_graphics.set_color("#999", alpha)
-            c_graphics.rectangle(x - self.radius,
-                                 y - self.radius,
-                                 self.radius * 2,
-                                 self.radius * 2, 3)
-            context.fill()
+            g.rectangle(x - self.radius,
+                            y - self.radius,
+                            self.radius * 2,
+                            self.radius * 2, 3)
+            g.fill("#999", alpha)
 
         if len(self.coords) > 1:
             self.coords.pop(-1)
@@ -60,7 +58,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(300, 300)
+        window.set_default_size(300, 300)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         window.add(Scene())
