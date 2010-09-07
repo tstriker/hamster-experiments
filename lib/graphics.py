@@ -520,7 +520,7 @@ class Graphics(object):
             # instructions that end path
             path_end_instructions = (self._new_path, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
 
-            # measure the path in a dummy context so we know the size of surface
+            # measure the path extents so we know the size of surface
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self._remember_path(context, instruction)
@@ -711,6 +711,8 @@ class Sprite(gtk.Object):
 
         if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
             context.restore()
+
+        context.new_path() #forget about us
 
     def _on_click(self, button_state):
         self.emit("on-click", button_state)
