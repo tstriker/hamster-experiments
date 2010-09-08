@@ -737,6 +737,8 @@ class Sprite(gtk.Object):
 
 
 class Bitmap(Sprite):
+    """Caches given image data in a surface similar to targets, which ensures
+       that drawing it will be quick and low on CPU"""
     def __init__(self, image_data = None, **kwargs):
         Sprite.__init__(self, **kwargs)
         self.image_data = image_data
@@ -777,9 +779,7 @@ class Bitmap(Sprite):
 
 
 class Image(Bitmap):
-    """Opens image and caches it on a surface similar to target to avoid any
-       conversions and make drawing as cheap as possible
-    """
+    """Displays image by path"""
     def __init__(self, path, **kwargs):
         Bitmap.__init__(self, **kwargs)
 
