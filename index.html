@@ -534,13 +534,14 @@ a class:Label object</p>
 </dd></dl>
 
 </div>
-<div class="section" id="icons-and-images">
-<span id="primitives"></span><h2>Icons and images<a class="headerlink" href="#icons-and-images" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sprites-icons-and-images">
+<span id="primitives"></span><h2>Sprites: Icons and images<a class="headerlink" href="#sprites-icons-and-images" title="Permalink to this headline">¶</a></h2>
 <p>Load icons and images as <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects. <tt class="xref py py-class docutils literal"><span class="pre">Image</span></tt> and
 <tt class="xref py py-class docutils literal"><span class="pre">Icon</span></tt> both are subclasses of <tt class="xref py py-class docutils literal"><span class="pre">Bitmap</span></tt> which performs data
 caching in a surface similar to target. That basically makes sure that redraws
 are low on CPU and conversion between source and destination is performed just
-once.</p>
+once. They are fully fledges sprites, so all the interaction and transformation
+bits are there.</p>
 <dl class="class">
 <dt id="graphics.Image">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Image</tt><big>(</big><em>path</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Image" title="Permalink to this definition">¶</a></dt>
@@ -586,8 +587,8 @@ Image data can be either <tt class="xref py py-class docutils literal"><span cla
 </dd></dl>
 
 </div>
-<div class="section" id="id4">
-<h2>Primitives<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sprites-primitives">
+<h2>Sprites: Primitives<a class="headerlink" href="#sprites-primitives" title="Permalink to this headline">¶</a></h2>
 <p>A few shapes to speed up your drawing. They are full fledged Sprites.</p>
 <dl class="class">
 <dt id="graphics.Circle">
@@ -856,8 +857,8 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 </ul>
 </li>
 <li><a class="reference internal" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
-<li><a class="reference internal" href="#icons-and-images">Icons and images</a></li>
-<li><a class="reference internal" href="#id4">Primitives</a></li>
+<li><a class="reference internal" href="#sprites-icons-and-images">Sprites: Icons and images</a></li>
+<li><a class="reference internal" href="#sprites-primitives">Sprites: Primitives</a></li>
 <li><a class="reference internal" href="#the-tweener">The Tweener</a></li>
 </ul>
 </li>
