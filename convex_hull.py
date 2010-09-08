@@ -21,7 +21,6 @@ class Node(graphics.Rectangle):
                                     fill = "#999",
                                     corner_radius = 3,
                                     pivot_x = 5, pivot_y = 5,
-                                    interactive = True,
                                     draggable = True)
 
 class Canvas(graphics.Scene):
