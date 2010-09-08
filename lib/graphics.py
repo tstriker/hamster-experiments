@@ -738,16 +738,21 @@ class Sprite(gtk.Object):
 
 class Bitmap(Sprite):
     """Caches given image data in a surface similar to targets, which ensures
-       that drawing it will be quick and low on CPU"""
+       that drawing it will be quick and low on CPU.
+       Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
+    """
     def __init__(self, image_data = None, **kwargs):
         Sprite.__init__(self, **kwargs)
+
+        #: image data
         self.image_data = image_data
-        self.surface = None
+
+        self._surface = None
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
         if name == 'image_data':
-            self.__dict__['surface'] = None
+            self.__dict__['_surface'] = None
             if self.image_data:
                 self.__dict__['width'] = self.image_data.get_width()
                 self.__dict__['height'] = self.image_data.get_height()
@@ -756,14 +761,14 @@ class Bitmap(Sprite):
         if self.image_data is None or self.width is None or self.height is None:
             return
 
-        if not self.surface:
+        if not self._surface:
             # caching image on surface similar to the target
-            self.surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
+            self._surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
                                                                self.width,
                                                                self.height)
 
 
-            local_context = gtk.gdk.CairoContext(cairo.Context(self.surface))
+            local_context = gtk.gdk.CairoContext(cairo.Context(self._surface))
             if isinstance(self.image_data, gtk.gdk.Pixbuf):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
@@ -771,7 +776,7 @@ class Bitmap(Sprite):
             local_context.paint()
 
             # add instructions with the resulting surface
-            self.graphics.set_source_surface(self.surface)
+            self.graphics.set_source_surface(self._surface)
             self.graphics.paint()
 
 
