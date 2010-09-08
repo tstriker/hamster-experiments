@@ -235,11 +235,8 @@ class Graph(object):
 
 class DisplayNode(graphics.Sprite):
     def __init__(self, x, y, real_node):
-        graphics.Sprite.__init__(self, x = x, y = y)
-
+        graphics.Sprite.__init__(self, x = x, y = y, draggable = True)
         self.real_node = real_node
-        self.interactive = True
-        self.draggable = True
         self.fill = "#999"
 
         self.connect("on-mouse-over", self.on_mouse_over)

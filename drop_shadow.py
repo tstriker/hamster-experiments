@@ -104,7 +104,7 @@ class DropShadow(graphics.Sprite):
 
 class SomeShape(graphics.Sprite):
     def __init__(self):
-        graphics.Sprite.__init__(self, interactive = True, draggable = True)
+        graphics.Sprite.__init__(self, draggable = True)
 
         #self.graphics.circle(25, 25, 15)
         label = graphics.Label("Drag me around!", 24, "#fff")

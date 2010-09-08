@@ -22,16 +22,15 @@ EPSILON = 0.00001
 
 class Node(graphics.Sprite):
     def __init__(self, x, y, point):
-        graphics.Sprite.__init__(self, x, y, interactive = True)
+        graphics.Sprite.__init__(self, x, y, draggable = True)
 
         self.draw_node()
         self.point = point
         self.connect("on-drag", self.on_drag)
-        self.draggable = True
 
-    def on_drag(self, event):
-        self.point.x = event.x
-        self.point.y = event.y
+    def on_drag(self, sprite, event):
+        self.point.x = event.x - sprite.drag_x
+        self.point.y = event.y - sprite.drag_y
         self.draw_node()
 
     def draw_node(self):

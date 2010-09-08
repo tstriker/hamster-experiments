@@ -14,7 +14,7 @@ import math
 
 class Eye(graphics.Sprite):
     def __init__(self, x, y, width, height):
-        graphics.Sprite.__init__(self, x = x, y = y, interactive = True, draggable = True)
+        graphics.Sprite.__init__(self, x = x, y = y, draggable = True)
         self.angle = 0
         self.pupil_distance = 0
         self.width = width

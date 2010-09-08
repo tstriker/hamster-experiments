@@ -20,7 +20,7 @@ EPSILON = 0.00001
 
 class Node(graphics.Sprite):
     def __init__(self, x, y):
-        graphics.Sprite.__init__(self, x = x, y = y, interactive = True, draggable = True)
+        graphics.Sprite.__init__(self, x = x, y = y, draggable = True)
         self.graphics.rectangle(-5, -5, 10, 10, 3)
         self.graphics.fill("#999")
 

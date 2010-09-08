@@ -16,8 +16,7 @@ class CenteredCircle(graphics.Sprite):
     """we don't have alignment yet and the pivot model is such that it does not
        alter anchor so the positioning would be predictable"""
     def __init__(self, x, y, radius):
-        graphics.Sprite.__init__(self, x = x, y = y,
-                                interactive = True, draggable=True,)
+        graphics.Sprite.__init__(self, x = x, y = y, draggable=True,)
         self.radius = radius
 
         self.graphics.circle(0, 0, self.radius)
