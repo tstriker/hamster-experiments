@@ -647,6 +647,7 @@ class Sprite(gtk.Object):
             self.__dict__[name] = val
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
                 self.__dict__["_sprite_dirty"] = True
+            self.redraw()
 
 
     def add_child(self, *sprites):
@@ -685,6 +686,38 @@ class Sprite(gtk.Object):
         else:
             return False
 
+    def get_scene(self):
+        """returns class:`Scene` the sprite belongs to"""
+        if hasattr(self, 'parent') and self.parent:
+            if isinstance(self.parent, Scene):
+                return self.parent
+            else:
+                return self.parent.get_scene()
+        return None
+
+    def redraw(self):
+        """queue redraw of the sprite. this function is called automatically
+           whenever a sprite attribute changes. sprite changes that happen
+           during scene redraw are ignored in order to avoid echoes.
+           Call scene.redraw() explicitly if you need to redraw in these cases.
+        """
+        scene = self.get_scene()
+        if scene and scene._redraw_in_progress == False:
+            self.parent.redraw()
+
+    def animate(self, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
+        """Request paretn Scene to Interpolate attributes using the internal tweener.
+           Specify sprite's attributes that need changing.
+           `duration` defaults to 0.4 seconds and `easing` to cubic in-out
+           (for others see pytweener.Easing class).
+
+           Example::
+             # tween some_sprite to coordinates (50,100) using default duration and easing
+             self.animate(x = 50, y = 100)
+        """
+        scene = self.get_scene()
+        if scene:
+            scene.animate(self, duration, easing, on_complete, on_update, delay, **kwargs)
 
     def _draw(self, context, opacity = 1):
         if self.visible is False:
@@ -751,7 +784,6 @@ class Sprite(gtk.Object):
     def _on_drag_finish(self, event):
         # scene will call us when there is mouse
         self.emit("on-drag-finish", event)
-
 
 class BitmapSprite(Sprite):
     """Caches given image data in a surface similar to targets, which ensures
@@ -1110,6 +1142,8 @@ class Scene(gtk.DrawingArea):
         self.__last_expose_time = dt.datetime.now()
         self.__last_cursor = None
 
+        self._redraw_in_progress = False
+
     def add_child(self, *sprites):
         """Add one or several :class:`graphics.Sprite` sprites to scene """
         for sprite in sprites:
@@ -1171,7 +1205,6 @@ class Scene(gtk.DrawingArea):
                                        on_complete=on_complete,
                                        on_update=on_update,
                                        delay=delay, **kwargs)
-        self.redraw()
         return tween
 
 
@@ -1193,12 +1226,14 @@ class Scene(gtk.DrawingArea):
 
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
+        self._redraw_in_progress = True
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
 
         self.__check_mouse(self.mouse_x, self.mouse_y)
         self.emit("on-finish-frame", context)
+        self._redraw_in_progress = False
 
 
     def all_sprites(self, sprites = None):
@@ -1271,12 +1306,10 @@ class Scene(gtk.DrawingArea):
                 over._on_mouse_over()
 
                 self.emit("on-mouse-over", over)
-                self.redraw()
 
         if self._mouse_sprite and self._mouse_sprite != over:
             self._mouse_sprite._on_mouse_out()
             self.emit("on-mouse-out", self._mouse_sprite)
-            self.redraw()
         self._mouse_sprite = over
 
         if cursor == False:
@@ -1338,7 +1371,6 @@ class Scene(gtk.DrawingArea):
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
                 self._drag_sprite._on_drag(event)
                 self.emit("on-drag", self._drag_sprite, event)
-                self.redraw()
 
                 return
         else:
@@ -1356,7 +1388,6 @@ class Scene(gtk.DrawingArea):
         if self._mouse_sprite:
             self.emit("on-mouse-out", self._mouse_sprite)
             self._mouse_sprite = None
-            self.redraw()
 
 
     def __on_button_press(self, area, event):
@@ -1370,8 +1401,8 @@ class Scene(gtk.DrawingArea):
 
     def __on_button_release(self, area, event):
         # trying to not emit click and drag-finish at the same time
-        click = (event.x - self.__drag_start_x) ** 2 + \
-                (event.y - self.__drag_start_y) ** 2 < self.drag_distance
+        click = not self.__drag_started or (event.x - self.__drag_start_x) ** 2 + \
+                                           (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
             target = self.get_sprite_at_position(event.x, event.y)
 
