@@ -74,7 +74,6 @@ class Scene(graphics.Scene):
                                  radius = wonky.radius * 1.3,
                                  easing = Easing.Elastic.ease_out,
                                  duration=2)
-            self.redraw()
 
 
 
