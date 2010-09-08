@@ -735,49 +735,68 @@ class Sprite(gtk.Object):
         # scene will call us when there is mouse
         self.emit("on-drag-finish", event)
 
-class Image(Sprite):
-    """Displays image from file"""
-    def __init__(self, path, **kwargs):
-        Sprite.__init__(self, **kwargs)
 
-        #: path to the image
-        self.path = path
-        self.connect("on-render", self.on_render)
-        self.cache_surface = None
-        self.width, self.height = None, None
+class Bitmap(Sprite):
+    def __init__(self, image_data = None, **kwargs):
+        Sprite.__init__(self, **kwargs)
+        self.image_data = image_data
+        self.surface = None
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
-        if name == 'path': # no other reason to discard cache than just on path change
-            self.cache_surface = None
+        if name == 'image_data':
+            self.__dict__['surface'] = None
+            if self.image_data:
+                self.__dict__['width'] = self.image_data.get_width()
+                self.__dict__['height'] = self.image_data.get_height()
 
     def _draw(self, context, opacity = 1):
-        if self.cache_surface == None and self.__dict__['cache_as_bitmap'] == False:
-            self.__dict__['cache_as_bitmap'] = True
-        elif self.cache_surface and self.__dict__['cache_as_bitmap']:
-            self.__dict__['cache_as_bitmap'] = False
+        if self.image_data is None or self.width is None or self.height is None:
+            return
+
+        if not self.surface:
+            # caching image on surface similar to the target
+            self.surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
+                                                               self.width,
+                                                               self.height)
+
+
+            local_context = gtk.gdk.CairoContext(cairo.Context(self.surface))
+            if isinstance(self.image_data, gtk.gdk.Pixbuf):
+                local_context.set_source_pixbuf(self.image_data, 0, 0)
+            else:
+                local_context.set_source_surface(self.image_data)
+            local_context.paint()
+
+            # add instructions with the resulting surface
+            self.graphics.set_source_surface(self.surface)
+            self.graphics.paint()
+
 
         Sprite._draw(self,  context, opacity)
-        if self.cache_surface == None:
-            self.cache_surface = self.graphics.cache_surface
-
-    def on_render(self, sprite):
-        if self.cache_surface:
-            self.graphics.set_source_surface(self.cache_surface)
-            # TODO - drawing rectangle just to get the extents right - there might be a better way
-            self.graphics.rectangle(0, 0, self.width, self.height)
-            self.graphics.paint()
-        else:
-            image = cairo.ImageSurface.create_from_png(self.path)
-            self.width, self.height = image.get_width(), image.get_height()
-            self.graphics.set_source_surface(image)
-            self.graphics.paint()
 
 
-class Icon(Sprite):
+class Image(Bitmap):
+    """Opens image and caches it on a surface similar to target to avoid any
+       conversions and make drawing as cheap as possible
+    """
+    def __init__(self, path, **kwargs):
+        Bitmap.__init__(self, **kwargs)
+
+        #: path to the image
+        self.path = path
+
+    def __setattr__(self, name, val):
+        Bitmap.__setattr__(self, name, val)
+        if name == 'path': # load when the value is set to avoid penalty on render
+            self.image_data = cairo.ImageSurface.create_from_png(self.path)
+
+
+
+class Icon(Bitmap):
     """Displays icon by name and size in the theme"""
-    def __init__(self, name, size=24, cache_as_bitmap = True, **kwargs):
-        Sprite.__init__(self, cache_as_bitmap = cache_as_bitmap, **kwargs)
+    def __init__(self, name, size=24, **kwargs):
+        Bitmap.__init__(self, **kwargs)
         self.theme = gtk.icon_theme_get_default()
 
         #: icon name from theme
@@ -786,37 +805,13 @@ class Icon(Sprite):
         #: icon size in pixels
         self.size = size
 
-        self.connect("on-render", self.on_render)
-
-        self.cache_surface = None
-        self.width, self.height = None, None
-
     def __setattr__(self, name, val):
-        Sprite.__setattr__(self, name, val)
-        if name == 'path': # no other reason to discard cache than just on path change
-            self.cache_surface = None
-
-    def _draw(self, context, opacity = 1):
-        if self.cache_surface == None and self.__dict__['cache_as_bitmap'] == False:
-            self.__dict__['cache_as_bitmap'] = True
-        elif self.cache_surface and self.__dict__['cache_as_bitmap']:
-            self.__dict__['cache_as_bitmap'] = False
-
-        Sprite._draw(self,  context, opacity)
-        if self.cache_surface == None:
-            self.cache_surface = self.graphics.cache_surface
-
-    def on_render(self, sprite):
-        if self.cache_surface:
-            self.graphics.set_source_surface(self.cache_surface)
-            # TODO - drawing rectangle just to get the extents right - there might be a better way
-            self.graphics.rectangle(0, 0, self.width, self.height)
-            self.graphics.paint()
-        else:
-            icon = self.theme.load_icon(self.name, self.size, 0)
-            self.width, self.height = icon.get_width(), icon.get_height()
-            self.graphics.set_source_pixbuf(icon)
-            self.graphics.paint()
+        Bitmap.__setattr__(self, name, val)
+        if name in ('name', 'size'): # no other reason to discard cache than just on path change
+            if self.__dict__.get('name') and self.__dict__.get('size'):
+                self.image_data = self.theme.load_icon(self.name, self.size, 0)
+            else:
+                self.image_data = None
 
 
 class Label(Sprite):
