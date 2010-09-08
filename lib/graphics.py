@@ -572,6 +572,7 @@ class Sprite(gtk.Object):
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-drag-start": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
@@ -581,7 +582,7 @@ class Sprite(gtk.Object):
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
-                 z_order = 0, cache_as_bitmap = False):
+                 z_order = 0, cache_as_bitmap = False, mouse_cursor = None):
         gtk.Object.__init__(self)
 
         #: list of children sprites. Use :func:`add_child` to add sprites
@@ -626,6 +627,18 @@ class Sprite(gtk.Object):
         #: Whether the sprite should be cached as a bitmap. Default: true
         #: Generally good when you have many static sprites
         self.cache_as_bitmap = cache_as_bitmap
+
+        #: mouse-over cursor of the sprite. See :class:`Scene`.mouse_cursor
+        #: for possible values
+        self.mouse_cursor = mouse_cursor
+
+        #: x position of the cursor within mouse upon drag. change this value
+        #: in on-drag-start to adjust drag point
+        self.drag_x = None
+
+        #: y position of the cursor within mouse upon drag. change this value
+        #: in on-drag-start to adjust drag point
+        self.drag_y = None
 
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
@@ -727,6 +740,10 @@ class Sprite(gtk.Object):
         # scene will call us when there is mouse
         self.emit("on-mouse-out")
 
+    def _on_drag_start(self, event):
+        # scene will call us when there is mouse
+        self.emit("on-drag-start", event)
+
     def _on_drag(self, event):
         # scene will call us when there is mouse
         self.emit("on-drag", event)
@@ -778,6 +795,7 @@ class BitmapSprite(Sprite):
             # add instructions with the resulting surface
             self.graphics.set_source_surface(self._surface)
             self.graphics.paint()
+            self.graphics.rectangle(0, 0, self.width, self.height)
 
 
         Sprite._draw(self,  context, opacity)
@@ -786,13 +804,13 @@ class BitmapSprite(Sprite):
 class Image(BitmapSprite):
     """Displays image by path"""
     def __init__(self, path, **kwargs):
-        Bitmap.__init__(self, **kwargs)
+        BitmapSprite.__init__(self, **kwargs)
 
         #: path to the image
         self.path = path
 
     def __setattr__(self, name, val):
-        Bitmap.__setattr__(self, name, val)
+        BitmapSprite.__setattr__(self, name, val)
         if name == 'path': # load when the value is set to avoid penalty on render
             self.image_data = cairo.ImageSurface.create_from_png(self.path)
 
@@ -801,7 +819,7 @@ class Image(BitmapSprite):
 class Icon(BitmapSprite):
     """Displays icon by name and size in the theme"""
     def __init__(self, name, size=24, **kwargs):
-        Bitmap.__init__(self, **kwargs)
+        BitmapSprite.__init__(self, **kwargs)
         self.theme = gtk.icon_theme_get_default()
 
         #: icon name from theme
@@ -811,7 +829,7 @@ class Icon(BitmapSprite):
         self.size = size
 
     def __setattr__(self, name, val):
-        Bitmap.__setattr__(self, name, val)
+        BitmapSprite.__setattr__(self, name, val)
         if name in ('name', 'size'): # no other reason to discard cache than just on path change
             if self.__dict__.get('name') and self.__dict__.get('size'):
                 self.image_data = self.theme.load_icon(self.name, self.size, 0)
@@ -1005,14 +1023,18 @@ class Scene(gtk.DrawingArea):
         "configure_event": "override",
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        "on-drag-start": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+
         "on-mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
@@ -1080,14 +1102,11 @@ class Scene(gtk.DrawingArea):
         self._mouse_sprite = None
         self._drag_sprite = None
         self.__drag_started = False
-        self.__drag_start_position = None
-        self._button_press_time = None # to distinguish between click and drag
-
+        self.__drag_start_x, self.__drag_start_y = None, None
 
         self._mouse_in = False
 
         self.__drawing_queued = False
-        self.__drag_x, self.__drag_y = None, None
         self.__last_expose_time = dt.datetime.now()
         self.__last_cursor = None
 
@@ -1209,7 +1228,7 @@ class Scene(gtk.DrawingArea):
 
 
     def get_sprite_at_position(self, x, y):
-        """Returns the topmost visible sprite for given coordinates"""
+        """Returns the topmost visible interactive sprite for given coordinates"""
         over = None
         for sprite in self.all_visible_sprites():
             if sprite.interactive and self.__check_hit(sprite, x, y):
@@ -1229,21 +1248,20 @@ class Scene(gtk.DrawingArea):
         if x is None or self._mouse_in == False:
             return
 
-        custom_mouse = self.mouse_cursor is not None
+        cursor = gtk.gdk.ARROW # default
 
-        cursor = gtk.gdk.ARROW
-        if custom_mouse:
-            if self.mouse_cursor == False:
-                cursor = self._blank_cursor
-            else:
-                cursor = self.mouse_cursor
+        if self.mouse_cursor is not None:
+            cursor = self.mouse_cursor
 
 
         #check if we have a mouse over
         over = self.get_sprite_at_position(x, y)
-
         if over:
-            if custom_mouse == False:
+            if over.mouse_cursor is not None:
+                cursor = over.mouse_cursor
+
+            elif self.mouse_cursor is None:
+                # resort to defaults
                 if over.draggable:
                     cursor = gtk.gdk.FLEUR
                 else:
@@ -1259,9 +1277,10 @@ class Scene(gtk.DrawingArea):
             self._mouse_sprite._on_mouse_out()
             self.emit("on-mouse-out", self._mouse_sprite)
             self.redraw()
-
-
         self._mouse_sprite = over
+
+        if cursor == False:
+            cursor = self._blank_cursor
 
         if not self.__last_cursor or cursor != self.__last_cursor:
             if isinstance(cursor, gtk.gdk.Cursor):
@@ -1280,10 +1299,29 @@ class Scene(gtk.DrawingArea):
         if self._drag_sprite and self._drag_sprite.draggable \
            and gtk.gdk.BUTTON1_MASK & event.state:
             # dragging around
-            self.__drag_started = self.__drag_started or \
-                                  (self.__drag_start_position  and \
-                                  (self.__drag_start_position[0] - event.x) ** 2 + \
-                                  (self.__drag_start_position[1] - event.y) ** 2 > self.drag_distance ** 2)
+            drag_started = (self.__drag_start_x is not None and \
+                           (self.__drag_start_x - event.x) ** 2 + \
+                           (self.__drag_start_y - event.y) ** 2 > self.drag_distance ** 2)
+
+            if drag_started and not self.__drag_started:
+                matrix = cairo.Matrix()
+                if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
+                    # TODO - this currently works only until second level
+                    #        should take all parents into account
+                    matrix.rotate(self._drag_sprite.parent.rotation)
+                    matrix.invert()
+
+                x1,y1 = matrix.transform_point(self.__drag_start_x,
+                                               self.__drag_start_y)
+                self._drag_sprite.drag_x = self._drag_sprite.x - x1
+                self._drag_sprite.drag_y = self._drag_sprite.y - y1
+
+                self._drag_sprite._on_drag_start(event)
+                self.emit("on-drag-start", self._drag_sprite, event)
+
+
+            self.__drag_started = self.__drag_started or drag_started
+
             if self.__drag_started:
                 matrix = cairo.Matrix()
                 if self._drag_sprite.parent and isinstance(self._drag_sprite.parent, Sprite):
@@ -1292,16 +1330,9 @@ class Scene(gtk.DrawingArea):
                     matrix.rotate(self._drag_sprite.parent.rotation)
                     matrix.invert()
 
-                if not self.__drag_x:
-                    x1,y1 = matrix.transform_point(self.__drag_start_position[0],
-                                                   self.__drag_start_position[1])
-
-                    self.__drag_x = self._drag_sprite.x - x1
-                    self.__drag_y = self._drag_sprite.y - y1
-
                 mouse_x, mouse_y = matrix.transform_point(event.x, event.y)
-                new_x = mouse_x + self.__drag_x
-                new_y = mouse_y + self.__drag_y
+                new_x = mouse_x - self._drag_sprite.drag_x
+                new_y = mouse_y - self._drag_sprite.drag_y
 
 
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
@@ -1329,37 +1360,19 @@ class Scene(gtk.DrawingArea):
 
 
     def __on_button_press(self, area, event):
-        x = event.x
-        y = event.y
-        state = event.state
-        self.__drag_start_position = (x, y)
+        self.__drag_start_x, self.__drag_start_y = event.x, event.y
 
         self._drag_sprite = self.get_sprite_at_position(event.x, event.y)
         if self._drag_sprite and self._drag_sprite.draggable == False:
             self._drag_sprite = None
 
-
-        self._button_press_time = dt.datetime.now()
         self.emit("on-mouse-down", event)
 
     def __on_button_release(self, area, event):
-        # we have a click if the drag is less than 5 pixels
-        click = self._button_press_time \
-                and (dt.datetime.now() - self._button_press_time) < dt.timedelta(milliseconds = 200) \
-                and (event.x - self.__drag_start_position[0]) ** 2 + (event.y - self.__drag_start_position[1]) ** 2 < 60
-
-        self._button_press_time = None
-        self.__drag_start_position = None
-        self.__drag_started = False
-
-        if self._drag_sprite:
-            self._drag_sprite._on_drag_finish(event)
-            self.emit("on-drag-finish", self._drag_sprite, event)
-
-        self.__drag_x, self.__drag_y = None, None
-        self._drag_sprite = None
-
-        if click:
+        # trying to not emit click and drag-finish at the same time
+        click = (event.x - self.__drag_start_x) ** 2 + \
+                (event.y - self.__drag_start_y) ** 2 < self.drag_distance
+        if (click and self.__drag_started == False) or not self._drag_sprite:
             target = self.get_sprite_at_position(event.x, event.y)
 
             if target:
@@ -1367,6 +1380,15 @@ class Scene(gtk.DrawingArea):
 
             self.emit("on-click", event, target)
 
+        if self._drag_sprite:
+            self._drag_sprite._on_drag_finish(event)
+            self.emit("on-drag-finish", self._drag_sprite, event)
+
+            self._drag_sprite.drag_x, self._drag_sprite.drag_y = None, None
+            self._drag_sprite = None
+
+        self.__drag_started = False
+        self.__drag_start_x, self__drag_start_y = None, None
         self.emit("on-mouse-up", event)
 
     def __on_scroll(self, area, event):

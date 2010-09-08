@@ -5,6 +5,8 @@
 """
  Games with points, implemented following Dr. Mike's Maths
  http://www.dr-mikes-maths.com/
+
+ Also this is an example how to handle mouse
 """
 
 import gtk
@@ -13,12 +15,14 @@ from lib import graphics
 import math
 from lib.euclid import Point2
 
-
-class Node(graphics.Sprite):
+class Node(graphics.Rectangle):
     def __init__(self, x, y):
-        graphics.Sprite.__init__(self, x = x, y = y, interactive = True, draggable = True)
-        self.graphics.rectangle(-5, -5, 10, 10, 3)
-        self.graphics.fill("#999")
+        graphics.Rectangle.__init__(self, 10, 10, x=x, y=y,
+                                    fill = "#999",
+                                    corner_radius = 3,
+                                    pivot_x = 5, pivot_y = 5,
+                                    interactive = True,
+                                    draggable = True)
 
 class Canvas(graphics.Scene):
     def __init__(self):
@@ -26,7 +30,15 @@ class Canvas(graphics.Scene):
         self.nodes = []
         self.connect("on-click", self.on_mouse_click)
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-drag-start", self.on_drag_start)
+        self.connect("on-drag-finish", self.on_drag_finish)
 
+    def on_drag_start(self, scene, sprite, event):
+        self.animate(sprite, width=50, height=50, pivot_x = 25, pivot_y = 25,
+                             drag_x = 25, drag_y = 25)
+
+    def on_drag_finish(self, scene, sprite, event):
+        self.animate(sprite, width=10, height=10, pivot_x = 5, pivot_y = 5)
 
     def on_mouse_click(self, area, event, target):
         if not target:
@@ -35,14 +47,16 @@ class Canvas(graphics.Scene):
             self.nodes.append(node)
             self.add_child(node)
             self.redraw()
+        else:
+            target.fill = "#f00"
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
         g.set_color("#999")
 
         for node, node2 in self.convex_hull():
-            g.move_to(node.x, node.y)
-            g.line_to(node2.x, node2.y)
+            g.move_to(node.x + node.pivot_x, node.y + node.pivot_y)
+            g.line_to(node2.x + node2.pivot_x, node2.y + node2.pivot_y)
 
             node.rotation += 0.01
 
