@@ -23,21 +23,21 @@ class Node(graphics.Rectangle):
                                     pivot_x = 5, pivot_y = 5,
                                     draggable = True)
 
+        self.connect("on-drag-start", self.on_drag_start)
+        self.connect("on-drag-finish", self.on_drag_finish)
+
+    def on_drag_start(self, sprite, event):
+        self.animate(width=50, height=50, pivot_x = 25, pivot_y = 25, drag_x = 25, drag_y = 25)
+
+    def on_drag_finish(self, sprite, event):
+        self.animate(width=10, height=10, pivot_x = 5, pivot_y = 5)
+
 class Canvas(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
         self.nodes = []
         self.connect("on-click", self.on_mouse_click)
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-drag-start", self.on_drag_start)
-        self.connect("on-drag-finish", self.on_drag_finish)
-
-    def on_drag_start(self, scene, sprite, event):
-        self.animate(sprite, width=50, height=50, pivot_x = 25, pivot_y = 25,
-                             drag_x = 25, drag_y = 25)
-
-    def on_drag_finish(self, scene, sprite, event):
-        self.animate(sprite, width=10, height=10, pivot_x = 5, pivot_y = 5)
 
     def on_mouse_click(self, area, event, target):
         if not target:
@@ -45,7 +45,6 @@ class Canvas(graphics.Scene):
 
             self.nodes.append(node)
             self.add_child(node)
-            self.redraw()
         else:
             target.fill = "#f00"
 
@@ -60,8 +59,8 @@ class Canvas(graphics.Scene):
             node.rotation += 0.01
 
         g.stroke()
-
         self.redraw()
+
 
 
 
