@@ -138,7 +138,7 @@ also influence the smoothness of tweeners.</p>
 <dl class="method">
 <dt id="graphics.Scene.get_sprite_at_position">
 <tt class="descname">get_sprite_at_position</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Scene.get_sprite_at_position" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the topmost visible sprite for given coordinates</p>
+<dd><p>Returns the topmost visible interactive sprite for given coordinates</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -227,7 +227,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 <h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>cache_as_bitmap=False</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>cache_as_bitmap=False</em>, <em>mouse_cursor=None</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Sprite class is a basic display list building block: a display list
 node that can display graphics and can also contain children.
 Once you have created the sprite, use Scene&#8217;s add_child to add it to
@@ -236,6 +236,20 @@ scene</p>
 <dt id="graphics.Sprite.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Sprite.add_child" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add child sprite. Child will be nested within parent</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.animate">
+<tt class="descname">animate</tt><big>(</big><em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Sprite.animate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request paretn Scene to Interpolate attributes using the internal tweener.
+Specify sprite&#8217;s attributes that need changing.
+<cite>duration</cite> defaults to 0.4 seconds and <cite>easing</cite> to cubic in-out
+(for others see pytweener.Easing class).</p>
+<dl class="docutils">
+<dt>Example::</dt>
+<dd># tween some_sprite to coordinates (50,100) using default duration and easing
+self.animate(x = 50, y = 100)</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -253,9 +267,29 @@ path</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Sprite.drag_x">
+<tt class="descname">drag_x</tt><a class="headerlink" href="#graphics.Sprite.drag_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>x position of the cursor within mouse upon drag. change this value
+in on-drag-start to adjust drag point</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.drag_y">
+<tt class="descname">drag_y</tt><a class="headerlink" href="#graphics.Sprite.drag_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>y position of the cursor within mouse upon drag. change this value
+in on-drag-start to adjust drag point</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Sprite.draggable">
 <tt class="descname">draggable</tt><a class="headerlink" href="#graphics.Sprite.draggable" title="Permalink to this definition">¶</a></dt>
 <dd><p>boolean marking if sprite can be automatically dragged</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.get_scene">
+<tt class="descname">get_scene</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Sprite.get_scene" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns class:<cite>Scene</cite> the sprite belongs to</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -271,6 +305,13 @@ path</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="graphics.Sprite.mouse_cursor">
+<tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Sprite.mouse_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>mouse-over cursor of the sprite. See <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>.mouse_cursor
+for possible values</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="graphics.Sprite.opacity">
 <tt class="descname">opacity</tt><a class="headerlink" href="#graphics.Sprite.opacity" title="Permalink to this definition">¶</a></dt>
 <dd><p>sprite opacity</p>
@@ -280,6 +321,15 @@ path</p>
 <dt id="graphics.Sprite.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#graphics.Sprite.parent" title="Permalink to this definition">¶</a></dt>
 <dd><p>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.redraw">
+<tt class="descname">redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Sprite.redraw" title="Permalink to this definition">¶</a></dt>
+<dd><p>queue redraw of the sprite. this function is called automatically
+whenever a sprite attribute changes. sprite changes that happen
+during scene redraw are ignored in order to avoid echoes.
+Call scene.redraw() explicitly if you need to redraw in these cases.</p>
 </dd></dl>
 
 <dl class="attribute">
