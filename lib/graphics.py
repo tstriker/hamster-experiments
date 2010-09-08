@@ -650,9 +650,12 @@ class Sprite(gtk.Object):
 
     def __setattr__(self, name, val):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
-            self.__dict__[name] = val
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
                 self.__dict__["_sprite_dirty"] = True
+            if name in ('x', 'y'):
+                val = int(val)
+
+            self.__dict__[name] = val
             self.redraw()
 
 
