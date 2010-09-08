@@ -122,7 +122,11 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 
 Icons and images
 =================
-Load icons and images as Sprites quick and easy.
+Load icons and images as :class:`Sprite` objects. :class:`Image` and
+:class:`Icon` both are subclasses of :class:`Bitmap` which performs data
+caching in a surface similar to target. That basically makes sure that redraws
+are low on CPU and conversion between source and destination is performed just
+once. 
 
 .. autoclass:: graphics.Image
    :members:

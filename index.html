@@ -536,7 +536,11 @@ a class:Label object</p>
 </div>
 <div class="section" id="icons-and-images">
 <span id="primitives"></span><h2>Icons and images<a class="headerlink" href="#icons-and-images" title="Permalink to this headline">¶</a></h2>
-<p>Load icons and images as Sprites quick and easy.</p>
+<p>Load icons and images as <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects. <tt class="xref py py-class docutils literal"><span class="pre">Image</span></tt> and
+<tt class="xref py py-class docutils literal"><span class="pre">Icon</span></tt> both are subclasses of <tt class="xref py py-class docutils literal"><span class="pre">Bitmap</span></tt> which performs data
+caching in a surface similar to target. That basically makes sure that redraws
+are low on CPU and conversion between source and destination is performed just
+once.</p>
 <dl class="class">
 <dt id="graphics.Image">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Image</tt><big>(</big><em>path</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Image" title="Permalink to this definition">¶</a></dt>
@@ -571,7 +575,14 @@ a class:Label object</p>
 <dt id="graphics.Bitmap">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Bitmap</tt><big>(</big><em>image_data=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Bitmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Caches given image data in a surface similar to targets, which ensures
-that drawing it will be quick and low on CPU</p>
+that drawing it will be quick and low on CPU.
+Image data can be either <tt class="xref py py-class docutils literal"><span class="pre">cairo.ImageSurface</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">gtk.gdk.Pixbuf</span></tt></p>
+<dl class="attribute">
+<dt id="graphics.Bitmap.image_data">
+<tt class="descname">image_data</tt><a class="headerlink" href="#graphics.Bitmap.image_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>image data</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
