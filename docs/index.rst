@@ -120,13 +120,14 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 
 .. _primitives:
 
-Icons and images
+Sprites: Icons and images
 =================
 Load icons and images as :class:`Sprite` objects. :class:`Image` and
 :class:`Icon` both are subclasses of :class:`Bitmap` which performs data
 caching in a surface similar to target. That basically makes sure that redraws
 are low on CPU and conversion between source and destination is performed just
-once. 
+once. They are fully fledges sprites, so all the interaction and transformation
+bits are there.
 
 .. autoclass:: graphics.Image
    :members:
@@ -137,7 +138,7 @@ once.
 .. autoclass:: graphics.Bitmap
    :members:
 
-Primitives
+Sprites: Primitives
 ==========
 A few shapes to speed up your drawing. They are full fledged Sprites.
 
