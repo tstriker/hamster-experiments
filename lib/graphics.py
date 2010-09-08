@@ -736,7 +736,7 @@ class Sprite(gtk.Object):
         self.emit("on-drag-finish", event)
 
 
-class Bitmap(Sprite):
+class BitmapSprite(Sprite):
     """Caches given image data in a surface similar to targets, which ensures
        that drawing it will be quick and low on CPU.
        Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
@@ -783,7 +783,7 @@ class Bitmap(Sprite):
         Sprite._draw(self,  context, opacity)
 
 
-class Image(Bitmap):
+class Image(BitmapSprite):
     """Displays image by path"""
     def __init__(self, path, **kwargs):
         Bitmap.__init__(self, **kwargs)
@@ -798,7 +798,7 @@ class Image(Bitmap):
 
 
 
-class Icon(Bitmap):
+class Icon(BitmapSprite):
     """Displays icon by name and size in the theme"""
     def __init__(self, name, size=24, **kwargs):
         Bitmap.__init__(self, **kwargs)
