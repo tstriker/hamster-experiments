@@ -421,7 +421,6 @@ class Graphics(object):
 
     def _draw(self, context, with_extents = False):
         """draw accumulated instructions in context"""
-
         if self.__new_instructions: #new stuff!
             self.__instruction_cache = deque()
             current_color = None
@@ -489,7 +488,10 @@ class Graphics(object):
 
 
             if instruction:
-                instruction(context, *args)
+                if instruction == self._paint and self.opacity < 1:
+                    context.paint_with_alpha(self.opacity)
+                else:
+                    instruction(context, *args)
 
         if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
             # last one
@@ -554,7 +556,11 @@ class Graphics(object):
             context.identity_matrix()
             context.translate(self.extents[0], self.extents[1])
             context.set_source_surface(self.cache_surface)
-            context.paint()
+
+            if self.opacity < 1:
+                context.paint_with_alpha(self.opacity)
+            else:
+                context.paint()
             context.restore()
 
 
@@ -1205,6 +1211,7 @@ class Scene(gtk.DrawingArea):
                                        on_complete=on_complete,
                                        on_update=on_update,
                                        delay=delay, **kwargs)
+        self.redraw()
         return tween
 
 
