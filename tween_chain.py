@@ -46,7 +46,6 @@ class Canvas(graphics.Scene):
 
 
     def on_mouse_move(self, area, event):
-        # oh i know this should not be performed using tweeners, but hey - a demo!
         self.redraw()
 
 
