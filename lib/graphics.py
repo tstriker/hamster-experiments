@@ -1231,7 +1231,7 @@ class Scene(gtk.DrawingArea):
         """Returns the topmost visible interactive sprite for given coordinates"""
         over = None
         for sprite in self.all_visible_sprites():
-            if sprite.interactive and self.__check_hit(sprite, x, y):
+            if (sprite.interactive or sprite.draggable) and self.__check_hit(sprite, x, y):
                 over = sprite
 
         return over
@@ -1313,8 +1313,8 @@ class Scene(gtk.DrawingArea):
 
                 x1,y1 = matrix.transform_point(self.__drag_start_x,
                                                self.__drag_start_y)
-                self._drag_sprite.drag_x = self._drag_sprite.x - x1
-                self._drag_sprite.drag_y = self._drag_sprite.y - y1
+                self._drag_sprite.drag_x = x1 - self._drag_sprite.x
+                self._drag_sprite.drag_y = y1 - self._drag_sprite.y
 
                 self._drag_sprite._on_drag_start(event)
                 self.emit("on-drag-start", self._drag_sprite, event)
