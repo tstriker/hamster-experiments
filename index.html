@@ -534,8 +534,49 @@ a class:Label object</p>
 </dd></dl>
 
 </div>
-<div class="section" id="primitives">
-<span id="id4"></span><h2>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="icons-and-images">
+<span id="primitives"></span><h2>Icons and images<a class="headerlink" href="#icons-and-images" title="Permalink to this headline">¶</a></h2>
+<p>Load icons and images as Sprites quick and easy.</p>
+<dl class="class">
+<dt id="graphics.Image">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Image</tt><big>(</big><em>path</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays image by path</p>
+<dl class="attribute">
+<dt id="graphics.Image.path">
+<tt class="descname">path</tt><a class="headerlink" href="#graphics.Image.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>path to the image</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="graphics.Icon">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Icon</tt><big>(</big><em>name</em>, <em>size=24</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Icon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays icon by name and size in the theme</p>
+<dl class="attribute">
+<dt id="graphics.Icon.name">
+<tt class="descname">name</tt><a class="headerlink" href="#graphics.Icon.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>icon name from theme</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Icon.size">
+<tt class="descname">size</tt><a class="headerlink" href="#graphics.Icon.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>icon size in pixels</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="graphics.Bitmap">
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Bitmap</tt><big>(</big><em>image_data=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Bitmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Caches given image data in a surface similar to targets, which ensures
+that drawing it will be quick and low on CPU</p>
+</dd></dl>
+
+</div>
+<div class="section" id="id4">
+<h2>Primitives<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>A few shapes to speed up your drawing. They are full fledged Sprites.</p>
 <dl class="class">
 <dt id="graphics.Circle">
@@ -804,7 +845,8 @@ Quad, Quart, Quint, Sine, Strong</strong></p>
 </ul>
 </li>
 <li><a class="reference internal" href="#graphics-class"><tt class="docutils literal"><span class="pre">Graphics</span></tt> class</a></li>
-<li><a class="reference internal" href="#primitives">Primitives</a></li>
+<li><a class="reference internal" href="#icons-and-images">Icons and images</a></li>
+<li><a class="reference internal" href="#id4">Primitives</a></li>
 <li><a class="reference internal" href="#the-tweener">The Tweener</a></li>
 </ul>
 </li>

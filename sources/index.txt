@@ -120,6 +120,19 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 
 .. _primitives:
 
+Icons and images
+=================
+Load icons and images as Sprites quick and easy.
+
+.. autoclass:: graphics.Image
+   :members:
+
+.. autoclass:: graphics.Icon
+   :members:
+
+.. autoclass:: graphics.Bitmap
+   :members:
+
 Primitives
 ==========
 A few shapes to speed up your drawing. They are full fledged Sprites.
