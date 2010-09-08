@@ -122,12 +122,13 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 
 Sprites: Icons and images
 =================
-Load icons and images as :class:`Sprite` objects. :class:`Image` and
-:class:`Icon` both are subclasses of :class:`Bitmap` which performs data
-caching in a surface similar to target. That basically makes sure that redraws
-are low on CPU and conversion between source and destination is performed just
-once. They are fully fledges sprites, so all the interaction and transformation
-bits are there.
+Load icons and images as :class:`Sprite` objects.
+
+:class:`Image` and :class:`Icon` both are subclasses of :class:`BitmapSprite`
+which performs data caching in a surface similar to target. That basically makes
+sure that redraws are low on CPU and conversion between source and destination
+is performed just once. They are fully fledges sprites, so all the interaction
+and transformation bits are there.
 
 .. autoclass:: graphics.Image
    :members:
@@ -135,7 +136,7 @@ bits are there.
 .. autoclass:: graphics.Icon
    :members:
 
-.. autoclass:: graphics.Bitmap
+.. autoclass:: graphics.BitmapSprite
    :members:
 
 Sprites: Primitives
