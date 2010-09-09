@@ -187,6 +187,12 @@ class Graphics(object):
         self._add_instruction(self._translate, x, y)
 
     @staticmethod
+    def _rotate(context, radians): context.rotate(radians)
+    def rotate(self, radians):
+        """change current position"""
+        self._add_instruction(self._rotate, radians)
+
+    @staticmethod
     def _move_to(context, x, y): context.move_to(x, y)
     def move_to(self, x, y):
         """change current position"""
@@ -196,7 +202,7 @@ class Graphics(object):
     def _line_to(context, x, y): context.line_to(x, y)
     def line_to(self, x, y = None):
         """draw line"""
-        if x and y is not None:
+        if y is not None:
             self._add_instruction(self._line_to, x, y)
         elif isinstance(x, list) and y is None:
             for x2, y2 in x:
