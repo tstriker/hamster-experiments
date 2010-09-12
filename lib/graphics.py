@@ -562,11 +562,7 @@ class Graphics(object):
             context.identity_matrix()
             context.translate(self.extents[0], self.extents[1])
             context.set_source_surface(self.cache_surface)
-
-            if self.opacity < 1:
-                context.paint_with_alpha(self.opacity)
-            else:
-                context.paint()
+            context.paint()
             context.restore()
 
 
@@ -664,6 +660,8 @@ class Sprite(gtk.Object):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
                 self.__dict__["_sprite_dirty"] = True
+            if name in ('x', 'y'):
+                val = int(val)
 
             self.__dict__[name] = val
             self.redraw()
@@ -753,19 +751,13 @@ class Sprite(gtk.Object):
             context.save()
 
             if any((self.x, self.y, self.pivot_x, self.pivot_y)):
-                if self.snap_to_pixel:
-                    context.translate(int(self.x) + int(self.pivot_x), int(self.y) + int(self.pivot_y))
-                else:
-                    context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
+                context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:
                 context.rotate(self.rotation)
 
             if self.pivot_x or self.pivot_y:
-                if self.snap_to_pixel:
-                    context.translate(int(-self.pivot_x), int(-self.pivot_y))
-                else:
-                    context.translate(-self.pivot_x, -self.pivot_y)
+                context.translate(-self.pivot_x, -self.pivot_y)
 
             if self.scale_x != 1 or self.scale_y != 1:
                 context.scale(self.scale_x, self.scale_y)
@@ -1338,12 +1330,14 @@ class Scene(gtk.DrawingArea):
 
             if over != self._mouse_sprite:
                 over._on_mouse_over()
-
                 self.emit("on-mouse-over", over)
+                self.redraw()
 
         if self._mouse_sprite and self._mouse_sprite != over:
             self._mouse_sprite._on_mouse_out()
             self.emit("on-mouse-out", self._mouse_sprite)
+            self.redraw()
+
         self._mouse_sprite = over
 
         if cursor == False:
@@ -1385,6 +1379,7 @@ class Scene(gtk.DrawingArea):
 
                 self._drag_sprite._on_drag_start(event)
                 self.emit("on-drag-start", self._drag_sprite, event)
+                self.redraw()
 
 
             self.__drag_started = self.__drag_started or drag_started
@@ -1405,6 +1400,7 @@ class Scene(gtk.DrawingArea):
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
                 self._drag_sprite._on_drag(event)
                 self.emit("on-drag", self._drag_sprite, event)
+                self.redraw()
 
                 return
         else:
@@ -1421,6 +1417,7 @@ class Scene(gtk.DrawingArea):
         self._mouse_in = False
         if self._mouse_sprite:
             self.emit("on-mouse-out", self._mouse_sprite)
+            self.redraw()
             self._mouse_sprite = None
 
 
@@ -1444,10 +1441,12 @@ class Scene(gtk.DrawingArea):
                 target._on_click(event.state)
 
             self.emit("on-click", event, target)
+            self.redraw()
 
         if self._drag_sprite:
             self._drag_sprite._on_drag_finish(event)
             self.emit("on-drag-finish", self._drag_sprite, event)
+            self.redraw()
 
             self._drag_sprite.drag_x, self._drag_sprite.drag_y = None, None
             self._drag_sprite = None
