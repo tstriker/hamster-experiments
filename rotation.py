@@ -43,7 +43,7 @@ class Rotator(graphics.Sprite):
 
 class Thing(graphics.Sprite):
     def __init__(self):
-        graphics.Sprite.__init__(self, 200, 200, pivot_x = 100, pivot_y = 25)
+        graphics.Sprite.__init__(self, 200, 200, pivot_x=100, pivot_y=25, snap_to_pixel=False)
 
         # add some shapes
         self.graphics.rectangle(0, 0, 200, 50, 5)
@@ -52,7 +52,7 @@ class Thing(graphics.Sprite):
         self.rotator = Rotator(x=self.pivot_x, y=self.pivot_y)
         self.add_child(self.rotator)
 
-        self.rotator.connect("on-drag-finish", self.on_drag)
+        self.rotator.connect("on-drag", self.on_drag)
 
     def on_drag(self, sprite, event):
         matrix = cairo.Matrix()
