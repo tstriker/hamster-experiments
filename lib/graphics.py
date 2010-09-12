@@ -594,7 +594,8 @@ class Sprite(gtk.Object):
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
-                 z_order = 0, cache_as_bitmap = False, mouse_cursor = None):
+                 z_order = 0, mouse_cursor = None,
+                 cache_as_bitmap = False, snap_to_pixel = True):
         gtk.Object.__init__(self)
 
         #: list of children sprites. Use :func:`add_child` to add sprites
@@ -636,10 +637,6 @@ class Sprite(gtk.Object):
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
-        #: Whether the sprite should be cached as a bitmap. Default: true
-        #: Generally good when you have many static sprites
-        self.cache_as_bitmap = cache_as_bitmap
-
         #: mouse-over cursor of the sprite. See :class:`Scene`.mouse_cursor
         #: for possible values
         self.mouse_cursor = mouse_cursor
@@ -652,14 +649,21 @@ class Sprite(gtk.Object):
         #: in on-drag-start to adjust drag point
         self.drag_y = None
 
+        #: Whether the sprite should be cached as a bitmap. Default: true
+        #: Generally good when you have many static sprites
+        self.cache_as_bitmap = cache_as_bitmap
+
+        #: Should the sprite coordinates always rounded to full pixel. Default: true
+        #: Mostly this is good for performance but in some cases that can lead
+        #: to rounding errors in positioning.
+        self.snap_to_pixel = snap_to_pixel
+
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
     def __setattr__(self, name, val):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
                 self.__dict__["_sprite_dirty"] = True
-            if name in ('x', 'y'):
-                val = int(val)
 
             self.__dict__[name] = val
             self.redraw()
@@ -749,13 +753,19 @@ class Sprite(gtk.Object):
             context.save()
 
             if any((self.x, self.y, self.pivot_x, self.pivot_y)):
-                context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
+                if self.snap_to_pixel:
+                    context.translate(int(self.x) + int(self.pivot_x), int(self.y) + int(self.pivot_y))
+                else:
+                    context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:
                 context.rotate(self.rotation)
 
             if self.pivot_x or self.pivot_y:
-                context.translate(-self.pivot_x, -self.pivot_y)
+                if self.snap_to_pixel:
+                    context.translate(int(-self.pivot_x), int(-self.pivot_y))
+                else:
+                    context.translate(-self.pivot_x, -self.pivot_y)
 
             if self.scale_x != 1 or self.scale_y != 1:
                 context.scale(self.scale_x, self.scale_y)
