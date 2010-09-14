@@ -49,11 +49,8 @@ class Scene(graphics.Scene):
         self.add_child(ChildParent(330, 50, cache_as_bitmap = False))
         self.add_child(ChildParent(381, 50, cache_as_bitmap = True))
 
-        image = graphics.Image("../assets/oxy.png", x=10, y=25, cache_as_bitmap=True, opacity=1)
-        spr = graphics.Sprite(opacity=1)
-        spr.add_child(image)
-        self.add_child(spr)
-        spr.animate(opacity=0.1, duration=2)
+        self.add_child(graphics.Image("../assets/oxy.png", x=430, y=50, opacity=0.5, cache_as_bitmap=False))
+        self.add_child(graphics.Image("../assets/oxy.png", x=455, y=75, opacity=0.5, cache_as_bitmap=True))
 
         self.connect("on-enter-frame", self.on_enter_frame)
 
@@ -72,7 +69,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_default_size(600, 500)
+        window.set_default_size(1100, 400)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
