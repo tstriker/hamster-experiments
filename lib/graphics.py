@@ -751,13 +751,19 @@ class Sprite(gtk.Object):
             context.save()
 
             if any((self.x, self.y, self.pivot_x, self.pivot_y)):
-                context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
+                if self.snap_to_pixel:
+                    context.translate(int(self.x) + int(self.pivot_x), int(self.y) + int(self.pivot_y))
+                else:
+                    context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
 
             if self.rotation:
                 context.rotate(self.rotation)
 
             if self.pivot_x or self.pivot_y:
-                context.translate(-self.pivot_x, -self.pivot_y)
+                if self.snap_to_pixel:
+                    context.translate(int(-self.pivot_x), int(-self.pivot_y))
+                else:
+                    context.translate(-self.pivot_x, -self.pivot_y)
 
             if self.scale_x != 1 or self.scale_y != 1:
                 context.scale(self.scale_x, self.scale_y)
