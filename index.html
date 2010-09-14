@@ -227,7 +227,7 @@ So you can for example disable automatic dragging but react to the drag motion.<
 <h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>cache_as_bitmap=False</em>, <em>mouse_cursor=None</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>mouse_cursor=None</em>, <em>cache_as_bitmap=False</em>, <em>snap_to_pixel=True</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Sprite class is a basic display list building block: a display list
 node that can display graphics and can also contain children.
 Once you have created the sprite, use Scene&#8217;s add_child to add it to
@@ -348,6 +348,14 @@ Call scene.redraw() explicitly if you need to redraw in these cases.</p>
 <dt id="graphics.Sprite.scale_y">
 <tt class="descname">scale_y</tt><a class="headerlink" href="#graphics.Sprite.scale_y" title="Permalink to this definition">¶</a></dt>
 <dd><p>scale Y</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.snap_to_pixel">
+<tt class="descname">snap_to_pixel</tt><a class="headerlink" href="#graphics.Sprite.snap_to_pixel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should the sprite coordinates always rounded to full pixel. Default: true
+Mostly this is good for performance but in some cases that can lead
+to rounding errors in positioning.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -526,6 +534,12 @@ equilateral polygons</p>
 <dl class="method">
 <dt id="graphics.Graphics.restore_context">
 <tt class="descname">restore_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.restore_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>change current position</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.rotate">
+<tt class="descname">rotate</tt><big>(</big><em>radians</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rotate" title="Permalink to this definition">¶</a></dt>
 <dd><p>change current position</p>
 </dd></dl>
 
