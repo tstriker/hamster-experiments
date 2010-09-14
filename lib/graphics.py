@@ -668,14 +668,22 @@ class Sprite(gtk.Object):
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
     def __setattr__(self, name, val):
-        if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
-            if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
-                self.__dict__["_sprite_dirty"] = True
-            if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
-                self.graphics._last_matrix = None
+        if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
+            return
 
-            self.__dict__[name] = val
-            self.redraw()
+        if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
+            self.__dict__["_sprite_dirty"] = True
+
+        if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
+            # invalidating cache for the bitmap version as that paints opacity in the image
+            self.graphics._last_matrix = None
+        elif name == 'interactive' and self.__dict__.get("graphics"):
+            # when suddenly item becomes interactive, it well can be that the extents had not been
+            # calculated
+            self.graphics._last_matrix = None
+
+        self.__dict__[name] = val
+        self.redraw()
 
 
     def add_child(self, *sprites):
