@@ -70,7 +70,7 @@ So you can for example disable automatic dragging but react to the drag motion.
 
 
 Sprite signals
-----------------------
+---------------
 
 Subscribe to signals using the `connect(signal, callback)` function of sprite.
 
@@ -121,7 +121,7 @@ The :class:`Graphics` class can also be used on it's own, by passing in Cairo
 .. _primitives:
 
 Sprites: Icons and images
-=================
+==========================
 Load icons and images as :class:`Sprite` objects.
 
 :class:`Image` and :class:`Icon` both are subclasses of :class:`BitmapSprite`
@@ -140,7 +140,7 @@ and transformation bits are there.
    :members:
 
 Sprites: Primitives
-==========
+====================
 A few shapes to speed up your drawing. They are full fledged Sprites.
 
 .. autoclass:: graphics.Circle
@@ -159,7 +159,7 @@ A few shapes to speed up your drawing. They are full fledged Sprites.
 
 
 The Tweener
-========================
+============
 You can use the tweener on it's own but must convenient is to use the
 :func:`animate` function of :class:`Scene`, or alternatively the `Scene.tweener`
 that is an instance of this class.
