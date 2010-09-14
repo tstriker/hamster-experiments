@@ -96,7 +96,6 @@ class Graphics(object):
         self.context = context
         self.colors = Colors    # pointer to the color utilities instance
         self.extents = None     # bounds of the object, only if interactive
-        self.opacity = 1.0      # opacity get's adjusted by parent - TODO - wrong inheritance?
         self.paths = None       # paths for mouse hit checks
         self._last_matrix = None
         self.__new_instructions = deque() # instruction set until it is converted into path-based instructions
@@ -249,10 +248,10 @@ class Graphics(object):
             self._add_instruction(self._set_dash, dash, dash_offset)
 
     def _set_color(self, context, r, g, b, a):
-        if a * self.opacity >= 1:
-            context.set_source_rgb(r, g, b)
+        if a < 1:
+            context.set_source_rgba(r, g, b, a)
         else:
-            context.set_source_rgba(r, g, b, a * self.opacity)
+            context.set_source_rgb(r, g, b)
 
     def set_color(self, color, alpha = 1):
         """set active color. You can use hex colors like "#aaa", or you can use
@@ -425,7 +424,7 @@ class Graphics(object):
             self.__new_instructions.append((function, params))
 
 
-    def _draw(self, context, with_extents = False):
+    def _draw(self, context, opacity, with_extents = False):
         """draw accumulated instructions in context"""
         if self.__new_instructions: #new stuff!
             self.__instruction_cache = deque()
@@ -484,7 +483,11 @@ class Graphics(object):
             return
 
         for path, color, line, instruction, args in self.__instruction_cache:
-            if color: self._set_color(context, *color)
+            if color:
+                if opacity < 1:
+                    self._set_color(context, color[0], color[1], color[2], color[3] * opacity)
+                else:
+                    self._set_color(context, *color)
             if line: self._set_line_width(context, *line)
 
             if path:
@@ -492,10 +495,9 @@ class Graphics(object):
                 if check_extents:
                     self._remember_path(context, self._fill)
 
-
             if instruction:
-                if instruction == self._paint and self.opacity < 1:
-                    context.paint_with_alpha(self.opacity)
+                if instruction == self._paint and opacity < 1:
+                    context.paint_with_alpha(opacity)
                 else:
                     instruction(context, *args)
 
@@ -506,13 +508,12 @@ class Graphics(object):
         self._last_matrix = context.get_matrix()
 
 
-    def _draw_as_bitmap(self, context):
+    def _draw_as_bitmap(self, context, opacity):
         """
             instead of caching paths, this function caches the whole drawn thing
             use cache_as_bitmap on sprite to enable this mode
         """
         matrix = context.get_matrix()
-
         if self.__new_instructions or matrix != self._last_matrix:
             if self.__new_instructions:
                 self.__instruction_cache = list(self.__new_instructions)
@@ -529,6 +530,7 @@ class Graphics(object):
             path_end_instructions = (self._new_path, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
 
             # measure the path extents so we know the size of surface
+            # also to save some time use the context to paint for the first time
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self._remember_path(context, instruction)
@@ -540,7 +542,13 @@ class Graphics(object):
                     y = args[2] if len(args) > 2 else 0
                     self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
 
-                instruction(context, *args)
+                if instruction == self._paint and opacity < 1:
+                    context.paint_with_alpha(opacity)
+                elif instruction == self._set_color and opacity < 1:
+                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+                else:
+                    instruction(context, *args)
+
 
             if instruction not in path_end_instructions: # last one
                 self._remember_path(context, self._fill)
@@ -562,7 +570,10 @@ class Graphics(object):
             context.identity_matrix()
             context.translate(self.extents[0], self.extents[1])
             context.set_source_surface(self.cache_surface)
-            context.paint()
+            if opacity < 1:
+                context.paint_with_alpha(opacity)
+            else:
+                context.paint()
             context.restore()
 
 
@@ -660,8 +671,8 @@ class Sprite(gtk.Object):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") != val:
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
                 self.__dict__["_sprite_dirty"] = True
-            if name in ('x', 'y'):
-                val = int(val)
+            if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
+                self.graphics._last_matrix = None
 
             self.__dict__[name] = val
             self.redraw()
@@ -768,12 +779,10 @@ class Sprite(gtk.Object):
             if self.scale_x != 1 or self.scale_y != 1:
                 context.scale(self.scale_x, self.scale_y)
 
-        self.graphics.opacity = self.opacity * opacity
-
         if self.cache_as_bitmap:
-            self.graphics._draw_as_bitmap(context)
+            self.graphics._draw_as_bitmap(context, self.opacity * opacity)
         else:
-            self.graphics._draw(context, self.interactive or self.draggable)
+            self.graphics._draw(context, self.opacity * opacity, self.interactive or self.draggable)
 
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
