@@ -89,7 +89,7 @@ class Graphics(object):
        Most of instructions are mapped to cairo functions by the same name.
        Where there are differences, documenation is provided.
 
-       See http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context
+       See http://cairographics.org/documentation/pycairo/2/reference/context.html
        for detailed description of the cairo drawing functions.
     """
     def __init__(self, context = None):
@@ -111,41 +111,35 @@ class Graphics(object):
     @staticmethod
     def _stroke(context): context.stroke()
     def stroke(self, color = None, alpha = 1):
-        """stroke the line with given color and opacity"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._stroke,)
 
     @staticmethod
     def _fill(context): context.fill()
     def fill(self, color = None, alpha = 1):
-        """fill path with given color and opacity"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill,)
 
     @staticmethod
     def _stroke_preserve(context): context.stroke_preserve()
     def stroke_preserve(self, color = None, alpha = 1):
-        """same as stroke, only after stroking, don't discard the path"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._stroke_preserve,)
 
     @staticmethod
     def _fill_preserve(context): context.fill_preserve()
     def fill_preserve(self, color = None, alpha = 1):
-        """same as fill, only after filling, don't discard the path"""
         if color or alpha < 1:self.set_color(color, alpha)
         self._add_instruction(self._fill_preserve,)
 
     @staticmethod
     def _new_path(context): context.new_path()
     def new_path(self):
-        """discard current path"""
         self._add_instruction(self._new_path,)
 
     @staticmethod
     def _paint(context): context.paint()
     def paint(self):
-        """errrm. paint"""
         self._add_instruction(self._paint,)
 
     @staticmethod
@@ -169,38 +163,32 @@ class Graphics(object):
     @staticmethod
     def _save_context(context): context.save()
     def save_context(self):
-        """change current position"""
         self._add_instruction(self._save_context)
 
     @staticmethod
     def _restore_context(context): context.restore()
     def restore_context(self):
-        """change current position"""
         self._add_instruction(self._restore_context)
 
 
     @staticmethod
     def _translate(context, x, y): context.translate(x, y)
     def translate(self, x, y):
-        """change current position"""
         self._add_instruction(self._translate, x, y)
 
     @staticmethod
     def _rotate(context, radians): context.rotate(radians)
     def rotate(self, radians):
-        """change current position"""
         self._add_instruction(self._rotate, radians)
 
     @staticmethod
     def _move_to(context, x, y): context.move_to(x, y)
     def move_to(self, x, y):
-        """change current position"""
         self._add_instruction(self._move_to, x, y)
 
     @staticmethod
     def _line_to(context, x, y): context.line_to(x, y)
     def line_to(self, x, y = None):
-        """draw line"""
         if y is not None:
             self._add_instruction(self._line_to, x, y)
         elif isinstance(x, list) and y is None:
@@ -211,7 +199,6 @@ class Graphics(object):
     @staticmethod
     def _rel_line_to(context, x, y): context.rel_line_to(x, y)
     def rel_line_to(self, x, y = None):
-        """draw line"""
         if x and y:
             self._add_instruction(self._rel_line_to, x, y)
         elif isinstance(x, list) and y is None:
@@ -223,13 +210,12 @@ class Graphics(object):
     def _curve_to(context, x, y, x2, y2, x3, y3):
         context.curve_to(x, y, x2, y2, x3, y3)
     def curve_to(self, x, y, x2, y2, x3, y3):
-        """draw curve. (x2, y2) is the middle point of the curve"""
+        """draw a curve. (x2, y2) is the middle point of the curve"""
         self._add_instruction(self._curve_to, x, y, x2, y2, x3, y3)
 
     @staticmethod
     def _close_path(context): context.close_path()
     def close_path(self):
-        """connect end with beginning of path"""
         self._add_instruction(self._close_path,)
 
     @staticmethod
@@ -240,7 +226,7 @@ class Graphics(object):
         context.set_dash(dash, dash_offset)
 
     def set_line_style(self, width = None, dash = None, dash_offset = 0):
-        """change the width of the line"""
+        """change width and dash of a line"""
         if width is not None:
             self._add_instruction(self._set_line_width, width)
 
@@ -256,7 +242,10 @@ class Graphics(object):
     def set_color(self, color, alpha = 1):
         """set active color. You can use hex colors like "#aaa", or you can use
         normalized RGB tripplets (where every value is in range 0..1), or
-        you can do the same thing in range 0..65535"""
+        you can do the same thing in range 0..65535.
+        also consider skipping this operation and specify the color on stroke and
+        fill.
+        """
         color = self.colors.parse(color) # parse whatever we have there into a normalized triplet
         if len(color) == 4 and alpha is None:
             alpha = color[3]
@@ -338,6 +327,7 @@ class Graphics(object):
 
 
     def fill_stroke(self, fill = None, stroke = None, line_width = None):
+        """fill and stroke the drawn area in one go"""
         if line_width: self.set_line_style(line_width)
 
         if fill and stroke:
@@ -647,7 +637,7 @@ class Sprite(gtk.Object):
         #: drawing order between siblings. The one with the highest z_order will be on top.
         self.z_order = z_order
 
-        #: mouse-over cursor of the sprite. See :class:`Scene`.mouse_cursor
+        #: mouse-over cursor of the sprite. See :meth:`Scene.mouse_cursor`
         #: for possible values
         self.mouse_cursor = mouse_cursor
 
