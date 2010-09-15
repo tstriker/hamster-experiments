@@ -617,8 +617,11 @@ class Sprite(gtk.Object):
         #: boolean marking if sprite can be automatically dragged
         self.draggable = draggable
 
-        #: relative coordinates of the sprites anchor and rotation point
-        self.pivot_x, self.pivot_y = pivot_x, pivot_y # rotation point in sprite's coordinates
+        #: relative x coordinate of the sprites' rotation point
+        self.pivot_x = pivot_x
+
+        #: relative y coordinates of the sprites' rotation point
+        self.pivot_y = pivot_y
 
         #: sprite opacity
         self.opacity = opacity
