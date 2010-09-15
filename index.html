@@ -38,10 +38,10 @@
           <div class="body">
             
   <div class="section" id="hamster-graphics">
-<h1>hamster.graphics<a class="headerlink" href="#hamster-graphics" title="Permalink to this headline">¶</a></h1>
+<span id="graphics"></span><h1>hamster.graphics<a class="headerlink" href="#hamster-graphics" title="Permalink to this headline">¶</a></h1>
 <p>The hamster graphics library is a sprite-styled abstraction layer on top of
 pygtk and cairo.
-Create a <a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Scene</span></tt></a> and add it to the window. Then you can start
+Create a <a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></a> and add it to the window. Then you can start
 adding and manipulating sprites.</p>
 <p><strong>Hello world</strong>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
@@ -65,13 +65,13 @@ adding and manipulating sprites.</p>
 <dt id="graphics.Scene">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drawing area for displaying sprites.
-Add sprites to the Scene by calling <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt>.
+Add sprites to the Scene by calling <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
 and thus inherits all it&#8217;s methods and everything.</p>
 <dl class="method">
 <dt id="graphics.Scene.add_child">
 <tt class="descname">add_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.add_child" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites to scene</p>
+<dd><p>Add one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> objects to the scene</p>
 </dd></dl>
 
 <dl class="method">
@@ -178,20 +178,20 @@ the <cite>framerate</cite> allows</p>
 <dl class="method">
 <dt id="graphics.Scene.remove_child">
 <tt class="descname">remove_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.remove_child" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> sprites from scene</p>
+<dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> sprites from scene</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Scene.sprites" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of sprites in scene. use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</p>
+<dd><p>list of sprites in scene. use <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a> to add sprites</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="graphics.Scene.tweener">
 <tt class="descname">tweener</tt><a class="headerlink" href="#graphics.Scene.tweener" title="Permalink to this definition">¶</a></dt>
 <dd><p>instance of <a class="reference internal" href="#pytweener.Tweener" title="pytweener.Tweener"><tt class="xref py py-class docutils literal"><span class="pre">pytweener.Tweener</span></tt></a> that is used by
-<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function, but can be also accessed directly for advanced control.</p>
+<a class="reference internal" href="#graphics.Scene.animate" title="graphics.Scene.animate"><tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt></a> function, but can be also accessed directly for advanced control.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -206,25 +206,32 @@ on-enter-frame signal below).</p>
 <div class="section" id="scene-signals">
 <h3>Scene signals<a class="headerlink" href="#scene-signals" title="Permalink to this headline">¶</a></h3>
 <p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of scene.</p>
-<p><strong>on-enter-frame</strong> <em>(context)</em> - fired before drawing sprites and will pass
-context to the listener</p>
-<p><strong>on-finish-frame</strong> <em>(context)</em> - fired after sprites have been drawn</p>
-<p><strong>on-click</strong> <em>(mouse_event, affected_sprites)</em> fired when user clicks in scene.
-<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">gtk.gdk.Event for BUTTON_PRESS</a>.
-<cite>affected_sprites</cite> is list of sprites that have been affected by the click.</p>
-<p><strong>on-drag</strong> <em>(mouse_event, affected_sprites)</em> - fired when user drags a
-sprite. <cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
-The signal is emitted also for sprites that have <cite>draggable</cite> disabled.
-So you can for example disable automatic dragging but react to the drag motion.</p>
-<p><strong>on-mouse-move</strong> <em>(mouse_event)</em> - fired when user moves the mouse.
-<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.</p>
-<p><strong>on-mouse-over</strong> <em>(affected_sprites)</em> - fired when user moves over any interactive sprite.</p>
-<p><strong>on-mouse-out</strong> <em>(affected_sprites)</em> - fired when user leaves an interactive sprite.</p>
-<p><strong>on-mouse-up</strong> <em>()</em> - fired when user releases mouse button</p>
+<p><strong>on-enter-frame</strong> <em>(context)</em>
+- fired before drawing sprites and will pass context to the listener</p>
+<p><strong>on-finish-frame</strong> <em>(context)</em>
+- fired after sprites have been drawn</p>
+<p><strong>on-click</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">button_press_event</a>, target_sprite)</p>
+<p><strong>on-drag-start</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>,
+drag_sprite)</p>
+<p><strong>on-drag</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>,
+drag_sprite) - fired on each drag motion</p>
+<p><strong>on-drag-finish</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>,
+drag_sprite)</p>
+<p><strong>on-mouse-move</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>)</p>
+<p><strong>on-mouse-down</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">button_press_event</a>)
+- fired when a mouse button is pressed down.</p>
+<p><strong>on-mouse-up</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">button_press_event</a>)
+- fired when a mouse button is released</p>
+<p><strong>on-mouse-over</strong> (target_sprite)
+- fired when mouse cursor moves over an interactive sprite.</p>
+<p><strong>on-mouse-out</strong> (target_sprite)
+- fired when mouse cursor leaves an interactive sprite.</p>
+<p><strong>on-scroll</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2981883">scroll_event</a>)
+- fired on scroll wheel motion</p>
 </div>
 </div>
 <div class="section" id="sprite-objects">
-<h2><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
+<h2><a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> objects<a class="headerlink" href="#sprite-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Sprite">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Sprite</tt><big>(</big><em>x=0</em>, <em>y=0</em>, <em>opacity=1</em>, <em>visible=True</em>, <em>rotation=0</em>, <em>pivot_x=0</em>, <em>pivot_y=0</em>, <em>scale_x=1</em>, <em>scale_y=1</em>, <em>interactive=False</em>, <em>draggable=False</em>, <em>z_order=0</em>, <em>mouse_cursor=None</em>, <em>cache_as_bitmap=False</em>, <em>snap_to_pixel=True</em><big>)</big><a class="headerlink" href="#graphics.Sprite" title="Permalink to this definition">¶</a></dt>
@@ -295,7 +302,7 @@ in on-drag-start to adjust drag point</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.graphics">
 <tt class="descname">graphics</tt><a class="headerlink" href="#graphics.Sprite.graphics" title="Permalink to this definition">¶</a></dt>
-<dd><p>instance of <a class="reference internal" href="#graphics"><em>Graphics class</em></a> for this sprite</p>
+<dd><p>instance of <a class="reference internal" href="#graphics"><em>hamster.graphics</em></a> for this sprite</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -307,7 +314,7 @@ in on-drag-start to adjust drag point</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.mouse_cursor">
 <tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Sprite.mouse_cursor" title="Permalink to this definition">¶</a></dt>
-<dd><p>mouse-over cursor of the sprite. See <tt class="xref py py-meth docutils literal"><span class="pre">Scene.mouse_cursor()</span></tt>
+<dd><p>mouse-over cursor of the sprite. See <a class="reference internal" href="#graphics.Scene.mouse_cursor" title="graphics.Scene.mouse_cursor"><tt class="xref py py-meth docutils literal"><span class="pre">Scene.mouse_cursor()</span></tt></a>
 for possible values</p>
 </dd></dl>
 
@@ -320,7 +327,7 @@ for possible values</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#graphics.Sprite.parent" title="Permalink to this definition">¶</a></dt>
-<dd><p>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
+<dd><p>pointer to parent <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> or <a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></a></p>
 </dd></dl>
 
 <dl class="attribute">
@@ -373,7 +380,7 @@ to rounding errors in positioning.</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Sprite.sprites" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of children sprites. Use <tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt> to add sprites</p>
+<dd><p>list of children sprites. Use <a class="reference internal" href="#graphics.Sprite.add_child" title="graphics.Sprite.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a> to add sprites</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -393,14 +400,16 @@ to rounding errors in positioning.</p>
 <div class="section" id="sprite-signals">
 <h3>Sprite signals<a class="headerlink" href="#sprite-signals" title="Permalink to this headline">¶</a></h3>
 <p>Subscribe to signals using the <cite>connect(signal, callback)</cite> function of sprite.</p>
-<p><strong>on-mouse-over</strong> <em>()</em> - fired when user moves over the sprite.</p>
-<p><strong>on-mouse-out</strong> <em>()</em> - fired when user leaves the sprite.</p>
-<p><strong>on-click</strong> <em>(mouse_event)</em> fired when user clicks on sprite.
-<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">gtk.gdk.Event for BUTTON_PRESS</a>.</p>
-<p><strong>on-drag</strong> <em>(mouse_event)</em> - fired when user drags the sprite.
-<cite>mouse_event</cite> is <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">gtk.gdk.Event for MOTION_NOTIFY</a>.
-The signal is emitted also if attribute <cite>draggable</cite> is disabled.</p>
-<p><strong>on-render</strong> <em>()</em> fired before rendering the sprite, in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
+<p><strong>on-mouse-over()</strong>
+- fired when cursor moves over the sprite.</p>
+<p><strong>on-mouse-out()</strong>
+- fired when cursor leaves the sprite.</p>
+<p><strong>on-click</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704">button_press_event</a>)</p>
+<p><strong>on-drag-start</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>)</p>
+<p><strong>on-drag</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>)
+- fired on every drag motion</p>
+<p><strong>on-drag-finish</strong> (<a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267">motion_notify_event</a>)</p>
+<p><strong>on-render</strong> <em>()</em> fired before rendering the sprite in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
 Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Ball</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
@@ -414,19 +423,19 @@ Example:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">graphics</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">)</span> <span class="c"># fill with the whatever color we have at the moment</span>
 </pre></div>
 </div>
-<p>Now, normally if you would change the color attribute of the Ball class nothing
+<p>Normally if you would change the color attribute of the Ball class nothing
 would happen as the sprite draws whatever there currently is in the instructions.
 But as the on_render will be called whenever a class attribute changes, this will
-trigger redrawal, and so the ball will correctly show the new color.</p>
+trigger a redraw, and so the ball sprite will correctly render with the new color.</p>
 </div>
 </div>
 <div class="section" id="graphics-class">
-<span id="graphics"></span><h2><tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class<a class="headerlink" href="#graphics-class" title="Permalink to this headline">¶</a></h2>
-<p><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt> and all <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects have a graphics attribute, that
-is an instance of <tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class. All the drawing is performed by
-calling functions of this attribute.
-The <tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt> class can also be used on it&#8217;s own, by passing in Cairo
-<cite>context</cite> into constructor.</p>
+<span id="graphics-graphics"></span><h2><a class="reference internal" href="#graphics.Graphics" title="graphics.Graphics"><tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt></a> class<a class="headerlink" href="#graphics-class" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></a> and <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> objects have a graphics attribute that
+is an instance of <a class="reference internal" href="#graphics.Graphics" title="graphics.Graphics"><tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt></a> class. All the drawing is performed by
+calling functions of this class.
+By passing in <a class="reference external" href="http://cairographics.org/documentation/pycairo/2/reference/context.html">Cairo context</a>
+into constructor the <a class="reference internal" href="#graphics.Graphics" title="graphics.Graphics"><tt class="xref py py-class docutils literal"><span class="pre">Graphics</span></tt></a> class can also be used on it&#8217;s own.</p>
 <dl class="class">
 <dt id="graphics.Graphics">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Graphics</tt><big>(</big><em>context=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics" title="Permalink to this definition">¶</a></dt>
@@ -463,6 +472,11 @@ for detailed description of the cairo drawing functions.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.close_path">
+<tt class="descname">close_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.close_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.create_layout">
 <tt class="descname">create_layout</tt><big>(</big><em>size=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>utility function to create layout with the default font. Size and
@@ -484,10 +498,20 @@ equilateral polygons</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.fill">
+<tt class="descname">fill</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.fill_area">
 <tt class="descname">fill_area</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>color</em>, <em>opacity=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_area" title="Permalink to this definition">¶</a></dt>
 <dd><p>fill rectangular area with specified color</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.fill_preserve">
+<tt class="descname">fill_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_preserve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.fill_stroke">
@@ -496,10 +520,50 @@ equilateral polygons</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.line_to">
+<tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.move_to">
+<tt class="descname">move_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.move_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.new_path">
+<tt class="descname">new_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.new_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.paint">
+<tt class="descname">paint</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.paint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.rectangle">
 <tt class="descname">rectangle</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>corner_radius=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rectangle" title="Permalink to this definition">¶</a></dt>
 <dd><p>draw a rectangle. if corner_radius is specified, will draw rounded corners</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.rel_line_to">
+<tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.restore_context">
+<tt class="descname">restore_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.restore_context" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.rotate">
+<tt class="descname">rotate</tt><big>(</big><em>radians</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rotate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.save_context">
+<tt class="descname">save_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.save_context" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.set_color">
@@ -518,6 +582,21 @@ fill.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.set_source">
+<tt class="descname">set_source</tt><big>(</big><em>image</em>, <em>x=0</em>, <em>y=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_source" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.set_source_pixbuf">
+<tt class="descname">set_source_pixbuf</tt><big>(</big><em>pixbuf</em>, <em>x=0</em>, <em>y=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_source_pixbuf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.set_source_surface">
+<tt class="descname">set_source_surface</tt><big>(</big><em>surface</em>, <em>x=0</em>, <em>y=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_source_surface" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.show_layout">
 <tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>width=-1</em>, <em>wrap=None</em>, <em>ellipsize=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>display text. font_desc is string of pango font description
@@ -531,13 +610,28 @@ a class:Label object</p>
 <dd><p>display text with system&#8217;s default font</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="graphics.Graphics.stroke">
+<tt class="descname">stroke</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.stroke_preserve">
+<tt class="descname">stroke_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke_preserve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.translate">
+<tt class="descname">translate</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.translate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
 <div class="section" id="sprites-icons-and-images">
 <span id="primitives"></span><h2>Sprites: Icons and images<a class="headerlink" href="#sprites-icons-and-images" title="Permalink to this headline">¶</a></h2>
-<p>Load icons and images as <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> objects.</p>
-<p><tt class="xref py py-class docutils literal"><span class="pre">Image</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">Icon</span></tt> both are subclasses of <tt class="xref py py-class docutils literal"><span class="pre">BitmapSprite</span></tt>
+<p>Load icons and images as <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> objects.</p>
+<p><a class="reference internal" href="#graphics.Image" title="graphics.Image"><tt class="xref py py-class docutils literal"><span class="pre">Image</span></tt></a> and <a class="reference internal" href="#graphics.Icon" title="graphics.Icon"><tt class="xref py py-class docutils literal"><span class="pre">Icon</span></tt></a> both are subclasses of <a class="reference internal" href="#graphics.BitmapSprite" title="graphics.BitmapSprite"><tt class="xref py py-class docutils literal"><span class="pre">BitmapSprite</span></tt></a>
 which performs data caching in a surface similar to target. That basically makes
 sure that redraws are low on CPU and conversion between source and destination
 is performed just once. They are fully fledges sprites, so all the interaction
@@ -545,7 +639,7 @@ and transformation bits are there.</p>
 <dl class="class">
 <dt id="graphics.Image">
 <em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Image</tt><big>(</big><em>path</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Image" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays image by path</p>
+<dd><p>Displays image by path. Currently supports only PNG images.</p>
 <dl class="attribute">
 <dt id="graphics.Image.path">
 <tt class="descname">path</tt><a class="headerlink" href="#graphics.Image.path" title="Permalink to this definition">¶</a></dt>
@@ -749,7 +843,7 @@ WRAP_WORD_CHAR]</p>
 <div class="section" id="the-tweener">
 <h2>The Tweener<a class="headerlink" href="#the-tweener" title="Permalink to this headline">¶</a></h2>
 <p>You can use the tweener on it&#8217;s own but must convenient is to use the
-<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <tt class="xref py py-meth docutils literal"><span class="pre">Scene.tweener()</span></tt>
+<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function of <a class="reference internal" href="#graphics.Scene" title="graphics.Scene"><tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></a>, or alternatively the <a class="reference internal" href="#graphics.Scene.tweener" title="graphics.Scene.tweener"><tt class="xref py py-data docutils literal"><span class="pre">Scene.tweener</span></tt></a>
 that is an instance of this class.</p>
 <dl class="class">
 <dt id="pytweener.Tweener">
