@@ -76,8 +76,9 @@ class Thing(graphics.Sprite):
 
 
 class Scene(graphics.Scene):
-    def __init__(self):
+    def __init__(self, progress):
         graphics.Scene.__init__(self)
+        self.progress = progress
 
         self.thing = Thing()
         self.rotator = Rotator(x=self.thing.pivot_x, y=self.thing.pivot_y)
@@ -119,8 +120,17 @@ class Scene(graphics.Scene):
 
             angle = math.atan2(start_vector.y, start_vector.x) - math.atan2(drag_vector.y, drag_vector.x)
 
-            self.thing.rotation = self.start_rotation - angle
 
+            delta = (self.start_rotation - angle) - self.thing.rotation
+
+            # full revolution jumps from -180 to 180 degrees
+            if abs(delta) >= math.pi:
+                delta = 0
+
+            progress = min(1, max(0, self.progress.get_fraction() + delta / (math.pi * 2 * 10)))
+            self.progress.set_fraction(progress)
+
+            self.thing.rotation = self.start_rotation - angle
 
 
     def on_drag_start(self, scene, sprite, event):
@@ -137,7 +147,12 @@ class BasicWindow:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-        window.add(Scene())
+        vbox = gtk.VBox()
+
+        progress_bar = gtk.ProgressBar()
+        vbox.pack_start(Scene(progress_bar), True)
+        vbox.pack_start(progress_bar, False)
+        window.add(vbox)
         window.show_all()
 
 if __name__ == '__main__':
