@@ -6,7 +6,7 @@
 
 
 import gtk
-from lib import graphics
+from lib import graphics, euclid
 
 import cairo
 import math
@@ -43,7 +43,7 @@ class Rotator(graphics.Sprite):
 
 class Thing(graphics.Sprite):
     def __init__(self):
-        graphics.Sprite.__init__(self, 200, 200, pivot_x=100, pivot_y=25, snap_to_pixel=False)
+        graphics.Sprite.__init__(self, 200, 200, pivot_x=100, pivot_y=25, snap_to_pixel=False, interactive=True)
 
         # add some shapes
         self.graphics.rectangle(0, 0, 200, 50, 5)
@@ -83,11 +83,44 @@ class Scene(graphics.Scene):
         self.rotator = Rotator(x=self.thing.pivot_x, y=self.thing.pivot_y)
 
         self.add_child(self.thing)
+
+        self.add_child(graphics.Label("Drag the thing to rotate", size=24, color="#333"))
         self.rotating = True
 
         self.connect("on-drag-start", self.on_drag_start)
         self.connect("on-drag-finish", self.on_drag_finish)
-        self.connect("on-enter-frame", self.on_enter_frame)
+
+        self.connect("on-mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-down", self.on_mouse_down)
+        self.connect("on-mouse-up", self.on_mouse_up)
+
+        self.drag_point = None
+        self.start_rotation = None
+
+    def on_mouse_down(self, scene, event):
+        sprite = self.get_sprite_at_position(event.x, event.y)
+        if sprite == self.thing:
+            self.drag_point = euclid.Point2(event.x, event.y)
+            self.start_rotation = self.thing.rotation
+
+    def on_mouse_up(self, scene, event):
+        self.drag_point = None
+        self.start_rotation = None
+
+    def on_mouse_move(self, scene, event):
+        mouse_down = gtk.gdk.BUTTON1_MASK & event.state
+        if mouse_down and self.drag_point:
+            pivot_x, pivot_y = self.thing.graphics._last_matrix.transform_point(self.thing.pivot_x, self.thing.pivot_y)
+
+            pivot_point = euclid.Point2(pivot_x, pivot_y)
+            drag_vector = euclid.Point2(event.x, event.y) - pivot_point
+
+            start_vector = self.drag_point - pivot_point
+
+            angle = math.atan2(start_vector.y, start_vector.x) - math.atan2(drag_vector.y, drag_vector.x)
+
+            self.thing.rotation = self.start_rotation - angle
+
 
 
     def on_drag_start(self, scene, sprite, event):
@@ -95,13 +128,6 @@ class Scene(graphics.Scene):
 
     def on_drag_finish(self, scene, sprite, event):
         self.rotating = True
-
-
-    def on_enter_frame(self, scene, context):
-        if self.rotating:
-            self.thing.rotation += 0.015
-
-        self.redraw()
 
 
 
