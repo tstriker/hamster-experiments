@@ -161,7 +161,7 @@ A few shapes to speed up your drawing. They are full fledged Sprites.
 The Tweener
 ============
 You can use the tweener on it's own but must convenient is to use the
-:func:`animate` function of :class:`Scene`, or alternatively the `Scene.tweener`
+:func:`animate` function of :class:`Scene`, or alternatively the :meth:`Scene.tweener`
 that is an instance of this class.
 
 .. autoclass:: pytweener.Tweener

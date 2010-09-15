@@ -307,7 +307,7 @@ in on-drag-start to adjust drag point</p>
 <dl class="attribute">
 <dt id="graphics.Sprite.mouse_cursor">
 <tt class="descname">mouse_cursor</tt><a class="headerlink" href="#graphics.Sprite.mouse_cursor" title="Permalink to this definition">¶</a></dt>
-<dd><p>mouse-over cursor of the sprite. See <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>.mouse_cursor
+<dd><p>mouse-over cursor of the sprite. See <tt class="xref py py-meth docutils literal"><span class="pre">Scene.mouse_cursor()</span></tt>
 for possible values</p>
 </dd></dl>
 
@@ -321,6 +321,18 @@ for possible values</p>
 <dt id="graphics.Sprite.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#graphics.Sprite.parent" title="Permalink to this definition">¶</a></dt>
 <dd><p>pointer to parent <tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt> or <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.pivot_x">
+<tt class="descname">pivot_x</tt><a class="headerlink" href="#graphics.Sprite.pivot_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>relative x coordinate of the sprites&#8217; rotation point</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Sprite.pivot_y">
+<tt class="descname">pivot_y</tt><a class="headerlink" href="#graphics.Sprite.pivot_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>relative y coordinates of the sprites&#8217; rotation point</p>
 </dd></dl>
 
 <dl class="method">
@@ -424,7 +436,7 @@ instructions and performs them in passed-in order when _draw is called
 with context.</p>
 <p>Most of instructions are mapped to cairo functions by the same name.
 Where there are differences, documenation is provided.</p>
-<p>See <a class="reference external" href="http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context">http://www.cairographics.org/documentation/pycairo/reference/context.html#class-context</a>
+<p>See <a class="reference external" href="http://cairographics.org/documentation/pycairo/2/reference/context.html">http://cairographics.org/documentation/pycairo/2/reference/context.html</a>
 for detailed description of the cairo drawing functions.</p>
 <dl class="method">
 <dt id="graphics.Graphics.arc">
@@ -451,12 +463,6 @@ for detailed description of the cairo drawing functions.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="graphics.Graphics.close_path">
-<tt class="descname">close_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.close_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>connect end with beginning of path</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="graphics.Graphics.create_layout">
 <tt class="descname">create_layout</tt><big>(</big><em>size=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.create_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>utility function to create layout with the default font. Size and
@@ -467,7 +473,7 @@ pango.Layout</p>
 <dl class="method">
 <dt id="graphics.Graphics.curve_to">
 <tt class="descname">curve_to</tt><big>(</big><em>x</em>, <em>y</em>, <em>x2</em>, <em>y2</em>, <em>x3</em>, <em>y3</em><big>)</big><a class="headerlink" href="#graphics.Graphics.curve_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>draw curve. (x2, y2) is the middle point of the curve</p>
+<dd><p>draw a curve. (x2, y2) is the middle point of the curve</p>
 </dd></dl>
 
 <dl class="method">
@@ -478,45 +484,15 @@ equilateral polygons</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="graphics.Graphics.fill">
-<tt class="descname">fill</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill" title="Permalink to this definition">¶</a></dt>
-<dd><p>fill path with given color and opacity</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="graphics.Graphics.fill_area">
 <tt class="descname">fill_area</tt><big>(</big><em>x</em>, <em>y</em>, <em>width</em>, <em>height</em>, <em>color</em>, <em>opacity=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_area" title="Permalink to this definition">¶</a></dt>
 <dd><p>fill rectangular area with specified color</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="graphics.Graphics.fill_preserve">
-<tt class="descname">fill_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_preserve" title="Permalink to this definition">¶</a></dt>
-<dd><p>same as fill, only after filling, don&#8217;t discard the path</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.line_to">
-<tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>draw line</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.move_to">
-<tt class="descname">move_to</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.move_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>change current position</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.new_path">
-<tt class="descname">new_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.new_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>discard current path</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.paint">
-<tt class="descname">paint</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.paint" title="Permalink to this definition">¶</a></dt>
-<dd><p>errrm. paint</p>
+<dt id="graphics.Graphics.fill_stroke">
+<tt class="descname">fill_stroke</tt><big>(</big><em>fill=None</em>, <em>stroke=None</em>, <em>line_width=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.fill_stroke" title="Permalink to this definition">¶</a></dt>
+<dd><p>fill and stroke the drawn area in one go</p>
 </dd></dl>
 
 <dl class="method">
@@ -526,41 +502,19 @@ equilateral polygons</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="graphics.Graphics.rel_line_to">
-<tt class="descname">rel_line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rel_line_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>draw line</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.restore_context">
-<tt class="descname">restore_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.restore_context" title="Permalink to this definition">¶</a></dt>
-<dd><p>change current position</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.rotate">
-<tt class="descname">rotate</tt><big>(</big><em>radians</em><big>)</big><a class="headerlink" href="#graphics.Graphics.rotate" title="Permalink to this definition">¶</a></dt>
-<dd><p>change current position</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.save_context">
-<tt class="descname">save_context</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.save_context" title="Permalink to this definition">¶</a></dt>
-<dd><p>change current position</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="graphics.Graphics.set_color">
 <tt class="descname">set_color</tt><big>(</big><em>color</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_color" title="Permalink to this definition">¶</a></dt>
 <dd><p>set active color. You can use hex colors like &#8220;#aaa&#8221;, or you can use
 normalized RGB tripplets (where every value is in range 0..1), or
-you can do the same thing in range 0..65535</p>
+you can do the same thing in range 0..65535.
+also consider skipping this operation and specify the color on stroke and
+fill.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.set_line_style">
 <tt class="descname">set_line_style</tt><big>(</big><em>width=None</em>, <em>dash=None</em>, <em>dash_offset=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_line_style" title="Permalink to this definition">¶</a></dt>
-<dd><p>change the width of the line</p>
+<dd><p>change width and dash of a line</p>
 </dd></dl>
 
 <dl class="method">
@@ -575,24 +529,6 @@ a class:Label object</p>
 <dt id="graphics.Graphics.show_text">
 <tt class="descname">show_text</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
 <dd><p>display text with system&#8217;s default font</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.stroke">
-<tt class="descname">stroke</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke" title="Permalink to this definition">¶</a></dt>
-<dd><p>stroke the line with given color and opacity</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.stroke_preserve">
-<tt class="descname">stroke_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke_preserve" title="Permalink to this definition">¶</a></dt>
-<dd><p>same as stroke, only after stroking, don&#8217;t discard the path</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="graphics.Graphics.translate">
-<tt class="descname">translate</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#graphics.Graphics.translate" title="Permalink to this definition">¶</a></dt>
-<dd><p>change current position</p>
 </dd></dl>
 
 </dd></dl>
@@ -813,7 +749,7 @@ WRAP_WORD_CHAR]</p>
 <div class="section" id="the-tweener">
 <h2>The Tweener<a class="headerlink" href="#the-tweener" title="Permalink to this headline">¶</a></h2>
 <p>You can use the tweener on it&#8217;s own but must convenient is to use the
-<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <cite>Scene.tweener</cite>
+<tt class="xref py py-func docutils literal"><span class="pre">animate()</span></tt> function of <tt class="xref py py-class docutils literal"><span class="pre">Scene</span></tt>, or alternatively the <tt class="xref py py-meth docutils literal"><span class="pre">Scene.tweener()</span></tt>
 that is an instance of this class.</p>
 <dl class="class">
 <dt id="pytweener.Tweener">
