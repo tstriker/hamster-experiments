@@ -46,7 +46,7 @@ class Thing(graphics.Sprite):
         graphics.Sprite.__init__(self, 200, 200, pivot_x=100, pivot_y=25, snap_to_pixel=False, interactive=True)
 
         # add some shapes
-        self.graphics.rectangle(0, 0, 200, 50, 5)
+        self.graphics.rectangle(0.5, 0.5, 200, 50, 5)
         self.graphics.stroke("#000")
 
         self.rotator = Rotator(x=self.pivot_x, y=self.pivot_y)
@@ -85,7 +85,7 @@ class Scene(graphics.Scene):
 
         self.add_child(self.thing)
 
-        self.add_child(graphics.Label("Drag the thing to rotate", size=24, color="#333"))
+        self.add_child(graphics.Label("Drag to rotate", size=24, color="#999"))
         self.rotating = True
 
         self.connect("on-drag-start", self.on_drag_start)
