@@ -1,11 +1,16 @@
+.. _graphics:
+.. currentmodule:: graphics
+
+
 ****************
 hamster.graphics
 ****************
 
 The hamster graphics library is a sprite-styled abstraction layer on top of
 pygtk and cairo.
-Create a :class:`graphics.Scene` and add it to the window. Then you can start
+Create a :class:`Scene` and add it to the window. Then you can start
 adding and manipulating sprites.
+
 
 **Hello world**::
 
@@ -28,7 +33,7 @@ adding and manipulating sprites.
 The Scene
 ========================
 
-.. autoclass:: graphics.Scene
+.. autoclass:: Scene
    :members:
    :inherited-members:
 
@@ -37,35 +42,45 @@ Scene signals
 --------------
 Subscribe to signals using the `connect(signal, callback)` function of scene.
 
-**on-enter-frame** *(context)* - fired before drawing sprites and will pass
-context to the listener
+**on-enter-frame** *(context)*
+- fired before drawing sprites and will pass context to the listener
 
-**on-finish-frame** *(context)* - fired after sprites have been drawn
+**on-finish-frame** *(context)*
+- fired after sprites have been drawn
 
-**on-click** *(mouse_event, affected_sprites)* fired when user clicks in scene.
-`mouse_event` is `gtk.gdk.Event for BUTTON_PRESS <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_.
-`affected_sprites` is list of sprites that have been affected by the click.
+**on-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_, target_sprite)
 
-**on-drag** *(mouse_event, affected_sprites)* - fired when user drags a
-sprite. `mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_.
-The signal is emitted also for sprites that have `draggable` disabled.
-So you can for example disable automatic dragging but react to the drag motion.
+**on-drag-start** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_,
+drag_sprite)
 
-**on-mouse-move** *(mouse_event)* - fired when user moves the mouse.
-`mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_.
+**on-drag** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_,
+drag_sprite) - fired on each drag motion
 
+**on-drag-finish** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_,
+drag_sprite)
 
-**on-mouse-over** *(affected_sprites)* - fired when user moves over any interactive sprite.
+**on-mouse-move** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
 
-**on-mouse-out** *(affected_sprites)* - fired when user leaves an interactive sprite.
+**on-mouse-down** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
+- fired when a mouse button is pressed down.
 
-**on-mouse-up** *()* - fired when user releases mouse button
+**on-mouse-up** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
+- fired when a mouse button is released
+
+**on-mouse-over** (target_sprite)
+- fired when mouse cursor moves over an interactive sprite.
+
+**on-mouse-out** (target_sprite)
+- fired when mouse cursor leaves an interactive sprite.
+
+**on-scroll** (`scroll_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2981883>`_)
+- fired on scroll wheel motion
 
 
 :class:`Sprite` objects
 ========================
 
-.. autoclass:: graphics.Sprite
+.. autoclass:: Sprite
    :members:
 
 
@@ -74,18 +89,22 @@ Sprite signals
 
 Subscribe to signals using the `connect(signal, callback)` function of sprite.
 
-**on-mouse-over** *()* - fired when user moves over the sprite.
+**on-mouse-over()**
+- fired when cursor moves over the sprite.
 
-**on-mouse-out** *()* - fired when user leaves the sprite.
+**on-mouse-out()**
+- fired when cursor leaves the sprite.
 
-**on-click** *(mouse_event)* fired when user clicks on sprite.
-`mouse_event` is `gtk.gdk.Event for BUTTON_PRESS <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_.
+**on-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
 
-**on-drag** *(mouse_event)* - fired when user drags the sprite.
-`mouse_event` is `gtk.gdk.Event for MOTION_NOTIFY <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_.
-The signal is emitted also if attribute `draggable` is disabled.
+**on-drag-start** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
 
-**on-render** *()* fired before rendering the sprite, in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
+**on-drag** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
+- fired on every drag motion
+
+**on-drag-finish** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
+
+**on-render** *()* fired before rendering the sprite in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
 Example::
 
     class Ball(graphics.Sprite):
@@ -99,23 +118,24 @@ Example::
             self.graphics.circle(0, 0, 10)
             self.graphics.fill(self.color) # fill with the whatever color we have at the moment
 
-Now, normally if you would change the color attribute of the Ball class nothing
+Normally if you would change the color attribute of the Ball class nothing
 would happen as the sprite draws whatever there currently is in the instructions.
 But as the on_render will be called whenever a class attribute changes, this will
-trigger redrawal, and so the ball will correctly show the new color.
+trigger a redraw, and so the ball sprite will correctly render with the new color.
 
-.. _graphics:
+.. _graphics.Graphics:
 
 :class:`Graphics` class
 ========================
-:class:`Scene` and all :class:`Sprite` objects have a graphics attribute, that
+:class:`Scene` and :class:`Sprite` objects have a graphics attribute that
 is an instance of :class:`Graphics` class. All the drawing is performed by
-calling functions of this attribute.
-The :class:`Graphics` class can also be used on it's own, by passing in Cairo
-`context` into constructor.
+calling functions of this class.
+By passing in `Cairo context <http://cairographics.org/documentation/pycairo/2/reference/context.html>`_
+into constructor the :class:`Graphics` class can also be used on it's own.
 
-.. autoclass:: graphics.Graphics
+.. autoclass:: Graphics
    :members:
+   :undoc-members:
 
 
 .. _primitives:
@@ -130,30 +150,30 @@ sure that redraws are low on CPU and conversion between source and destination
 is performed just once. They are fully fledges sprites, so all the interaction
 and transformation bits are there.
 
-.. autoclass:: graphics.Image
+.. autoclass:: Image
    :members:
 
-.. autoclass:: graphics.Icon
+.. autoclass:: Icon
    :members:
 
-.. autoclass:: graphics.BitmapSprite
+.. autoclass:: BitmapSprite
    :members:
 
 Sprites: Primitives
 ====================
 A few shapes to speed up your drawing. They are full fledged Sprites.
 
-.. autoclass:: graphics.Circle
+.. autoclass:: Circle
    :members:
 
-.. autoclass:: graphics.Rectangle
+.. autoclass:: Rectangle
    :members:
 
 
-.. autoclass:: graphics.Polygon
+.. autoclass:: Polygon
    :members:
 
-.. autoclass:: graphics.Label
+.. autoclass:: Label
    :members:
 
 
@@ -161,7 +181,7 @@ A few shapes to speed up your drawing. They are full fledged Sprites.
 The Tweener
 ============
 You can use the tweener on it's own but must convenient is to use the
-:func:`animate` function of :class:`Scene`, or alternatively the :meth:`Scene.tweener`
+:func:`animate` function of :class:`Scene`, or alternatively the :data:`Scene.tweener`
 that is an instance of this class.
 
 .. autoclass:: pytweener.Tweener

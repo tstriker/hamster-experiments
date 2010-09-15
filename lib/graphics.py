@@ -867,7 +867,7 @@ class BitmapSprite(Sprite):
 
 
 class Image(BitmapSprite):
-    """Displays image by path"""
+    """Displays image by path. Currently supports only PNG images."""
     def __init__(self, path, **kwargs):
         BitmapSprite.__init__(self, **kwargs)
 
@@ -1186,7 +1186,7 @@ class Scene(gtk.DrawingArea):
         self._redraw_in_progress = False
 
     def add_child(self, *sprites):
-        """Add one or several :class:`graphics.Sprite` sprites to scene """
+        """Add one or several :class:`Sprite` objects to the scene"""
         for sprite in sprites:
             if sprite.parent:
                 sprite.parent.remove_child(sprite)
@@ -1195,7 +1195,7 @@ class Scene(gtk.DrawingArea):
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
     def remove_child(self, *sprites):
-        """Remove one or several :class:`graphics.Sprite` sprites from scene """
+        """Remove one or several :class:`Sprite` sprites from scene """
         for sprite in sprites:
             self.sprites.remove(sprite)
             sprite.parent = None
@@ -1234,6 +1234,7 @@ class Scene(gtk.DrawingArea):
 
            Redraw is requested right after creating the animation.
            Example::
+
              # tween some_sprite to coordinates (50,100) using default duration and easing
              scene.animate(some_sprite, x = 50, y = 100)
         """
