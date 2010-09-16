@@ -416,6 +416,13 @@ class Graphics(object):
 
     def _draw(self, context, opacity, with_extents = False):
         """draw accumulated instructions in context"""
+
+        # if we have been moved around, we should update bounds
+        check_extents = with_extents and (context.get_matrix() != self._last_matrix or not self.paths)
+        if check_extents:
+            self.paths = deque()
+            self.extents = None
+
         if self.__new_instructions: #new stuff!
             self.__instruction_cache = deque()
             current_color = None
@@ -450,50 +457,49 @@ class Graphics(object):
                                                current_color,
                                                current_line,
                                                instruction, ()))
-                    context.new_path() # reset even on preserve as the instruction will preserve it instead
                     instruction_cache = []
                 else:
                     # the rest are non-special
-                    instruction(context, *args)
                     instruction_cache.append((instruction, args))
 
+                if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
+                    # last one
+                    self._remember_path(context, self._fill)
+
+
+                instruction(context, *args) # reset even on preserve as the instruction will preserve it instead
 
             while instruction_cache: # stroke is missing so we just cache
                 instruction, args = instruction_cache.pop(0)
                 self.__instruction_cache.append((None, None, None, instruction, args))
 
 
-        # if we have been moved around, we should update bounds
-        check_extents = with_extents and (context.get_matrix() != self._last_matrix or not self.paths)
-        if check_extents:
-            self.paths = deque()
-            self.extents = None
+        else:
+            if not self.__instruction_cache:
+                return
 
-        if not self.__instruction_cache:
-            return
+            for path, color, line, instruction, args in self.__instruction_cache:
+                if color:
+                    if opacity < 1:
+                        self._set_color(context, color[0], color[1], color[2], color[3] * opacity)
+                    else:
+                        self._set_color(context, *color)
+                if line: self._set_line_width(context, *line)
 
-        for path, color, line, instruction, args in self.__instruction_cache:
-            if color:
-                if opacity < 1:
-                    self._set_color(context, color[0], color[1], color[2], color[3] * opacity)
-                else:
-                    self._set_color(context, *color)
-            if line: self._set_line_width(context, *line)
+                if path:
+                    context.append_path(path)
+                    if check_extents:
+                        self._remember_path(context, self._fill)
 
-            if path:
-                context.append_path(path)
-                if check_extents:
-                    self._remember_path(context, self._fill)
+                if instruction:
+                    if instruction == self._paint and opacity < 1:
+                        context.paint_with_alpha(opacity)
+                    else:
+                        instruction(context, *args)
 
-            if instruction:
-                if instruction == self._paint and opacity < 1:
-                    context.paint_with_alpha(opacity)
-                else:
-                    instruction(context, *args)
-
-        if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
-            # last one
-            self._remember_path(context, self._fill)
+            if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
+                # last one
+                self._remember_path(context, self._fill)
 
         self._last_matrix = context.get_matrix()
 
@@ -1183,7 +1189,7 @@ class Scene(gtk.DrawingArea):
         self.__last_expose_time = dt.datetime.now()
         self.__last_cursor = None
 
-        self._redraw_in_progress = False
+        self._redraw_in_progress = True
 
     def add_child(self, *sprites):
         """Add one or several :class:`Sprite` objects to the scene"""
