@@ -1184,12 +1184,12 @@ class Scene(gtk.DrawingArea):
         self.__drag_start_x, self.__drag_start_y = None, None
 
         self._mouse_in = False
-
-        self.__drawing_queued = False
-        self.__last_expose_time = dt.datetime.now()
         self.__last_cursor = None
 
+        self.__drawing_queued = False
+        self.__more_tweens = True
         self._redraw_in_progress = True
+
 
     def add_child(self, *sprites):
         """Add one or several :class:`Sprite` objects to the scene"""
@@ -1209,27 +1209,6 @@ class Scene(gtk.DrawingArea):
     def clear(self):
         """Remove all sprites from scene"""
         self.remove_child(*self.sprites)
-
-
-    def redraw(self):
-        """Queue redraw. The redraw will be performed not more often than
-           the `framerate` allows"""
-        if self.__drawing_queued == False: #if we are moving, then there is a timeout somewhere already
-            self.__drawing_queued = True
-            self._last_frame_time = dt.datetime.now()
-            gobject.timeout_add(1000 / self.framerate, self.__interpolate)
-
-    # animation bits
-    def __interpolate(self):
-        if self.tweener:
-            self.tweener.update((dt.datetime.now() - self._last_frame_time).microseconds / 1000000.0)
-
-        self.__drawing_queued = self.tweener.has_tweens()
-        self._last_frame_time = dt.datetime.now()
-
-        self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
-        return self.__drawing_queued
-
 
     def animate(self, sprite, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
         """Interpolate attributes of the given object using the internal tweener
@@ -1257,9 +1236,25 @@ class Scene(gtk.DrawingArea):
         return tween
 
 
-    # exposure events
-    def do_configure_event(self, event):
-        self.width, self.height = event.width, event.height
+    def redraw(self):
+        """Queue redraw. The redraw will be performed not more often than
+           the `framerate` allows"""
+        if self.__drawing_queued == False: #if we are moving, then there is a timeout somewhere already
+            self.__drawing_queued = True
+            self._last_frame_time = dt.datetime.now()
+            gobject.timeout_add(1000 / self.framerate, self.__redraw_loop)
+
+    def __redraw_loop(self):
+        """loop until there is nothing more to tween"""
+        self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
+
+        # we need this drawing_queued -> more_tweens shuffle to make sure that
+        # two timeouts are not launched at the same time due to asynchronicity
+        # (loop comes when pleases, expose happens on expose and redraw can be called on mouse events)
+        # but don't want to stress the tweener either
+        self.__drawing_queued = self.__more_tweens
+        return self.__drawing_queued
+
 
     def do_expose_event(self, event):
         context = self.window.cairo_create()
@@ -1269,13 +1264,22 @@ class Scene(gtk.DrawingArea):
                           event.area.width, event.area.height)
         context.clip()
 
-        now = dt.datetime.now()
-        self.fps = 1 / ((now - self.__last_expose_time).microseconds / 1000000.0)
-        self.__last_expose_time = now
-
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
         self._redraw_in_progress = True
+
+        # update tweens
+        now = dt.datetime.now()
+        delta = (now - (self._last_frame_time or dt.datetime.now())).microseconds / 1000000.0
+        self._last_frame_time = now
+        if self.tweener:
+            self.tweener.update(delta)
+        self.__more_tweens = self.tweener and self.tweener.has_tweens()
+
+        self.fps = 1 / delta
+
+
+        # start drawing
         self.emit("on-enter-frame", context)
         for sprite in self.sprites:
             sprite._draw(context)
@@ -1284,6 +1288,9 @@ class Scene(gtk.DrawingArea):
         self.emit("on-finish-frame", context)
         self._redraw_in_progress = False
 
+
+    def do_configure_event(self, event):
+        self.width, self.height = event.width, event.height
 
     def all_sprites(self, sprites = None):
         """Returns flat list of the sprite tree for simplified iteration"""
