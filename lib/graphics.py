@@ -740,7 +740,7 @@ class Sprite(gtk.Object):
         if scene and scene._redraw_in_progress == False:
             self.parent.redraw()
 
-    def animate(self, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
+    def animate(self, duration = None, easing = None, on_complete = None, on_update = None, **kwargs):
         """Request paretn Scene to Interpolate attributes using the internal tweener.
            Specify sprite's attributes that need changing.
            `duration` defaults to 0.4 seconds and `easing` to cubic in-out
@@ -752,7 +752,7 @@ class Sprite(gtk.Object):
         """
         scene = self.get_scene()
         if scene:
-            scene.animate(self, duration, easing, on_complete, on_update, delay, **kwargs)
+            scene.animate(self, duration, easing, on_complete, on_update, **kwargs)
 
     def _draw(self, context, opacity = 1):
         if self.visible is False:
@@ -1210,7 +1210,7 @@ class Scene(gtk.DrawingArea):
         """Remove all sprites from scene"""
         self.remove_child(*self.sprites)
 
-    def animate(self, sprite, duration = None, easing = None, on_complete = None, on_update = None, delay = None, **kwargs):
+    def animate(self, sprite, duration = None, easing = None, on_complete = None, on_update = None, **kwargs):
         """Interpolate attributes of the given object using the internal tweener
            and redrawing scene after every tweener update.
            Specify the sprite and sprite's attributes that need changing.
@@ -1231,7 +1231,7 @@ class Scene(gtk.DrawingArea):
                                        easing=easing,
                                        on_complete=on_complete,
                                        on_update=on_update,
-                                       delay=delay, **kwargs)
+                                       **kwargs)
         self.redraw()
         return tween
 
@@ -1246,6 +1246,7 @@ class Scene(gtk.DrawingArea):
 
     def __redraw_loop(self):
         """loop until there is nothing more to tween"""
+        self.__more_tweens = True
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
         # we need this drawing_queued -> more_tweens shuffle to make sure that
