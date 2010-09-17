@@ -72,14 +72,30 @@ class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
-        self.add_child(OldTweenGraph(EasingOld.Sine, y = 50, x = 50))
-        self.add_child(TweenGraph(Easing.Sine, y = 50, x = 50, opacity=0.1))
+        self.add_child(graphics.Label("Red is old, blue is new.", 12, "#666", x=5, y=5))
+
+        y = 50
+        x = 90
+        for func in Easing.__dict__:
+            if func.startswith("_") == False:
+                self.add_child(graphics.Label(func, 12, "#666", x = x - 80, y = y + 25))
+                self.add_child(OldTweenGraph(EasingOld.__dict__[func], y = y, x = x))
+                self.add_child(TweenGraph(Easing.__dict__[func], y = y, x = x, opacity=0.5))
+
+                y += 90
+
+                if y > 500:
+                    x += 450
+                    y = 50
+
+
+
 
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_default_size(600, 500)
+        window.set_default_size(900, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
