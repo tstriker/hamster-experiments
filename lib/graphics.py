@@ -466,8 +466,12 @@ class Graphics(object):
                     # last one
                     self._remember_path(context, self._fill)
 
-
-                instruction(context, *args) # reset even on preserve as the instruction will preserve it instead
+                if opacity < 1 and instruction == self._set_color:
+                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+                elif opacity < 1 and instruction == self._paint:
+                    context.paint_with_alpha(opacity)
+                else:
+                    instruction(context, *args) # reset even on preserve as the instruction will preserve it instead
 
             while instruction_cache: # stroke is missing so we just cache
                 instruction, args = instruction_cache.pop(0)
