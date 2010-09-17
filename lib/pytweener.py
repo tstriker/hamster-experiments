@@ -212,7 +212,7 @@ class Tweenable(object):
 
 
 """Robert Penner's classes stripped from the repetetive c,b,d mish-mash
-(discovery of Patryk Zawadski). This way we do the math once and apply to
+(discovery of Patryk Zawadzki). This way we do the math once and apply to
 all the tweenables instead of repeating it for each attribute
 """
 
