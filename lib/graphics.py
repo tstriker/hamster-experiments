@@ -1131,7 +1131,8 @@ class Scene(gtk.DrawingArea):
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-    def __init__(self, interactive = True, framerate = 80, background_color = None, scale = False):
+    def __init__(self, interactive = True, framerate = 80,
+                       background_color = None, scale = False, keep_aspect = True):
         gtk.DrawingArea.__init__(self)
         if interactive:
             self.set_events(gtk.gdk.POINTER_MOTION_MASK
@@ -1209,6 +1210,11 @@ class Scene(gtk.DrawingArea):
         #: When specified, upon window resize the content will be scaled
         #: relative to original window size. Defaults to False.
         self.scale = scale
+
+        #: Should the stage maintain aspect ratio upon scale if
+        #: :attr:`Scene.scale` is enabled. Defaults to true.
+        self.keep_aspect = keep_aspect
+
         self._original_width, self._original_height = None,  None
 
 
@@ -1292,8 +1298,11 @@ class Scene(gtk.DrawingArea):
         context.clip()
 
         if self.scale:
-            context.scale(self.width / self._original_width,
-                          self.height / self._original_height)
+            aspect_x = self.width / self._original_width
+            aspect_y = self.height / self._original_height
+            if self.keep_aspect:
+                aspect_x = aspect_y = min(aspect_x, aspect_y)
+            context.scale(aspect_x, aspect_y)
 
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
@@ -1320,7 +1329,7 @@ class Scene(gtk.DrawingArea):
 
 
     def do_configure_event(self, event):
-        if self.width is None:
+        if self._original_width is None:
             self._original_width = float(event.width)
             self._original_height = float(event.height)
 
