@@ -33,7 +33,10 @@ class Tweener(object):
             This will move the sprite to coordinates (500, 200) in 0.4 seconds.
             For parameter "easing" you can use one of the pytweener.Easing
             functions, or specify your own.
-            The tweener can handle numbers, dates and color strings in hex ("#ffffff")
+            The tweener can handle numbers, dates and color strings in hex ("#ffffff").
+            This function performs overwrite style conflict solving - in case
+            if a previous tween operates on same attributes, the attributes in
+            question are removed from that tween.
         """
         if duration is None:
             duration = self.default_duration
@@ -43,13 +46,17 @@ class Tweener(object):
         tw = Tween(obj, duration, easing, on_complete, on_update, **kwargs )
 
         if obj in self.current_tweens:
-            for current_tween in self.current_tweens[obj]:
+            for current_tween in tuple(self.current_tweens[obj]):
                 prev_keys = set((key for (key, tweenable) in current_tween.tweenables))
                 dif = prev_keys & set(kwargs.keys())
 
-                for key, tweenable in list(current_tween.tweenables):
+                for key, tweenable in tuple(current_tween.tweenables):
                     if key in dif:
                         current_tween.tweenables.remove((key, tweenable))
+
+                if not current_tween.tweenables:
+                    current_tween.finish()
+                    self.current_tweens[obj].remove(current_tween)
 
 
         self.current_tweens[obj].add(tw)
@@ -82,8 +89,8 @@ class Tweener(object):
     def finish(self):
         """jump the the last frame of all tweens"""
         for obj in self.current_tweens:
-            for t in self.current_tweens[obj]:
-                t._update(t.duration)
+            for tween in self.current_tweens[obj]:
+                tween.finish()
         self.current_tweens = {}
 
     def update(self, delta_seconds):
@@ -125,6 +132,9 @@ class Tween(object):
         self.on_complete = on_complete
         self.on_update = on_update
         self.complete = False
+
+    def finish(self):
+        self._update(self.duration)
 
     def _update(self, ptime):
         """Update tween with the time since the last frame"""
