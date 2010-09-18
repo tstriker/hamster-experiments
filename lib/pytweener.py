@@ -96,19 +96,13 @@ class Tweener(object):
     def update(self, delta_seconds):
         """update tweeners. delta_seconds is time in seconds since last frame"""
 
-        done_list = set()
-        for obj in self.current_tweens:
-            for tween in self.current_tweens[obj]:
+        for obj in tuple(self.current_tweens):
+            for tween in tuple(self.current_tweens[obj]):
                 done = tween._update(delta_seconds)
                 if done:
-                    done_list.add(tween)
+                    self.current_tweens[obj].remove(tween)
+                    if tween.on_complete: tween.on_complete(tween.target)
 
-        # remove all the completed tweens
-        for tween in done_list:
-            if tween.on_complete:
-                tween.on_complete(tween.target)
-
-            self.current_tweens[tween.target].remove(tween)
             if not self.current_tweens[tween.target]:
                 del self.current_tweens[tween.target]
 
