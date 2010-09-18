@@ -63,7 +63,7 @@ adding and manipulating sprites.</p>
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Scene">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em>, <em>scale=False</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drawing area for displaying sprites.
 Add sprites to the Scene by calling <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
@@ -185,6 +185,13 @@ the <cite>framerate</cite> allows</p>
 <dt id="graphics.Scene.remove_child">
 <tt class="descname">remove_child</tt><big>(</big><em>*sprites</em><big>)</big><a class="headerlink" href="#graphics.Scene.remove_child" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove one or several <a class="reference internal" href="#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">Sprite</span></tt></a> sprites from scene</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.scale">
+<tt class="descname">scale</tt><a class="headerlink" href="#graphics.Scene.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>When specified, upon window resize the content will be scaled
+relative to original window size. Defaults to False.</p>
 </dd></dl>
 
 <dl class="attribute">
