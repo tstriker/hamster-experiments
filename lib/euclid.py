@@ -57,9 +57,11 @@ class Vector2(object):
             return self.x == other.x and \
                    self.y == other.y
         else:
-            assert hasattr(other, '__len__') and len(other) == 2
-            return self.x == other[0] and \
-                   self.y == other[1]
+            if hasattr(other, '__len__') and len(other) == 2:
+                return self.x == other[0] and \
+                       self.y == other[1]
+            else:
+                return False
 
     def __neq__(self, other):
         return not self.__eq__(other)
