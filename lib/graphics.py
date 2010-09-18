@@ -677,8 +677,9 @@ class Sprite(gtk.Object):
     def __setattr__(self, name, val):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
             return
+        self.__dict__[name] = val
 
-        if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'visible'):
+        if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'opacity', 'visible', 'z_order'):
             self.__dict__["_sprite_dirty"] = True
 
         if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
@@ -688,10 +689,14 @@ class Sprite(gtk.Object):
             # when suddenly item becomes interactive, it well can be that the extents had not been
             # calculated
             self.graphics._last_matrix = None
+        elif name == 'z_order' and self.__dict__.get('parent'):
+            self.parent._sort()
 
-        self.__dict__[name] = val
         self.redraw()
 
+    def _sort(self):
+        """sort sprites by z_order"""
+        self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
@@ -701,8 +706,8 @@ class Sprite(gtk.Object):
 
             self.sprites.append(sprite)
             sprite.parent = self
+        self._sort()
 
-        self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
     def remove_child(self, *sprites):
         for sprite in sprites:
@@ -1206,7 +1211,12 @@ class Scene(gtk.DrawingArea):
                 sprite.parent.remove_child(sprite)
             self.sprites.append(sprite)
             sprite.parent = self
+        self._sort()
+
+    def _sort(self):
+        """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
+
 
     def remove_child(self, *sprites):
         """Remove one or several :class:`Sprite` sprites from scene """

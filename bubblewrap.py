@@ -38,6 +38,7 @@ class Scene(graphics.Scene):
         self.fps_label = graphics.Label(size = 20, color = "#fff", z_order=99, x = 10, y = 4)
         self.add_child(self.fps_label)
         self.bubbles = []
+        self.max_zorder = 1
 
     def on_mouse_move(self, scene, event):
         sprite = self.get_sprite_at_position(event.x, event.y)
@@ -56,6 +57,8 @@ class Scene(graphics.Scene):
     def on_mouse_over(self, scene, sprite):
         sprite.original_radius = sprite.radius
         self.animate(sprite, radius = sprite.radius * 1.3, easing = Easing.Elastic.ease_out, duration = 1)
+        self.max_zorder +=1
+        sprite.z_order = self.max_zorder
 
 
     def on_mouse_out(self, scene, sprite):
