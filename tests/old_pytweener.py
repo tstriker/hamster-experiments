@@ -582,8 +582,7 @@ class Easing(object):
             return c * 0.5 * (t * t * t * t * t + 2) + b
 
 
-
-class _PerformanceTester(object):
+class _Dummy(object):
     def __init__(self, a, b, c):
         self.a = a
         self.b = b
@@ -594,16 +593,25 @@ if __name__ == "__main__":
 
     tweener = Tweener()
     objects = []
+
     for i in range(10000):
-        objects.append(_PerformanceTester(dt.datetime.now(), i-100, i-100))
+        objects.append(_Dummy(dt.datetime.now(), i-100, i-100))
 
 
     total = dt.datetime.now()
 
     t = dt.datetime.now()
+    print "Adding 10000 objects..."
     for i, o in enumerate(objects):
-        tweener.add_tween(o, a = dt.datetime.now() - dt.timedelta(days=3), b = i, c = i, duration = 1.0)
-    print "add", dt.datetime.now() - t
+        tweener.add_tween(o, a = dt.datetime.now() - dt.timedelta(days=3),
+                             b = i,
+                             c = i,
+                             duration = 1.0,
+                             easing=Easing.Circ.ease_in_out)
+    print dt.datetime.now() - t
 
-    tweener.finish()
-    print objects[0].a
+    t = dt.datetime.now()
+    print "Updating 10 times......"
+    for i in range(11):  #update 1000 times
+        tweener.update(0.1)
+    print dt.datetime.now() - t

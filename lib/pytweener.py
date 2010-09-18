@@ -44,12 +44,12 @@ class Tweener(object):
 
         if obj in self.current_tweens:
             for current_tween in self.current_tweens[obj]:
-                prev_keys = set((tweenable.key for tweenable in current_tween.tweenables))
+                prev_keys = set((key for (key, tweenable) in current_tween.tweenables))
                 dif = prev_keys & set(kwargs.keys())
 
-                removable = [tweenable for tweenable in current_tween.tweenables if tweenable.key in dif]
-                for tweenable in removable:
-                    current_tween.tweenables.remove(tweenable)
+                for key, tweenable in list(current_tween.tweenables):
+                    if key in dif:
+                        current_tween.tweenables.remove((key, tweenable))
 
 
         self.current_tweens[obj].add(tw)
@@ -76,6 +76,8 @@ class Tweener(object):
         """"remove given tween without completing the motion or firing the on_complete"""
         if tween.target in self.current_tweens and tween in self.current_tweens[tween.target]:
             self.current_tweens[tween.target].remove(tween)
+            if not self.current_tweens[tween.target]:
+                del self.current_tweens[tween.target]
 
     def finish(self):
         """jump the the last frame of all tweens"""
@@ -105,9 +107,8 @@ class Tweener(object):
 
 
 class Tween(object):
-    __slots__ = ('tweenables', 'target', 'delta', 'duration',
-                 'ease', 'delta', 'on_complete',
-                 'on_update', 'complete')
+    __slots__ = ('tweenables', 'target', 'delta', 'duration', 'ease', 'delta',
+                 'on_complete', 'on_update', 'complete')
 
     def __init__(self, obj, duration, easing, on_complete, on_update, **kwargs):
         """Tween object use Tweener.add_tween( ... ) to create"""
@@ -118,7 +119,7 @@ class Tween(object):
         # list of (property, start_value, delta)
         self.tweenables = set()
         for key, value in kwargs.items():
-            self.tweenables.add(Tweenable(key, self.target.__dict__[key], value))
+            self.tweenables.add((key, Tweenable(self.target.__dict__[key], value)))
 
         self.delta = 0
         self.on_complete = on_complete
@@ -132,13 +133,13 @@ class Tween(object):
             self.delta = self.duration
 
         if self.delta == self.duration:
-            for tweenable in self.tweenables:
-                self.target.__setattr__(tweenable.key, tweenable.target_value)
+            for key, tweenable in self.tweenables:
+                self.target.__setattr__(key, tweenable.target_value)
         else:
             fraction = self.ease(self.delta / self.duration)
 
-            for tweenable in self.tweenables:
-                self.target.__setattr__(tweenable.key, tweenable.update(fraction))
+            for key, tweenable in self.tweenables:
+                self.target.__setattr__(key, tweenable.update(fraction))
 
         if self.delta == self.duration or len(self.tweenables) == 0:
             self.complete = True
@@ -152,37 +153,49 @@ class Tween(object):
 
 
 class Tweenable(object):
+    """a single attribute that has to be tweened from start to target"""
+    __slots__ = ('start_value', 'change', 'decode_func', 'target_value', 'update')
+
     hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
     hex_color_short = re.compile("#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])")
 
-    def __init__(self, key, start_value, target_value):
-        self.key = key
-        self.change = None
+
+    def __init__(self, start_value, target_value):
         self.decode_func = lambda x: x
-        self.encode_func = lambda x: x
-        self.start_value = start_value
         self.target_value = target_value
+
+        def float_update(fraction):
+            return self.start_value + self.change * fraction
+
+        def date_update(fraction):
+            return dt.date.fromtimestamp(self.start_value + self.change * fraction)
+
+        def datetime_update(fraction):
+            return dt.datetime.fromtimestamp(self.start_value + self.change * fraction)
+
+        def color_update(fraction):
+            val = [max(min(self.start_value[i] + self.change[i] * fraction, 255), 0)  for i in range(3)]
+            return "#%02x%02x%02x" % (val[0], val[1], val[2])
+
 
         if isinstance(start_value, int) or isinstance(start_value, float):
             self.start_value = start_value
             self.change = target_value - start_value
+            self.update = float_update
         else:
             if isinstance(start_value, dt.datetime) or isinstance(start_value, dt.date):
-                self.decode_func = lambda x: time.mktime(x.timetuple())
                 if isinstance(start_value, dt.datetime):
-                    self.encode_func = lambda x: dt.datetime.fromtimestamp(x)
+                    self.update = datetime_update
                 else:
-                    self.encode_func = lambda x: dt.date.fromtimestamp(x)
+                    self.update = date_update
 
+                self.decode_func = lambda x: time.mktime(x.timetuple())
                 self.start_value = self.decode_func(start_value)
                 self.change = self.decode_func(target_value) - self.start_value
 
             elif isinstance(start_value, basestring) \
              and (self.hex_color_normal.match(start_value) or self.hex_color_short.match(start_value)):
-                # code below is mainly based on jquery-color plugin
-                self.encode_func = lambda val: "#%02x%02x%02x" % (max(min(val[0], 255), 0),
-                                                                  max(min(val[1], 255), 0),
-                                                                  max(min(val[2], 255), 0))
+                self.update = color_update
                 if self.hex_color_normal.match(start_value):
                     self.decode_func = lambda val: [int(match, 16)
                                                     for match in self.hex_color_normal.match(val).groups()]
@@ -200,14 +213,6 @@ class Tweenable(object):
 
                 self.start_value = self.decode_func(start_value)
                 self.change = [target - start for start, target in zip(self.start_value, target_value)]
-
-
-    def update(self, fraction):
-        # list means we are dealing with a color triplet
-        if isinstance(self.start_value, list):
-            return self.encode_func([self.start_value[i] + self.change[i] * fraction for i in range(3)])
-        else:
-            return self.encode_func(self.start_value + self.change * fraction)
 
 
 
@@ -297,7 +302,7 @@ class Easing(object):
 
 
 
-class _PerformanceTester(object):
+class _Dummy(object):
     def __init__(self, a, b, c):
         self.a = a
         self.b = b
@@ -308,16 +313,25 @@ if __name__ == "__main__":
 
     tweener = Tweener()
     objects = []
+
     for i in range(10000):
-        objects.append(_PerformanceTester(dt.datetime.now(), i-100, i-100))
+        objects.append(_Dummy(dt.datetime.now(), i-100, i-100))
 
 
     total = dt.datetime.now()
 
     t = dt.datetime.now()
+    print "Adding 10000 objects..."
     for i, o in enumerate(objects):
-        tweener.add_tween(o, a = dt.datetime.now() - dt.timedelta(days=3), b = i, c = i, duration = 1.0)
-    print "add", dt.datetime.now() - t
+        tweener.add_tween(o, a = dt.datetime.now() - dt.timedelta(days=3),
+                             b = i,
+                             c = i,
+                             duration = 1.0,
+                             easing=Easing.Circ.ease_in_out)
+    print dt.datetime.now() - t
 
-    tweener.finish()
-    print dt.datetime.now() - total
+    t = dt.datetime.now()
+    print "Updating 10 times......"
+    for i in range(11):  #update 1000 times
+        tweener.update(0.1)
+    print dt.datetime.now() - t
