@@ -454,17 +454,15 @@ class Graphics(object):
                                      self._stroke_preserve,
                                      self._fill_preserve):
                     self.__instruction_cache.append((context.copy_path(),
-                                               current_color,
-                                               current_line,
-                                               instruction, ()))
+                                                     current_color,
+                                                     current_line,
+                                                     instruction, ()))
                     instruction_cache = []
+                    if check_extents:
+                        self._remember_path(context, instruction)
                 else:
                     # the rest are non-special
                     instruction_cache.append((instruction, args))
-
-                if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
-                    # last one
-                    self._remember_path(context, self._fill)
 
                 if opacity < 1 and instruction == self._set_color:
                     self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
@@ -473,6 +471,12 @@ class Graphics(object):
                 else:
                     instruction(context, *args) # reset even on preserve as the instruction will preserve it instead
 
+
+            # last one
+            if check_extents and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
+                self._remember_path(context, self._fill)
+
+            # also empty the temporary cache that was not met by a stroke at the end
             while instruction_cache: # stroke is missing so we just cache
                 instruction, args = instruction_cache.pop(0)
                 self.__instruction_cache.append((None, None, None, instruction, args))
@@ -1087,7 +1091,8 @@ class Circle(Sprite):
 
     def on_render(self, sprite):
         if self.width == self.height:
-            self.graphics.circle(self.width, self.width / 2.0, self.width / 2.0)
+            radius = self.width / 2.0
+            self.graphics.circle(radius, radius, radius)
         else:
             self.graphics.ellipse(0, 0, self.width, self.height)
 
@@ -1191,7 +1196,6 @@ class Scene(gtk.DrawingArea):
         self.__last_cursor = None
 
         self.__drawing_queued = False
-        self.__more_tweens = True
         self._redraw_in_progress = True
 
 
@@ -1250,14 +1254,9 @@ class Scene(gtk.DrawingArea):
 
     def __redraw_loop(self):
         """loop until there is nothing more to tween"""
-        self.__more_tweens = True
         self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
 
-        # we need this drawing_queued -> more_tweens shuffle to make sure that
-        # two timeouts are not launched at the same time due to asynchronicity
-        # (loop comes when pleases, expose happens on expose and redraw can be called on mouse events)
-        # but don't want to stress the tweener either
-        self.__drawing_queued = self.__more_tweens
+        self.__drawing_queued = self.tweener and self.tweener.has_tweens()
         return self.__drawing_queued
 
 
@@ -1279,7 +1278,6 @@ class Scene(gtk.DrawingArea):
         self._last_frame_time = now
         if self.tweener:
             self.tweener.update(delta)
-        self.__more_tweens = self.tweener and self.tweener.has_tweens()
 
         self.fps = 1 / delta
 
