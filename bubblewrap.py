@@ -34,8 +34,8 @@ class Scene(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
         self.cache_as_bitmap = True
         self.paint_color = None
-        self.add_child(graphics.Rectangle(600, 40, 4, "#666", opacity = 0.8, z_order = 98))
-        self.fps_label = graphics.Label(size = 20, color = "#fff", z_order=99, x = 10, y = 4)
+        self.add_child(graphics.Rectangle(600, 40, 4, "#666", opacity = 0.8, z_order = 999998))
+        self.fps_label = graphics.Label(size = 20, color = "#fff", z_order=999999, x = 10, y = 4)
         self.add_child(self.fps_label)
         self.bubbles = []
         self.max_zorder = 1
