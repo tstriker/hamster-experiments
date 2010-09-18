@@ -1131,7 +1131,7 @@ class Scene(gtk.DrawingArea):
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-    def __init__(self, interactive = True, framerate = 80):
+    def __init__(self, interactive = True, framerate = 80, background_color = None):
         gtk.DrawingArea.__init__(self)
         if interactive:
             self.set_events(gtk.gdk.POINTER_MOTION_MASK
@@ -1178,6 +1178,9 @@ class Scene(gtk.DrawingArea):
 
         #: Last known y position of the mouse (set on expose event)
         self.mouse_y = None
+
+        #: Background color of the scene. Use either a string with hex color or an RGB triplet.
+        self.background_color = background_color
 
         #: Mouse cursor appearance.
         #: Replace with your own cursor or set to False to have no cursor.
@@ -1276,6 +1279,10 @@ class Scene(gtk.DrawingArea):
         # clip to the visible part
         context.rectangle(event.area.x, event.area.y,
                           event.area.width, event.area.height)
+        if self.background_color:
+            color = self.colors.parse(self.background_color)
+            context.set_source_rgb(*color)
+            context.fill_preserve()
         context.clip()
 
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
