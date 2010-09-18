@@ -63,7 +63,7 @@ adding and manipulating sprites.</p>
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Scene">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em>, <em>scale=False</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em>, <em>scale=False</em>, <em>keep_aspect=True</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drawing area for displaying sprites.
 Add sprites to the Scene by calling <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
@@ -152,6 +152,13 @@ also influence the smoothness of tweeners.</p>
 <tt class="descname">height</tt><a class="headerlink" href="#graphics.Scene.height" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scene height. Will be <cite>None</cite> until first expose (that is until first
 on-enter-frame signal below).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.keep_aspect">
+<tt class="descname">keep_aspect</tt><a class="headerlink" href="#graphics.Scene.keep_aspect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should the stage maintain aspect ratio upon scale if
+<a class="reference internal" href="#graphics.Scene.scale" title="graphics.Scene.scale"><tt class="xref py py-attr docutils literal"><span class="pre">Scene.scale</span></tt></a> is enabled. Defaults to true.</p>
 </dd></dl>
 
 <dl class="attribute">
