@@ -89,7 +89,7 @@ parents are not displayed</p>
 
 <dl class="method">
 <dt id="graphics.Scene.animate">
-<tt class="descname">animate</tt><big>(</big><em>sprite</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Scene.animate" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">animate</tt><big>(</big><em>sprite</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Scene.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolate attributes of the given object using the internal tweener
 and redrawing scene after every tweener update.
 Specify the sprite and sprite&#8217;s attributes that need changing.
@@ -247,7 +247,7 @@ scene</p>
 
 <dl class="method">
 <dt id="graphics.Sprite.animate">
-<tt class="descname">animate</tt><big>(</big><em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Sprite.animate" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">animate</tt><big>(</big><em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Sprite.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Request paretn Scene to Interpolate attributes using the internal tweener.
 Specify sprite&#8217;s attributes that need changing.
 <cite>duration</cite> defaults to 0.4 seconds and <cite>easing</cite> to cubic in-out
@@ -850,13 +850,16 @@ that is an instance of this class.</p>
 <em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tweener</tt><big>(</big><em>default_duration=None</em>, <em>tween=None</em><big>)</big><a class="headerlink" href="#pytweener.Tweener" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pytweener.Tweener.add_tween">
-<tt class="descname">add_tween</tt><big>(</big><em>obj</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>delay=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.add_tween" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_tween</tt><big>(</big><em>obj</em>, <em>duration=None</em>, <em>easing=None</em>, <em>on_complete=None</em>, <em>on_update=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tweener.add_tween" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add tween for the object to go from current values to set ones.
 Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
 This will move the sprite to coordinates (500, 200) in 0.4 seconds.
 For parameter &#8220;easing&#8221; you can use one of the pytweener.Easing
 functions, or specify your own.
-The tweener can handle numbers, dates and color strings in hex (&#8220;#ffffff&#8221;)</p>
+The tweener can handle numbers, dates and color strings in hex (&#8220;#ffffff&#8221;).
+This function performs overwrite style conflict solving - in case
+if a previous tween operates on same attributes, the attributes in
+question are removed from that tween.</p>
 </dd></dl>
 
 <dl class="method">
@@ -895,22 +898,8 @@ on_complete</p>
 
 <dl class="class">
 <dt id="pytweener.Tween">
-<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tween</tt><big>(</big><em>obj</em>, <em>duration</em>, <em>easing</em>, <em>on_complete</em>, <em>on_update</em>, <em>delay</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tween" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="pytweener.Tween.pause">
-<tt class="descname">pause</tt><big>(</big><em>seconds=-1</em><big>)</big><a class="headerlink" href="#pytweener.Tween.pause" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pause this tween
-do tween.pause( 2 ) to pause for a specific time
-or tween.pause() which pauses indefinitely.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pytweener.Tween.resume">
-<tt class="descname">resume</tt><big>(</big><big>)</big><a class="headerlink" href="#pytweener.Tween.resume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resume from pause</p>
-</dd></dl>
-
-</dd></dl>
+<em class="property">class </em><tt class="descclassname">pytweener.</tt><tt class="descname">Tween</tt><big>(</big><em>obj</em>, <em>duration</em>, <em>easing</em>, <em>on_complete</em>, <em>on_update</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pytweener.Tween" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="class">
 <dt id="pytweener.Easing">
