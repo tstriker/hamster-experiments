@@ -76,9 +76,8 @@ class Thing(graphics.Sprite):
 
 
 class Scene(graphics.Scene):
-    def __init__(self, progress):
+    def __init__(self):
         graphics.Scene.__init__(self)
-        self.progress = progress
 
         self.thing = Thing()
         self.rotator = Rotator(x=self.thing.pivot_x, y=self.thing.pivot_y)
@@ -127,9 +126,6 @@ class Scene(graphics.Scene):
             if abs(delta) >= math.pi:
                 delta = 0
 
-            progress = min(1, max(0, self.progress.get_fraction() + delta / (math.pi * 2 * 10)))
-            self.progress.set_fraction(progress)
-
             self.thing.rotation = self.start_rotation - angle
 
 
@@ -147,12 +143,7 @@ class BasicWindow:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-        vbox = gtk.VBox()
-
-        progress_bar = gtk.ProgressBar()
-        vbox.pack_start(Scene(progress_bar), True)
-        vbox.pack_start(progress_bar, False)
-        window.add(vbox)
+        window.add(Scene())
         window.show_all()
 
 if __name__ == '__main__':
