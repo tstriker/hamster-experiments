@@ -63,7 +63,7 @@ adding and manipulating sprites.</p>
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Scene">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drawing area for displaying sprites.
 Add sprites to the Scene by calling <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
@@ -101,6 +101,12 @@ Example:</p>
 <span class="n">scene</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">some_sprite</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Scene.background_color">
+<tt class="descname">background_color</tt><a class="headerlink" href="#graphics.Scene.background_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Background color of the scene. Use either a string with hex color or an RGB triplet.</p>
 </dd></dl>
 
 <dl class="method">
