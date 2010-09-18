@@ -1131,7 +1131,7 @@ class Scene(gtk.DrawingArea):
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-    def __init__(self, interactive = True, framerate = 80, background_color = None):
+    def __init__(self, interactive = True, framerate = 80, background_color = None, scale = False):
         gtk.DrawingArea.__init__(self)
         if interactive:
             self.set_events(gtk.gdk.POINTER_MOTION_MASK
@@ -1205,6 +1205,12 @@ class Scene(gtk.DrawingArea):
 
         self.__drawing_queued = False
         self._redraw_in_progress = True
+
+        #: When specified, upon window resize the content will be scaled
+        #: relative to original window size. Defaults to False.
+        self.scale = scale
+        self._original_width, self._original_height = None,  None
+
 
 
     def add_child(self, *sprites):
@@ -1285,6 +1291,10 @@ class Scene(gtk.DrawingArea):
             context.fill_preserve()
         context.clip()
 
+        if self.scale:
+            context.scale(self.width / self._original_width,
+                          self.height / self._original_height)
+
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
         self._redraw_in_progress = True
@@ -1310,6 +1320,10 @@ class Scene(gtk.DrawingArea):
 
 
     def do_configure_event(self, event):
+        if self.width is None:
+            self._original_width = float(event.width)
+            self._original_height = float(event.height)
+
         self.width, self.height = event.width, event.height
 
     def all_sprites(self, sprites = None):
