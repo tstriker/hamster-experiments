@@ -84,17 +84,17 @@ class Particle(object):
 
 
 
-        self.x = self.x + self.speed_x
-        self.y = self.y + self.speed_y
+        self.x = self.x + self.speed_x * 0.1
+        self.y = self.y + self.speed_y * 0.1
 
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.set_double_buffered(False) # cheap way how to get to continuous draw!
 
         self.particles = []
-        self.paths = collections.deque()
 
         self.particle_count = 40 # these are the flies
         self.max_path_count = 14   # set this bigger to get longer tails and fry your computer
@@ -106,6 +106,7 @@ class Scene(graphics.Scene):
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
+        g.fill_area(0, 0, self.width, self.height, "#fff", 0.08)
 
         if not self.particles:
             for i in range(self.particle_count):
@@ -114,21 +115,11 @@ class Scene(graphics.Scene):
         self.target.update_position(self.width, self.height)
 
         g.set_line_style(width=0.3)
-        for i, path in enumerate(self.paths):
-            context.append_path(path)
-
-            if i % self.fade_step == 0:
-                g.set_color("#000", i / float(len(self.paths)))
-            context.stroke()
 
         for particle in self.particles:
             particle.update(self.target.location.x, self.target.location.y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
-
-        self.paths.append(context.copy_path())
-        if len(self.paths) > self.max_path_count:
-            self.paths.popleft()
 
         g.set_color("#000")
         g.stroke()
@@ -141,7 +132,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 500)
+        window.set_size_request(1000, 650)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()

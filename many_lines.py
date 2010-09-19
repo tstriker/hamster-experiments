@@ -23,10 +23,9 @@ import collections
 
 
 class Particle(object):
-    def __init__(self, x, y):
+    def __init__(self, x, y, color):
         self.x, self.y = x, y
-
-
+        self.color = color
         self.prev_x, self.prev_y = x, y
 
         # bouncyness - set to 1 to disable
@@ -34,14 +33,16 @@ class Particle(object):
         self.speed_mod_y = random() * 20 + 8
 
         # random force of atraction towards target (0.1 .. 0.5)
-        self.accel_mod_x = random() * 0.5 + 0.2
-        self.accel_mod_y = random() * 0.5 + 0.2
+        self.accel_mod_x = random() * 0.5 + 0.1
+        self.accel_mod_y = random() * 0.5 + 0.1
 
         self.speed_x, self.speed_y = 0, 0
 
     def update(self, mouse_x, mouse_y):
         self.prev_x, self.prev_y = self.x, self.y
 
+        # two random x/y directions make the motion square
+        # should be angle diff and spead instead
         target_accel_x = (mouse_x - self.x) * self.accel_mod_x
         target_accel_y = (mouse_y - self.y) * self.accel_mod_y
 
@@ -51,49 +52,39 @@ class Particle(object):
 
 
 
-        self.x = self.x + self.speed_x
-        self.y = self.y + self.speed_y
+        self.x = self.x + self.speed_x * 0.3 #TODO should fix the speed math instead
+        self.y = self.y + self.speed_y * 0.3
 
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
+        self.set_double_buffered(False) # cheap way how to get to continuous draw!
 
         self.connect("on-enter-frame", self.on_enter_frame)
         self.particles = []
         self.paths = collections.deque()
 
-        self.particle_count = 50 # these are the flies
-        self.max_path_count = 10   # set this bigger to get longer tails and fry your computer
+        self.particle_count = 100 # these are the flies
         self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
 
 
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
+        g.fill_area(0, 0, self.width, self.height, "#fff", 0.08)
 
         if not self.particles:
             for i in range(self.particle_count):
-                self.particles.append(Particle(random() * self.width, random() * self.height))
+                #color = (random(), random(), random())
+                color = (0,0,0)
+                self.particles.append(Particle(random() * self.width, random() * self.height, color))
 
         g.set_line_style(width=0.3)
-
-        for i, path in enumerate(self.paths):
-            context.append_path(path)
-
-            if i % self.fade_step == 0:
-                g.set_color("#000", i / float(len(self.paths)))
-            context.stroke()
 
         for particle in self.particles:
             particle.update(self.mouse_x, self.mouse_y)
             g.move_to(particle.prev_x, particle.prev_y)
             g.line_to(particle.x, particle.y)
-
-        self.paths.append(context.copy_path())
-        if len(self.paths) > self.max_path_count:
-            self.paths.popleft()
-
-        g.set_color("#000")
-        g.stroke()
+            g.stroke(particle.color)
 
         self.redraw()
 
@@ -103,7 +94,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 500)
+        window.set_size_request(1000, 650)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
