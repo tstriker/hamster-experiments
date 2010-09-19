@@ -13,7 +13,7 @@ import math
 
 class Scene(graphics.Scene):
     def __init__(self, progress):
-        graphics.Scene.__init__(self)
+        graphics.Scene.__init__(self, scale=True, keep_aspect=True)
         self.progress = progress
 
 
@@ -21,7 +21,7 @@ class Scene(graphics.Scene):
         self.add_child(self.wheel)
         self.add_child(graphics.Circle(50, 50, "#fafafa", x=95, y=95, interactive=True))
 
-        self.ticker = graphics.Label("*tick*", size=24, color="#000", x = 5, opacity=0)
+        self.ticker = graphics.Label("*tick*", size=24, color="#000", x=5, y=220, opacity=0)
         self.ticker.last_degrees = 0
         self.add_child(self.ticker)
 
@@ -49,8 +49,6 @@ class Scene(graphics.Scene):
             self.ticker.animate(opacity=0, duration=0.2)
 
     def on_mouse_move(self, scene, event):
-        self.ticker.y = self.height - self.ticker.height -5
-
         mouse_down = gtk.gdk.BUTTON1_MASK & event.state
         if not mouse_down:
             return
