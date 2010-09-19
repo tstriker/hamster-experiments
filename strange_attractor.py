@@ -23,7 +23,6 @@ class Scene(graphics.Scene):
         self.c = 2.4275403
         self.d = -2.177196
         self.points = 2000
-        self.zoom = 1
 
         self.x, self.y = 0,0
         self.image = None
@@ -38,7 +37,6 @@ class Scene(graphics.Scene):
             self.x, self.y = 0,0
 
         if self.x == 0 and self.y ==0:
-            print self.zoom
             g.fill_area(0,0, self.width, self.height, "#fff")
 
 
