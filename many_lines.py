@@ -52,8 +52,8 @@ class Particle(object):
 
 
 
-        self.x = self.x + self.speed_x * 0.3 #TODO should fix the speed math instead
-        self.y = self.y + self.speed_y * 0.3
+        self.x = self.x + self.speed_x * 0.5 #TODO should fix the speed math instead
+        self.y = self.y + self.speed_y * 0.5
 
 class Scene(graphics.Scene):
     def __init__(self):
@@ -64,7 +64,7 @@ class Scene(graphics.Scene):
         self.particles = []
         self.paths = collections.deque()
 
-        self.particle_count = 100 # these are the flies
+        self.particle_count = 50 # these are the flies
         self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
 
 
@@ -74,8 +74,7 @@ class Scene(graphics.Scene):
 
         if not self.particles:
             for i in range(self.particle_count):
-                #color = (random(), random(), random())
-                color = (0,0,0)
+                color = (random() * 0.8, random() * 0.8, random() * 0.8)
                 self.particles.append(Particle(random() * self.width, random() * self.height, color))
 
         g.set_line_style(width=0.3)
