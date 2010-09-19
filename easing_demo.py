@@ -51,7 +51,7 @@ class Scene(graphics.Scene):
         if not clicked:
             return
 
-        easing = clicked.easing_method()
+        easing = clicked.easing_method
 
         if clicked.left_side:
             self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"), fill="#fff000")
