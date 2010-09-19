@@ -16,6 +16,7 @@ import cairo
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
+        self.set_double_buffered(False)
 
         self.a = 1.4191403
         self.b = -2.2841523
@@ -26,39 +27,39 @@ class Scene(graphics.Scene):
 
         self.x, self.y = 0,0
         self.image = None
+        self.prev_width, self.prev_height = 0, 0
 
-        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
-    def on_mouse_move(self, area, event):
-        self.points = int(event.y / float(self.height) * 30000) + 10000
-        self.zoom = abs((event.x / float(self.width)) * 2 - 1)
-        self.image = None
-        self.x, self.y = 0,0
-        self.redraw()
-
     def on_enter_frame(self, scene, context):
-        if not self.image:
-            self.image = self.window.get_image(0, 0, self.width, self.height)
+        g = graphics.Graphics(context)
 
-        colormap = self.image.get_colormap()
-        color1 = colormap.alloc_color(self.colors.gdk("#000000")).pixel
+        if self.prev_width != self.width or self.prev_height != self.height:
+            self.x, self.y = 0,0
+
+        if self.x == 0 and self.y ==0:
+            print self.zoom
+            g.fill_area(0,0, self.width, self.height, "#fff")
+
 
         for i in range(1000):
             self.x = math.sin(self.a * self.y) - math.cos(self.b * self.x)
             self.y = math.sin(self.c * self.x) - math.cos(self.d * self.y)
 
-            self.image.put_pixel(int(self.x * self.width * self.zoom + self.width / 2),
-                                 int(self.y * self.height * self.zoom + self.height / 2),
-                                 color1)
+            x = int(self.x * self.width * 0.2 + self.width / 2)
+            y = int(self.y * self.height * 0.2  + self.height / 2)
 
-        self.window.draw_image(self.get_style().black_gc, self.image, 0, 0, 0, 0, -1, -1)
+            g.rectangle(x, y, 1, 1)
+
+        g.fill("#000", 0.08)
+
+        self.prev_width, self.prev_height = self.width, self.height
         self.redraw()
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(800, 500)
+        window.set_default_size(800, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         window.add(Scene())
