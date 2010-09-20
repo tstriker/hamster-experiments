@@ -812,30 +812,6 @@ class Sprite(gtk.Object):
 
         context.new_path() #forget about us
 
-    def _on_click(self, button_state):
-        self.emit("on-click", button_state)
-        if self.parent and isinstance(self.parent, Sprite):
-            self.parent._on_click(button_state)
-
-    def _on_mouse_over(self):
-        # scene will call us when there is mouse
-        self.emit("on-mouse-over")
-
-    def _on_mouse_out(self):
-        # scene will call us when there is mouse
-        self.emit("on-mouse-out")
-
-    def _on_drag_start(self, event):
-        # scene will call us when there is mouse
-        self.emit("on-drag-start", event)
-
-    def _on_drag(self, event):
-        # scene will call us when there is mouse
-        self.emit("on-drag", event)
-
-    def _on_drag_finish(self, event):
-        # scene will call us when there is mouse
-        self.emit("on-drag-finish", event)
 
 class BitmapSprite(Sprite):
     """Caches given image data in a surface similar to targets, which ensures
@@ -1402,12 +1378,12 @@ class Scene(gtk.DrawingArea):
                     cursor = gtk.gdk.HAND2
 
             if over != self._mouse_sprite:
-                over._on_mouse_over()
+                over.emit("on-mouse-over")
                 self.emit("on-mouse-over", over)
                 self.redraw()
 
         if self._mouse_sprite and self._mouse_sprite != over:
-            self._mouse_sprite._on_mouse_out()
+            self._mouse_sprite.emit("on-mouse-out")
             self.emit("on-mouse-out", self._mouse_sprite)
             self.redraw()
 
@@ -1450,7 +1426,7 @@ class Scene(gtk.DrawingArea):
                 self._drag_sprite.drag_x = x1 - self._drag_sprite.x
                 self._drag_sprite.drag_y = y1 - self._drag_sprite.y
 
-                self._drag_sprite._on_drag_start(event)
+                self._drag_sprite.emit("on-drag-start", event)
                 self.emit("on-drag-start", self._drag_sprite, event)
                 self.redraw()
 
@@ -1471,7 +1447,7 @@ class Scene(gtk.DrawingArea):
 
 
                 self._drag_sprite.x, self._drag_sprite.y = new_x, new_y
-                self._drag_sprite._on_drag(event)
+                self._drag_sprite.emit("on-drag", event)
                 self.emit("on-drag", self._drag_sprite, event)
                 self.redraw()
 
@@ -1511,13 +1487,13 @@ class Scene(gtk.DrawingArea):
             target = self.get_sprite_at_position(event.x, event.y)
 
             if target:
-                target._on_click(event.state)
+                target.emit("on-click", event)
 
             self.emit("on-click", event, target)
             self.redraw()
 
         if self._drag_sprite:
-            self._drag_sprite._on_drag_finish(event)
+            self._drag_sprite.emit("on-drag-finish", event)
             self.emit("on-drag-finish", self._drag_sprite, event)
             self.redraw()
 
