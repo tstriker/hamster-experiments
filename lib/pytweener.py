@@ -103,8 +103,8 @@ class Tweener(object):
                     self.current_tweens[obj].remove(tween)
                     if tween.on_complete: tween.on_complete(tween.target)
 
-            if not self.current_tweens[tween.target]:
-                del self.current_tweens[tween.target]
+            if not self.current_tweens[obj]:
+                del self.current_tweens[obj]
 
 
 class Tween(object):
