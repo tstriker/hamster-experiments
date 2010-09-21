@@ -1107,7 +1107,7 @@ class Scene(gtk.DrawingArea):
         "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-    def __init__(self, interactive = True, framerate = 80,
+    def __init__(self, interactive = True, framerate = 60,
                        background_color = None, scale = False, keep_aspect = True):
         gtk.DrawingArea.__init__(self)
         if interactive:
