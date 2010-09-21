@@ -594,6 +594,8 @@ class Sprite(gtk.Object):
     __gsignals__ = {
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag-start": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -1099,8 +1101,8 @@ class Scene(gtk.DrawingArea):
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
 
         "on-mouse-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT)),
+        "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT)),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
 
@@ -1471,21 +1473,23 @@ class Scene(gtk.DrawingArea):
 
 
     def __on_button_press(self, area, event):
+        target = self.get_sprite_at_position(event.x, event.y)
         self.__drag_start_x, self.__drag_start_y = event.x, event.y
 
-        self._drag_sprite = self.get_sprite_at_position(event.x, event.y)
+        self._drag_sprite = target
         if self._drag_sprite and self._drag_sprite.draggable == False:
             self._drag_sprite = None
 
+        if target:
+            target.emit("on-mouse-down", event)
         self.emit("on-mouse-down", event)
 
     def __on_button_release(self, area, event):
         # trying to not emit click and drag-finish at the same time
+        target = self.get_sprite_at_position(event.x, event.y)
         click = not self.__drag_started or (event.x - self.__drag_start_x) ** 2 + \
                                            (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
-            target = self.get_sprite_at_position(event.x, event.y)
-
             if target:
                 target.emit("on-click", event)
 
@@ -1502,6 +1506,8 @@ class Scene(gtk.DrawingArea):
 
         self.__drag_started = False
         self.__drag_start_x, self__drag_start_y = None, None
+        if target:
+            target.emit("on-mouse-up", event)
         self.emit("on-mouse-up", event)
 
     def __on_scroll(self, area, event):
