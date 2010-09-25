@@ -172,6 +172,11 @@ class Graphics(object):
 
 
     @staticmethod
+    def _clip(context): context.clip()
+    def clip(self):
+        self._add_instruction(self._clip)
+
+    @staticmethod
     def _translate(context, x, y): context.translate(x, y)
     def translate(self, x, y):
         self._add_instruction(self._translate, x, y)
