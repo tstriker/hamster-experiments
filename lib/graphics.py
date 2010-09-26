@@ -744,7 +744,7 @@ class Sprite(gtk.Object):
     def get_scene(self):
         """returns class:`Scene` the sprite belongs to"""
         if hasattr(self, 'parent') and self.parent:
-            if isinstance(self.parent, Scene):
+            if isinstance(self.parent, Sprite) == False:
                 return self.parent
             else:
                 return self.parent.get_scene()
