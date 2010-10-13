@@ -36,21 +36,20 @@ class Slice9(graphics.Sprite):
             ctx.fill()
             return img
 
-
-        self.corners = [
-            graphics.BitmapSprite(get_slice(0, 0, self.left, self.top)),
-            graphics.BitmapSprite(get_slice(self.width - self.right, 0, self.right, self.top)),
-            graphics.BitmapSprite(get_slice(0, self.height - self.bottom, self.left, self.bottom)),
-            graphics.BitmapSprite(get_slice(self.width - self.right, self.height - self.bottom, self.right, self.bottom)),
-        ]
-        self.add_child(*self.corners)
-
-
         exes = (0, x1, x2, image_width)
         ys = (0, y1, y2, image_height)
         for y1, y2 in zip(ys, ys[1:]):
             for x1, x2 in zip(exes, exes[1:]):
                 self.slices.append(get_slice(x1, y1, x2 - x1, y2 - y1))
+
+        self.corners = [
+            graphics.BitmapSprite(self.slices[0]),
+            graphics.BitmapSprite(self.slices[2]),
+            graphics.BitmapSprite(self.slices[6]),
+            graphics.BitmapSprite(self.slices[8]),
+        ]
+        self.add_child(*self.corners)
+
 
         self.connect("on-render", self.on_render)
 
