@@ -14,68 +14,53 @@ import gtk, cairo
 from lib import graphics
 
 class Slice9(graphics.Sprite):
-    def __init__(self, file_name, x1, x2, y1, y2):
+    def __init__(self, file_name, x1, x2, y1, y2, width = None, height = None):
         graphics.Sprite.__init__(self)
 
-        self.cols = (x1, x2)
-        self.rows = (y1, y2)
+        image = cairo.ImageSurface.create_from_png(file_name)
+        image_width, image_height = image.get_width(), image.get_height()
 
-        img = cairo.ImageSurface.create_from_png(file_name)
-        img_w, img_h = img.get_width(), img.get_height()
+        self.width = width or image_width
+        self.height = height or image_height
 
-        img_content = img.get_content()
+        self.left, self.right = x1, image_width - x2
+        self.top, self.bottom = y1, image_height - y2
 
-        self.support_alpha = False
-        if img_content in (cairo.CONTENT_ALPHA, cairo.CONTENT_COLOR_ALPHA):
-            self.support_alpha = True
-
-
+        image_content = image.get_content()
+        self.slices = []
         def get_slice(x, y, w, h):
-            image = self._get_blank_image(w, h)
-            ctx = cairo.Context(image)
-            ctx.set_source_surface(img, -x, -y)
+            img = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+            ctx = cairo.Context(img)
+            ctx.set_source_surface(image, -x, -y)
             ctx.rectangle(0, 0, w, h)
             ctx.fill()
-            return image
+            return img
 
-        self.slices = []
-        exes = (0, x1, x2, img_w)
-        ys = (0, y1, y2, img_h)
 
+        self.corners = [
+            graphics.BitmapSprite(get_slice(0, 0, self.left, self.top)),
+            graphics.BitmapSprite(get_slice(self.width - self.right, 0, self.right, self.top)),
+            graphics.BitmapSprite(get_slice(0, self.height - self.bottom, self.left, self.bottom)),
+            graphics.BitmapSprite(get_slice(self.width - self.right, self.height - self.bottom, self.right, self.bottom)),
+        ]
+        self.add_child(*self.corners)
+
+
+        exes = (0, x1, x2, image_width)
+        ys = (0, y1, y2, image_height)
         for y1, y2 in zip(ys, ys[1:]):
             for x1, x2 in zip(exes, exes[1:]):
-                x, y, w, h = x1, y1, x2 - x1, y2 - y1
-                slice = get_slice(x, y, w, h)
-                self.slices.append(dict(image=slice, x=x, y=y, w=w, h=h))
-
-        self.width = 500
-        self.height = 100
-
-        self.center_graphics_style = "pattern"
-        self.center_color = None
-        self.center_bitmap = None
+                self.slices.append(get_slice(x1, y1, x2 - x1, y2 - y1))
 
         self.connect("on-render", self.on_render)
 
-
-    #todo: get feedback on this bug from Toms
-    def _get_blank_image(self, width, height):
-        return cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-        """
-        if (self.support_alpha):
-            return cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-        else:
-            return cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
-        """
+    def get_center_bounds(self):
+        return (self.left,
+                self.top,
+                self.width - self.left - self.right,
+                self.height - self.top - self.bottom)
 
     def on_render(self, sprite):
-        def put_image(image, x, y):
-            self.graphics.save_context()
-            self.graphics.translate(x, y)
-            self.graphics.set_source_surface(image)
-            self.graphics.paint()
-            self.graphics.restore_context()
-
         def put_pattern(image, x, y, w, h):
             pattern = cairo.SurfacePattern(image)
             pattern.set_extend(cairo.EXTEND_REPEAT)
@@ -86,55 +71,43 @@ class Slice9(graphics.Sprite):
             self.graphics.fill()
             self.graphics.restore_context()
 
-
-        # top left
-        put_image(self.slices[0]['image'], 0, 0)
-
         # top center - repeat width
-        put_pattern(self.slices[1]['image'],
-                    self.slices[1]['x'],
-                    self.slices[1]['y'],
-                    self.width - self.slices[2]['w'] - self.slices[1]['x'],
-                    self.slices[1]['h'])
+        put_pattern(self.slices[1],
+                    self.left, 0,
+                    self.width - self.left - self.right, self.top)
 
         # top right
-        put_image(self.slices[2]['image'],
-                  self.width - self.slices[2]['w'],
-                  0)
+        self.corners[1].x = self.width - self.right
+
 
         # left - repeat height
-        put_pattern(self.slices[3]['image'],
-                    self.slices[3]['x'],
-                    self.slices[3]['y'],
-                    self.slices[3]['w'],
-                    self.height - self.slices[6]['h'] - self.slices[3]['y'])
+        put_pattern(self.slices[3],
+                    0, self.top,
+                    self.left, self.height - self.top - self.bottom)
 
         # center - repeat width and height
-        put_pattern(self.slices[4]['image'],
-                    self.slices[4]['x'],
-                    self.slices[4]['y'],
-                    self.width - self.slices[5]['w'] - self.slices[4]['x'],
-                    self.height - self.slices[7]['h'] - self.slices[4]['y'])
+        put_pattern(self.slices[4],
+                    self.top, self.left,
+                    self.width - self.left - self.right,
+                    self.height - self.top - self.bottom)
 
         # right - repeat height
-        put_pattern(self.slices[5]['image'],
-                    self.width - self.slices[5]['w'],
-                    self.slices[5]['y'],
-                    self.slices[5]['w'],
-                    self.height - self.slices[8]['h'] - self.slices[5]['y'])
+        put_pattern(self.slices[5],
+                    self.width - self.right, self.top,
+                    self.right, self.height - self.top - self.bottom)
 
         # bottom left
-        put_image(self.slices[6]['image'], 0, self.height - self.slices[6]['h'])
+        self.corners[2].y = self.height - self.bottom
 
         # bottom center - repeat width
-        put_pattern(self.slices[7]['image'],
-                    self.slices[7]['x'],
-                    self.height - self.slices[7]['h'],
-                    self.width - self.slices[8]['w'] - self.slices[7]['x'],
-                    self.slices[7]['h'])
+        put_pattern(self.slices[7],
+                    self.left, self.height - self.bottom,
+                    self.width - self.left - self.right, self.bottom)
 
         # bottom right
-        put_image(self.slices[8]['image'], self.width - self.slices[8]['w'], self.height - self.slices[8]['h'])
+        self.corners[3].x = self.width - self.right
+        self.corners[3].y = self.height - self.bottom
+
 
 
 
@@ -146,13 +119,14 @@ class Scene(graphics.Scene):
         self.connect("on-enter-frame", self.on_enter_frame)
 
     def on_enter_frame(self, scene, context):
-        self.slice.width = self.width
-        self.slice.height = self.height
+        self.slice.x, self.slice.y = 5, 5
+        self.slice.width = self.width - 10
+        self.slice.height = self.height - 10
 
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(640, 516)
+        window.set_default_size(640, 516)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
