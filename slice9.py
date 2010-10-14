@@ -86,7 +86,7 @@ class Slice9(graphics.Sprite):
 
         # center - repeat width and height
         put_pattern(self.slices[4],
-                    self.top, self.left,
+                    self.left, self.top,
                     self.width - self.left - self.right,
                     self.height - self.top - self.bottom)
 
