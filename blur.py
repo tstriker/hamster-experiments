@@ -37,7 +37,7 @@ class Canvas(graphics.Scene):
         self.two_tile_random(context)
 
         g.move_to(0,0)
-        g.show_text("Hello", size=48, color="#33a")
+        g.show_label("Hello", size=48, color="#33a")
 
         # creating a in-memory image of current context
         image_surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.width, self.height)
