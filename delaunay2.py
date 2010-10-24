@@ -136,12 +136,12 @@ class Canvas(graphics.Scene):
 
 
     def on_enter_frame(self, scene, context):
-        c_graphics = graphics.Graphics(context)
-        c_graphics.set_line_style(width = 0.5)
+        g = graphics.Graphics(context)
+        g.set_line_style(width = 0.5)
 
         self.triangulate()
 
-        c_graphics.set_color("#666")
+        g.set_color("#666")
         for edge in self.edges:
             context.move_to(edge.point1.x, edge.point1.y)
             context.line_to(edge.point2.x, edge.point2.y)
@@ -151,13 +151,13 @@ class Canvas(graphics.Scene):
             context.save()
             context.rotate((edge.point2 - edge.point1).heading())
             context.move_to(-5, 0)
-            c_graphics.show_text(str(edge.left_face))
+            g.show_label(str(edge.left_face))
             context.restore()
 
             context.save()
             context.rotate((edge.point1 - edge.point2).heading())
             context.move_to(-5, 0)
-            c_graphics.show_text(str(edge.right_face))
+            g.show_label(str(edge.right_face))
             context.restore()
 
             context.restore()
@@ -166,12 +166,12 @@ class Canvas(graphics.Scene):
 
         if self.draw_circles:
             for centre in self.centres:
-                c_graphics.set_color("#f00", 0.1)
+                g.set_color("#f00", 0.1)
                 context.arc(centre.x, centre.y, centre.radius, 0, 2.0 * math.pi)
                 context.fill_preserve()
                 context.stroke()
 
-                c_graphics.set_color("#a00")
+                g.set_color("#a00")
                 context.rectangle(centre.x-1, centre.y-1, 2, 2)
                 context.stroke()
 
@@ -287,7 +287,7 @@ class Canvas(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 500)
+        window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
 
