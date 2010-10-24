@@ -13,7 +13,7 @@ import math
 
 class Ellipse(graphics.Sprite):
     def __init__(self, x, y, width, height):
-        graphics.Sprite.__init__(self, x = x, y = y)
+        graphics.Sprite.__init__(self, x = x, y = y, snap_to_pixel = False)
         self.width, self.height = width, height
         self.connect("on-render", self.on_render)
 
