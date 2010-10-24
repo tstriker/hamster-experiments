@@ -14,7 +14,6 @@ class DropShadow(graphics.Sprite):
     def __init__(self, sprite):
         graphics.Sprite.__init__(self)
         self.original_sprite = sprite
-
         self.us = False
         #self.original_sprite.connect("on-render", self.on_prev_sprite_render)
 
@@ -31,7 +30,7 @@ class DropShadow(graphics.Sprite):
         self.us = True
 
         # first we will measure extents (lame)
-        image_surface = cairo.ImageSurface(cairo.FORMAT_A1, 2000, 2000)
+        image_surface = cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)
         image_context = gtk.gdk.CairoContext(cairo.Context(image_surface))
         self.original_sprite._draw(image_context)
 
@@ -112,7 +111,6 @@ class SomeShape(graphics.Sprite):
 
         self.graphics.rectangle(0, 0, label.width, label.height)
         self.graphics.stroke("#fff", 0)
-
 
         #self.graphics.fill_area(5, 5, 80, 80, "#fff")
 
