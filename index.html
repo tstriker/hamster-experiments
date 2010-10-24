@@ -63,7 +63,7 @@ adding and manipulating sprites.</p>
 <h2>The Scene<a class="headerlink" href="#the-scene" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="graphics.Scene">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=80</em>, <em>background_color=None</em>, <em>scale=False</em>, <em>keep_aspect=True</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Scene</tt><big>(</big><em>interactive=True</em>, <em>framerate=60</em>, <em>background_color=None</em>, <em>scale=False</em>, <em>keep_aspect=True</em><big>)</big><a class="headerlink" href="#graphics.Scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drawing area for displaying sprites.
 Add sprites to the Scene by calling <a class="reference internal" href="#graphics.Scene.add_child" title="graphics.Scene.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a>.
 Scene is descendant of <a class="reference external" href="http://www.pygtk.org/docs/pygtk/class-gtkdrawingarea.html">gtk.DrawingArea</a>
@@ -314,6 +314,19 @@ in on-drag-start to adjust drag point</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Sprite.from_scene_coords">
+<tt class="descname">from_scene_coords</tt><big>(</big><em>x=0</em>, <em>y=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite.from_scene_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts x, y given in the scene coordinates to sprite&#8217;s local ones
+coordinates</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.get_matrix">
+<tt class="descname">get_matrix</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Sprite.get_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>return sprite&#8217;s current transformation matrix</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="graphics.Sprite.get_scene">
 <tt class="descname">get_scene</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Sprite.get_scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns class:<cite>Scene</cite> the sprite belongs to</p>
@@ -401,6 +414,12 @@ to rounding errors in positioning.</p>
 <dt id="graphics.Sprite.sprites">
 <tt class="descname">sprites</tt><a class="headerlink" href="#graphics.Sprite.sprites" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of children sprites. Use <a class="reference internal" href="#graphics.Sprite.add_child" title="graphics.Sprite.add_child"><tt class="xref py py-func docutils literal"><span class="pre">add_child()</span></tt></a> to add sprites</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Sprite.to_scene_coords">
+<tt class="descname">to_scene_coords</tt><big>(</big><em>x=0</em>, <em>y=0</em><big>)</big><a class="headerlink" href="#graphics.Sprite.to_scene_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts x, y from sprite&#8217;s local coordinates to scene coordinates</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -492,6 +511,11 @@ for detailed description of the cairo drawing functions.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.clip">
+<tt class="descname">clip</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.clip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.close_path">
 <tt class="descname">close_path</tt><big>(</big><big>)</big><a class="headerlink" href="#graphics.Graphics.close_path" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -542,6 +566,11 @@ equilateral polygons</p>
 <dl class="method">
 <dt id="graphics.Graphics.line_to">
 <tt class="descname">line_to</tt><big>(</big><em>x</em>, <em>y=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.line_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.mask">
+<tt class="descname">mask</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#graphics.Graphics.mask" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -596,6 +625,16 @@ fill.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.set_font_face">
+<tt class="descname">set_font_face</tt><big>(</big><em>face</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_font_face" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.set_font_size">
+<tt class="descname">set_font_size</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_font_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.set_line_style">
 <tt class="descname">set_line_style</tt><big>(</big><em>width=None</em>, <em>dash=None</em>, <em>dash_offset=0</em><big>)</big><a class="headerlink" href="#graphics.Graphics.set_line_style" title="Permalink to this definition">¶</a></dt>
 <dd><p>change width and dash of a line</p>
@@ -617,6 +656,12 @@ fill.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="graphics.Graphics.show_label">
+<tt class="descname">show_label</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>display text with system&#8217;s default font</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="graphics.Graphics.show_layout">
 <tt class="descname">show_layout</tt><big>(</big><em>text</em>, <em>font_desc</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>width=-1</em>, <em>wrap=None</em>, <em>ellipsize=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>display text. font_desc is string of pango font description
@@ -626,8 +671,8 @@ a class:Label object</p>
 
 <dl class="method">
 <dt id="graphics.Graphics.show_text">
-<tt class="descname">show_text</tt><big>(</big><em>text</em>, <em>size=None</em>, <em>color=None</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
-<dd><p>display text with system&#8217;s default font</p>
+<tt class="descname">show_text</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#graphics.Graphics.show_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function is most likely to change</p>
 </dd></dl>
 
 <dl class="method">
@@ -639,6 +684,12 @@ a class:Label object</p>
 <dt id="graphics.Graphics.stroke_preserve">
 <tt class="descname">stroke_preserve</tt><big>(</big><em>color=None</em>, <em>alpha=1</em><big>)</big><a class="headerlink" href="#graphics.Graphics.stroke_preserve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="graphics.Graphics.text_path">
+<tt class="descname">text_path</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#graphics.Graphics.text_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function is most likely to change</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="graphics.Graphics.translate">
@@ -741,7 +792,7 @@ Image data can be either <tt class="xref py py-class docutils literal"><span cla
 
 <dl class="class">
 <dt id="graphics.Rectangle">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Rectangle</tt><big>(</big><em>w</em>, <em>h</em>, <em>corner_radius=0</em>, <em>fill=None</em>, <em>stroke=None</em>, <em>line_width=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Rectangle" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="graphics.Rectangle.corner_radius">
 <tt class="descname">corner_radius</tt><a class="headerlink" href="#graphics.Rectangle.corner_radius" title="Permalink to this definition">¶</a></dt>
@@ -812,7 +863,7 @@ will automatically close path.</p>
 
 <dl class="class">
 <dt id="graphics.Label">
-<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">graphics.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>size=10</em>, <em>color=None</em>, <em>alignment=&lt;enum PANGO_ALIGN_LEFT of type PangoAlignment&gt;</em>, <em>font_face=None</em>, <em>max_width=None</em>, <em>wrap=None</em>, <em>ellipsize=None</em>, <em>outline_color=None</em>, <em>outline_width=5</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#graphics.Label" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="graphics.Label.alignment">
 <tt class="descname">alignment</tt><a class="headerlink" href="#graphics.Label.alignment" title="Permalink to this definition">¶</a></dt>
@@ -836,6 +887,39 @@ ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]</p>
 <dt id="graphics.Label.font_desc">
 <tt class="descname">font_desc</tt><a class="headerlink" href="#graphics.Label.font_desc" title="Permalink to this definition">¶</a></dt>
 <dd><p>pango.FontDescription, default is the system&#8217;s font</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.font_face">
+<tt class="descname">font_face</tt><a class="headerlink" href="#graphics.Label.font_face" title="Permalink to this definition">¶</a></dt>
+<dd><p>label&#8217;s <a class="reference external" href="http://www.cairographics.org/documentation/pycairo/2/reference/text.html#cairo.FontFace">FontFace</a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.max_width">
+<tt class="descname">max_width</tt><a class="headerlink" href="#graphics.Label.max_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum  width of the label in pixels. if specified, the label
+will be wrapped or ellipsized depending on the wrap and ellpisize settings</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="graphics.Label.measure">
+<tt class="descname">measure</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#graphics.Label.measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>measures given text with label&#8217;s font and size.
+returns width, height and ascent. Ascent&#8217;s null in case if the label
+does not have font face specified (and is thusly using pango)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.outline_color">
+<tt class="descname">outline_color</tt><a class="headerlink" href="#graphics.Label.outline_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>color for text outline (currently works only with a custom font face)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="graphics.Label.outline_width">
+<tt class="descname">outline_width</tt><a class="headerlink" href="#graphics.Label.outline_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>text outline thickness (currently works only with a custom font face)</p>
 </dd></dl>
 
 <dl class="attribute">
