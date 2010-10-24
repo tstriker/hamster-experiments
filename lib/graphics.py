@@ -403,7 +403,6 @@ class Graphics(object):
     @staticmethod
     def _show_text(context, text): context.show_text(text)
     def show_text(self, text):
-        """this function is most likely to change"""
         self._add_instruction(self._show_text, text)
 
     @staticmethod
