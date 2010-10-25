@@ -735,8 +735,8 @@ class Sprite(gtk.Object):
                 return
             self.__dict__[name] = val
 
-            if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'opacity', 'visible', 'z_order',
-                            '_pre_drag_x', '_pre_drag_y', 'drag_x', 'drag_y'):
+            if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y',
+                            'opacity', 'visible', 'z_order', 'drag_x', 'drag_y'):
                 self.__dict__["_sprite_dirty"] = True
 
             if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
@@ -1735,10 +1735,7 @@ class Scene(gtk.DrawingArea):
             if drag_started and not self.__drag_started:
                 self._drag_sprite = self._mouse_down_sprite
 
-                self._drag_sprite.drag_x, self._drag_sprite.drag_y = self._drag_sprite.from_scene_coords(self.__drag_start_x,
-                                                                                                         self.__drag_start_y)
-                self._drag_sprite._pre_drag_x, self._drag_sprite._pre_drag_y = self._drag_sprite.to_scene_coords(self._drag_sprite.drag_x,
-                                                                                                                 self._drag_sprite.drag_y)
+                self._drag_sprite.drag_x, self._drag_sprite.drag_y = self._drag_sprite.x, self._drag_sprite.y
 
                 self._drag_sprite.emit("on-drag-start", event)
                 self.emit("on-drag-start", self._drag_sprite, event)
@@ -1749,11 +1746,12 @@ class Scene(gtk.DrawingArea):
 
             if self.__drag_started:
                 diff_x, diff_y = event.x - self.__drag_start_x, event.y - self.__drag_start_y
+                if isinstance(self._drag_sprite.parent, Sprite):
+                    matrix = self._drag_sprite.parent.get_matrix()
+                    matrix.invert()
+                    diff_x, diff_y = matrix.transform_distance(diff_x, diff_y)
 
-                self._drag_sprite.x, self._drag_sprite.y = self._drag_sprite.parent.from_scene_coords(self._drag_sprite._pre_drag_x + diff_x, \
-                                                                                                      self._drag_sprite._pre_drag_y + diff_y)
-                self._drag_sprite.x = int(self._drag_sprite.x  - self._drag_sprite.drag_x)
-                self._drag_sprite.y = int(self._drag_sprite.y - self._drag_sprite.drag_y)
+                self._drag_sprite.x, self._drag_sprite.y = self._drag_sprite.drag_x + diff_x, self._drag_sprite.drag_y + diff_y
 
                 self._drag_sprite.emit("on-drag", event)
                 self.emit("on-drag", self._drag_sprite, event)
