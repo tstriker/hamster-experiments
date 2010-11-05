@@ -422,18 +422,20 @@ class Graphics(object):
         context.save()
         context.identity_matrix()
 
-        if instruction in (self._fill, self._fill_preserve):
-            new_extents = context.path_extents()
-        else:
-            new_extents = context.stroke_extents()
+        path = context.copy_path()
+        if str(path):
+            if instruction in (self._fill, self._fill_preserve):
+                new_extents = context.path_extents()
+            else:
+                new_extents = context.stroke_extents()
 
-        self.extents = self.extents or new_extents
-        self.extents = (min(self.extents[0], new_extents[0]),
-                        min(self.extents[1], new_extents[1]),
-                        max(self.extents[2], new_extents[2]),
-                        max(self.extents[3], new_extents[3]))
+            self.extents = self.extents or new_extents
+            self.extents = (min(self.extents[0], new_extents[0]),
+                            min(self.extents[1], new_extents[1]),
+                            max(self.extents[2], new_extents[2]),
+                            max(self.extents[3], new_extents[3]))
 
-        self.paths.append(context.copy_path())
+            self.paths.append(path)
 
         context.restore()
 
