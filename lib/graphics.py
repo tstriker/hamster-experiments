@@ -955,12 +955,12 @@ class BitmapSprite(Sprite):
 
         if not self._surface:
             # caching image on surface similar to the target
-            self._surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
+            surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
                                                                self.width,
                                                                self.height)
 
 
-            local_context = gtk.gdk.CairoContext(cairo.Context(self._surface))
+            local_context = gtk.gdk.CairoContext(cairo.Context(surface))
             if isinstance(self.image_data, gtk.gdk.Pixbuf):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
@@ -968,9 +968,10 @@ class BitmapSprite(Sprite):
             local_context.paint()
 
             # add instructions with the resulting surface
-            self.graphics.set_source_surface(self._surface)
+            self.graphics.set_source_surface(surface)
             self.graphics.paint()
             self.graphics.rectangle(0, 0, self.width, self.height)
+            self._surface = surface
 
 
         Sprite._draw(self,  context, opacity)
