@@ -782,6 +782,20 @@ class Sprite(gtk.Object):
             self.sprites.remove(sprite)
             sprite.parent = None
 
+    def bring_to_front(self):
+        """adjusts sprite's z-order so that the sprite is on top of it's
+        siblings"""
+        if not self.parent:
+            return
+        self.z_order = self.parent.sprites[-1].z_order + 1
+
+    def send_to_back(self):
+        """adjusts sprite's z-order so that the sprite is behind it's
+        siblings"""
+        if not self.parent:
+            return
+        self.z_order = self.parent.sprites[0].z_order - 1
+
     def check_hit(self, x, y):
         """check if the given coordinates are inside the sprite's fill or stroke
            path"""
