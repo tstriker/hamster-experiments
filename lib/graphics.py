@@ -80,6 +80,68 @@ class Colors(object):
 
 Colors = Colors() # this is a static class, so an instance will do
 
+class Geometry(object):
+    """geometry related objects"""
+    class Rectangle(object):
+        def __init__(self, x=0, y=0, w=0, h=0):
+            if isinstance(x, geom.Rectangle):
+                # allow cloning rectangles rect = Rectangle(rect)
+                self.x, self.y, self.w, self.h = x.x, x.y, x.w, x,h
+            else:
+                self.x, self.y, self.w, self.h = x, y, w, h
+
+        @property
+        def left(self): return self.x
+        @left.setter
+        def left(self, val):
+            self.w, self.x = self.w + val - self.x, val
+            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
+
+        @property
+        def right(self): return self.x + self.w
+        @right.setter
+        def right(self, val):
+            self.w = val - self.x
+            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
+
+
+        @property
+        def top(self): return self.y
+        @top.setter
+        def top(self, val):
+            self.h, self.y = self.h + val - self.y, val
+            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
+
+        @property
+        def bottom(self): return self.y + self.h
+        @bottom.setter
+        def bottom(self, val):
+            self.h = val - self.y
+            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
+
+
+        def size(self):
+            return self.w * self.h
+
+        def union(self, rect2):
+            x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
+            y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
+            return geom.Rectangle(x, y, x2-x, y2-y)
+
+        def intersection(self, rect2):
+            """returns intersecting area of two rectangles or None if rectangles are not
+            intersecting"""
+            x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
+            y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
+
+            if x2 < x or y2 < y:
+                return None
+            else:
+                return geom.Rectangle(x, y, x2-x, y2-y)
+
+geom = Geometry()
+
+
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
        operations on context instantly. Otherwise queues up the drawing
@@ -1341,7 +1403,7 @@ class Rectangle(Sprite):
 
     def on_render(self, sprite):
         self.graphics.set_line_style(width = self.line_width)
-        self.graphics.rectangle(0.5, 0.5, self.width, self.height, self.corner_radius)
+        self.graphics.rectangle(0, 0, self.width, self.height, self.corner_radius)
         self.graphics.fill_stroke(self.fill, self.stroke, self.line_width)
 
 
@@ -1803,8 +1865,13 @@ class Scene(gtk.DrawingArea):
         self.emit("on-mouse-down", event)
 
     def __on_button_release(self, area, event):
-        # trying to not emit click and drag-finish at the same time
         target = self.get_sprite_at_position(event.x, event.y)
+
+        if target:
+            target.emit("on-mouse-up", event)
+        self.emit("on-mouse-up", event)
+
+        # trying to not emit click and drag-finish at the same time
         click = not self.__drag_started or (event.x - self.__drag_start_x) ** 2 + \
                                            (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
@@ -1825,9 +1892,6 @@ class Scene(gtk.DrawingArea):
 
         self.__drag_started = False
         self.__drag_start_x, self__drag_start_y = None, None
-        if target:
-            target.emit("on-mouse-up", event)
-        self.emit("on-mouse-up", event)
 
     def __on_scroll(self, area, event):
         self.emit("on-scroll", event)
