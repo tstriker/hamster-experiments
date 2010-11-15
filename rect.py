@@ -2,7 +2,7 @@
 # - coding: utf-8 -
 # Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
 
-"""Base template"""
+"""Using the geom.Rectangle object to perform operations on rectangles."""
 
 
 import gtk
@@ -47,7 +47,10 @@ class Scene(graphics.Scene):
 
         union = self.rect.union(self.rect2)
         g.rectangle(union.x, union.y, union.w, union.h)
-        g.fill("#fff000", 0.3)
+        if self.rect.contains(self.rect2) or self.rect2.contains(self.rect):
+            g.fill("#ff00ff", 0.3)
+        else:
+            g.fill("#fff000", 0.3)
 
         inter = self.rect.intersection(self.rect2)
         if inter:

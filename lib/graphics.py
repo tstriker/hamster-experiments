@@ -139,6 +139,19 @@ class Geometry(object):
             else:
                 return geom.Rectangle(x, y, x2-x, y2-y)
 
+        def contains(self, target):
+            """checks if our rectangle contains the target. Target can be
+               either another rectangle, x, y coordinates or an (x,y) tuple
+            """
+            if isinstance(target, geom.Rectangle):
+                return all((self.left < target.left,
+                            self.right > target.right,
+                            self.top < target.top,
+                            self.bottom > target.bottom))
+            else:
+                return self.left < target[0] < self.right and \
+                       self.top < target[1] < self.bottom
+
 geom = Geometry()
 
 
