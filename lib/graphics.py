@@ -725,8 +725,7 @@ class Sprite(gtk.Object):
         "on-drag-start": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        "on-move": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
@@ -804,6 +803,9 @@ class Sprite(gtk.Object):
 
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
+        self._matrix = None
+
+
     def __setattr__(self, name, val):
         try:
             setter = self.__class__.__dict__[name].__set__
@@ -811,6 +813,9 @@ class Sprite(gtk.Object):
             if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
                 return
             self.__dict__[name] = val
+
+            if name in ('x', 'y', 'rotation', 'scale_x', 'scale_y'):
+                self.__dict__['_matrix'] = None
 
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y',
                             'opacity', 'visible', 'z_order', 'drag_x', 'drag_y'):
@@ -826,8 +831,6 @@ class Sprite(gtk.Object):
             elif name == 'z_order' and self.__dict__.get('parent'):
                 self.parent._sort()
 
-            if name in ('x', 'y'):
-                self.emit("on-move")
         else:
             setter(self, val)
 
@@ -837,6 +840,9 @@ class Sprite(gtk.Object):
     def _sort(self):
         """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
+        scene = self.get_scene()
+        if scene:
+            scene._sprites_flat = []
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
@@ -844,7 +850,7 @@ class Sprite(gtk.Object):
             if sprite == self:
                 raise Exception("trying to add sprite to itself")
             if sprite.parent:
-                sprite.x, sprite.y = self.from_scene_coords(*sprite.to_scene_coords(0, 0))
+                sprite.x, sprite.y = self.from_scene_coords(*sprite.to_scene_coords())
                 sprite.parent.remove_child(sprite)
 
             self.sprites.append(sprite)
@@ -924,22 +930,39 @@ class Sprite(gtk.Object):
         if scene:
             scene.animate(self, duration, easing, on_complete, on_update, **kwargs)
 
+    def get_local_matrix(self):
+        if not self._matrix:
+            self._matrix = cairo.Matrix()
+
+            if self.snap_to_pixel:
+                self._matrix.translate(int(self.x) + int(self.pivot_x), int(self.y) + int(self.pivot_y))
+            else:
+                self._matrix.translate(self.x + self.pivot_x, self.y + self.pivot_y)
+
+            if self.rotation:
+                self._matrix.rotate(self.rotation)
+
+
+            if self.snap_to_pixel:
+                self._matrix.translate(int(-self.pivot_x), int(-self.pivot_y))
+            else:
+                self._matrix.translate(-self.pivot_x, -self.pivot_y)
+
+
+            if self.scale_x != 1 or self.scale_y != 1:
+                self._matrix.scale(self.scale_x, self.scale_y)
+
+        return cairo.Matrix() * self._matrix
+
+
     def get_matrix(self):
         """return sprite's current transformation matrix"""
-        chain = []
-        sprite = self
-        while sprite and isinstance(sprite, Scene) == False: #go up to the one before the last one
-            chain.append(sprite)
-            sprite = sprite.parent
 
-        matrix = cairo.Matrix()
-        for sprite in reversed(chain):
-            matrix.translate(sprite.x + sprite.pivot_x, sprite.y + sprite.pivot_y)
-            matrix.rotate(sprite.rotation)
-            matrix.translate(-sprite.pivot_x, -sprite.pivot_y)
-            matrix.scale(sprite.scale_x, sprite.scale_y)
+        if self.parent:
+            return self.parent.get_matrix() * self.get_local_matrix()
+        else:
+            return self.get_local_matrix()
 
-        return matrix
 
     def from_scene_coords(self, x=0, y=0):
         """Converts x, y given in the scene coordinates to sprite's local ones
@@ -964,33 +987,13 @@ class Sprite(gtk.Object):
             self.__dict__["_sprite_dirty"] = False
 
 
-        if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
-            context.save()
 
-            if any((self.x, self.y, self.pivot_x, self.pivot_y)):
-                if self.snap_to_pixel:
-                    context.translate(int(self.x) + int(self.pivot_x), int(self.y) + int(self.pivot_y))
-                else:
-                    context.translate(self.x + self.pivot_x, self.y + self.pivot_y)
-
-            if self.rotation:
-                context.rotate(self.rotation)
-
-            if self.pivot_x or self.pivot_y:
-                if self.snap_to_pixel:
-                    context.translate(int(-self.pivot_x), int(-self.pivot_y))
-                else:
-                    context.translate(-self.pivot_x, -self.pivot_y)
-
-            if self.scale_x != 1 or self.scale_y != 1:
-                context.scale(self.scale_x, self.scale_y)
+        matrix = self.get_local_matrix()
+        context.save()
+        context.transform(matrix)
 
 
-        matrix = context.get_matrix()
-        if self._last_matrix and matrix != self._last_matrix:
-            self.emit("on-move")
-
-
+        matrix = context.get_matrix()  # this would be the absolute one
         if self.cache_as_bitmap:
             self.graphics._draw_as_bitmap(context, self.opacity * opacity)
         else:
@@ -1001,8 +1004,8 @@ class Sprite(gtk.Object):
 
         self.__dict__['_last_matrix'] = matrix
 
-        if any((self.x, self.y, self.rotation, self.scale_x, self.scale_y)):
-            context.restore()
+
+        context.restore()
 
         context.new_path() #forget about us
 
@@ -1595,6 +1598,8 @@ class Scene(gtk.DrawingArea):
 
         self._original_width, self._original_height = None,  None
 
+        self._sprites_flat = []
+
 
 
     def add_child(self, *sprites):
@@ -1612,6 +1617,7 @@ class Scene(gtk.DrawingArea):
     def _sort(self):
         """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
+        self._sprites_flat = []
 
 
     def remove_child(self, *sprites):
@@ -1623,6 +1629,7 @@ class Scene(gtk.DrawingArea):
     # these two mimic sprite functions so parent check can be avoided
     def from_scene_coords(self, x, y): return x, y
     def to_scene_coords(self, x, y): return x, y
+    def get_matrix(self): return cairo.Matrix()
 
     def clear(self):
         """Remove all sprites from scene"""
@@ -1720,35 +1727,28 @@ class Scene(gtk.DrawingArea):
 
         self.width, self.height = event.width, event.height
 
-    def all_sprites(self, sprites = None):
+    def all_visible_sprites(self, sprites = None):
         """Returns flat list of the sprite tree for simplified iteration"""
 
-        if sprites is None:
-            sprites = self.sprites
+        if self._sprites_flat:
+            return self._sprites_flat
 
-        for sprite in sprites:
-            yield sprite
-            if sprite.sprites:
-                for child in self.all_sprites(sprite.sprites):
-                    yield child
-
-    def all_visible_sprites(self, sprites = None):
-        """Returns flat list of just the visible sprites - avoid children whos
-        parents are not displayed"""
-        if sprites is None:
-            sprites = self.sprites
-
-        for sprite in sprites:
-            if sprite.visible:
+        def all_recursive(sprites):
+            for sprite in sprites:
                 yield sprite
                 if sprite.sprites:
-                    for child in self.all_visible_sprites(sprite.sprites):
+                    for child in all_recursive(sprite.sprites):
                         yield child
+
+        self._sprites_flat = list(all_recursive(self.sprites))
+
+        return self._sprites_flat
 
 
     def get_sprite_at_position(self, x, y):
         """Returns the topmost visible interactive sprite for given coordinates"""
         over = None
+
         for sprite in self.all_visible_sprites():
             if (sprite.interactive or sprite.draggable) and self.__check_hit(sprite, x, y):
                 over = sprite
