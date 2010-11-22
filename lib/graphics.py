@@ -799,8 +799,6 @@ class Sprite(gtk.Object):
         #: to rounding errors in positioning.
         self.snap_to_pixel = snap_to_pixel
 
-        self._last_matrix = None
-
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
         self._matrix = None
@@ -840,9 +838,6 @@ class Sprite(gtk.Object):
     def _sort(self):
         """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
-        scene = self.get_scene()
-        if scene:
-            scene._sprites_flat = []
 
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
@@ -980,12 +975,9 @@ class Sprite(gtk.Object):
         if self.visible is False:
             return
 
-        context.new_path()
-
         if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
             self.emit("on-render")
             self.__dict__["_sprite_dirty"] = False
-
 
 
         matrix = self.get_local_matrix()
@@ -993,7 +985,6 @@ class Sprite(gtk.Object):
         context.transform(matrix)
 
 
-        matrix = context.get_matrix()  # this would be the absolute one
         if self.cache_as_bitmap:
             self.graphics._draw_as_bitmap(context, self.opacity * opacity)
         else:
@@ -1001,8 +992,6 @@ class Sprite(gtk.Object):
 
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity)
-
-        self.__dict__['_last_matrix'] = matrix
 
 
         context.restore()
@@ -1598,8 +1587,6 @@ class Scene(gtk.DrawingArea):
 
         self._original_width, self._original_height = None,  None
 
-        self._sprites_flat = []
-
 
 
     def add_child(self, *sprites):
@@ -1617,7 +1604,6 @@ class Scene(gtk.DrawingArea):
     def _sort(self):
         """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
-        self._sprites_flat = []
 
 
     def remove_child(self, *sprites):
@@ -1727,22 +1713,17 @@ class Scene(gtk.DrawingArea):
 
         self.width, self.height = event.width, event.height
 
-    def all_visible_sprites(self, sprites = None):
+    def all_visible_sprites(self):
         """Returns flat list of the sprite tree for simplified iteration"""
-
-        if self._sprites_flat:
-            return self._sprites_flat
-
         def all_recursive(sprites):
             for sprite in sprites:
-                yield sprite
-                if sprite.sprites:
-                    for child in all_recursive(sprite.sprites):
-                        yield child
+                if sprite.visible:
+                    yield sprite
+                    if sprite.sprites:
+                        for child in all_recursive(sprite.sprites):
+                            yield child
 
-        self._sprites_flat = list(all_recursive(self.sprites))
-
-        return self._sprites_flat
+        return all_recursive(self.sprites)
 
 
     def get_sprite_at_position(self, x, y):
