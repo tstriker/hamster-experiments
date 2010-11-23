@@ -90,6 +90,9 @@ class Geometry(object):
             else:
                 self.x, self.y, self.w, self.h = x, y, w, h
 
+        def __repr__(self):
+            return "<%s %d (%d, %d, %d, %d)>" % (self.__class__.__name__, id(self), self.x, self.y, self.w, self.h)
+
         @property
         def left(self): return self.x
         @left.setter
@@ -124,6 +127,9 @@ class Geometry(object):
             return self.w * self.h
 
         def union(self, rect2):
+            if not rect2:
+                return geom.Rectangle(self)
+
             x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
             y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
             return geom.Rectangle(x, y, x2-x, y2-y)
@@ -131,6 +137,9 @@ class Geometry(object):
         def intersection(self, rect2):
             """returns intersecting area of two rectangles or None if rectangles are not
             intersecting"""
+            if not rect2:
+                return geom.Rectangle(self)
+
             x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
             y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
 
@@ -504,11 +513,12 @@ class Graphics(object):
             else:
                 new_extents = context.stroke_extents()
 
+            new_extents = geom.Rectangle(new_extents[0], new_extents[1],
+                                         new_extents[2] - new_extents[0],
+                                         new_extents[3] - new_extents[1])
+
             self.extents = self.extents or new_extents
-            self.extents = (min(self.extents[0], new_extents[0]),
-                            min(self.extents[1], new_extents[1]),
-                            max(self.extents[2], new_extents[2]),
-                            max(self.extents[3], new_extents[3]))
+            self.extents = self.extents.union(new_extents)
 
             self.paths.append(path)
 
@@ -683,11 +693,11 @@ class Graphics(object):
 
             if not just_transforms:
                 # now draw the instructions on the caching surface
-                w = int(self.extents[2] - self.extents[0]) + 1
-                h = int(self.extents[3] - self.extents[1]) + 1
+                w = int(self.extents.w) + 1
+                h = int(self.extents.h) + 1
                 self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
                 ctx = gtk.gdk.CairoContext(cairo.Context(self.cache_surface))
-                ctx.translate(-self.extents[0], -self.extents[1])
+                ctx.translate(-self.extents.x, -self.extents.y)
 
                 ctx.transform(matrix)
                 for instruction, args in self.__instruction_cache:
@@ -697,7 +707,7 @@ class Graphics(object):
         else:
             context.save()
             context.identity_matrix()
-            context.translate(self.extents[0], self.extents[1])
+            context.translate(self.extents.x, self.extents.y)
             context.set_source_surface(self.cache_surface)
             if opacity < 1:
                 context.paint_with_alpha(opacity)
@@ -816,7 +826,7 @@ class Sprite(gtk.Object):
                 self.__dict__['_matrix'] = None
 
             if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y',
-                            'opacity', 'visible', 'z_order', 'drag_x', 'drag_y'):
+                            'opacity', 'visible', 'z_order', 'drag_x', 'drag_y', '_matrix'):
                 self.__dict__["_sprite_dirty"] = True
 
             if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
@@ -878,7 +888,7 @@ class Sprite(gtk.Object):
         if not self.graphics.extents:
             return False
 
-        sprite_x, sprite_y, sprite_x2, sprite_y2 = self.graphics.extents
+        sprite_x, sprite_y, sprite_x2, sprite_y2 = self.graphics.extents.left, self.graphics.extents.top, self.graphics.extents.right, self.graphics.extents.bottom
 
         if sprite_x <= x <= sprite_x2 and sprite_y <= y <= sprite_y2:
             paths = self.graphics.paths
