@@ -66,7 +66,7 @@ class Thing(graphics.Sprite):
         matrix.translate(-self.rotator.x, -self.rotator.y)
         new_x, new_y =  matrix.transform_point(0,0)
 
-        prev_x, prev_y = self.graphics._last_matrix.transform_point(0,0)
+        prev_x, prev_y = self.get_matrix().transform_point(0,0)
 
         self.x -= new_x - prev_x
         self.y -= new_y - prev_y
@@ -110,7 +110,7 @@ class Scene(graphics.Scene):
     def on_mouse_move(self, scene, event):
         mouse_down = gtk.gdk.BUTTON1_MASK & event.state
         if mouse_down and self.drag_point:
-            pivot_x, pivot_y = self.thing.graphics._last_matrix.transform_point(self.thing.pivot_x, self.thing.pivot_y)
+            pivot_x, pivot_y = self.thing.get_matrix().transform_point(self.thing.pivot_x, self.thing.pivot_y)
 
             pivot_point = euclid.Point2(pivot_x, pivot_y)
             drag_vector = euclid.Point2(event.x, event.y) - pivot_point

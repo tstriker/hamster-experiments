@@ -58,7 +58,7 @@ class Scene(graphics.Scene):
             if not self.drag_point:
                 self.on_mouse_down(scene, event)
 
-            pivot_x, pivot_y = self.wheel.graphics._last_matrix.transform_point(self.wheel.pivot_x, self.wheel.pivot_y)
+            pivot_x, pivot_y = self.wheel.get_matrix().transform_point(self.wheel.pivot_x, self.wheel.pivot_y)
 
             pivot_point = euclid.Point2(pivot_x, pivot_y)
             drag_vector = euclid.Point2(event.x, event.y) - pivot_point
