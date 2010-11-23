@@ -86,12 +86,15 @@ class Geometry(object):
         def __init__(self, x=0, y=0, w=0, h=0):
             if isinstance(x, geom.Rectangle):
                 # allow cloning rectangles rect = Rectangle(rect)
-                self.x, self.y, self.w, self.h = x.x, x.y, x.w, x,h
+                self.x, self.y, self.w, self.h = x.x, x.y, x.w, x.h
             else:
                 self.x, self.y, self.w, self.h = x, y, w, h
 
         def __repr__(self):
             return "<%s %d (%d, %d, %d, %d)>" % (self.__class__.__name__, id(self), self.x, self.y, self.w, self.h)
+
+        def __nonzero__(self):
+            return any((self.x, self.y, self.w, self.h))
 
         @property
         def left(self): return self.x
@@ -127,8 +130,8 @@ class Geometry(object):
             return self.w * self.h
 
         def union(self, rect2):
-            if not rect2:
-                return geom.Rectangle(self)
+            if not rect2 or not self:
+                return geom.Rectangle(self) or geom.Rectangle(rect2)
 
             x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
             y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
@@ -137,8 +140,8 @@ class Geometry(object):
         def intersection(self, rect2):
             """returns intersecting area of two rectangles or None if rectangles are not
             intersecting"""
-            if not rect2:
-                return geom.Rectangle(self)
+            if not rect2 or not self:
+                return geom.Rectangle(self) or geom.Rectangle(rect2)
 
             x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
             y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
@@ -631,16 +634,13 @@ class Graphics(object):
 
             # measure the path extents so we know the size of cache surface
             # also to save some time use the context to paint for the first time
-            extents = None
+            extents = geom.Rectangle()
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
 
                     ext = context.stroke_extents()
-                    if not extents:
-                        extents = geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1])
-                    else:
-                        extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
+                    extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
 
 
                 if instruction in (self._set_source_pixbuf, self._set_source_surface):
@@ -662,7 +662,7 @@ class Graphics(object):
                 self.paths.append(context.copy_path())
 
                 ext = context.stroke_extents()
-                extents = extents.union(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1])
+                extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
 
 
             # avoid re-caching if we have just moved
