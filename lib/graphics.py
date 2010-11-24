@@ -19,6 +19,16 @@ except: # we can also live without tweener. Scene.animate will not work
 import colorsys
 from collections import deque
 
+if cairo.version in ('1.8.2', '1.8.4'):
+    # in these two cairo versions the matrix multiplication was flipped
+    # http://bugs.freedesktop.org/show_bug.cgi?id=19221
+    def cairo_matrix_multiply(matrix1, matrix2):
+        return matrix2 * matrix1
+else:
+    def cairo_matrix_multiply(matrix1, matrix2):
+        return matrix1 * matrix2
+
+
 class Colors(object):
     hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
     hex_color_short = re.compile("#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])")
@@ -722,6 +732,13 @@ class Sprite(gtk.Object):
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
+
+    transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'))
+    dirty_flags = transformation_flags ^ set(('opacity', 'visible', 'z_order',
+                                              'drag_x', 'drag_y', 'sprites'
+                                              '_matrix', 'sprites',
+                                              '_stroke_context'))
+
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
                  rotation = 0, pivot_x = 0, pivot_y = 0,
@@ -795,11 +812,15 @@ class Sprite(gtk.Object):
         self.snap_to_pixel = snap_to_pixel
 
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
+        self.__dict__["_sprite_moved"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
         self._matrix = None
         self._prev_parent_matrix = None
 
         self._extents = None
+        self._prev_extents = None
+
+
 
 
     def __setattr__(self, name, val):
@@ -817,15 +838,14 @@ class Sprite(gtk.Object):
                 return
 
 
-            if name in ('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'):
+            if name in self.transformation_flags:
                 self.__dict__['_matrix'] = None
                 self.__dict__['_extents'] = None
                 for sprite in self.sprites:
                     sprite._prev_parent_matrix = None
 
 
-            if name not in ('x', 'y', 'rotation', 'scale_x', 'scale_y',
-                            'opacity', 'visible', 'z_order', 'drag_x', 'drag_y', '_matrix', '_extents'):
+            if name not in (self.dirty_flags):
                 self.__dict__["_sprite_dirty"] = True
 
             if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
@@ -889,9 +909,12 @@ class Sprite(gtk.Object):
             return self._extents
 
         context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
-
-
         context.transform(self.get_matrix())
+
+        if not self.graphics.paths:
+            self.graphics._draw(context, 1)
+        if not self.graphics.paths:
+            return None
 
 
         for path in self.graphics.paths:
@@ -899,14 +922,10 @@ class Sprite(gtk.Object):
         context.identity_matrix()
 
         ext = context.stroke_extents()
+        ext = geom.Rectangle(ext[0], ext[1], ext[2] - ext[0], ext[3] - ext[1])
 
-
-
-        ext = geom.Rectangle(ext[0], ext[1],
-                             ext[2] - ext[0],
-                             ext[3] - ext[1])
-
-        self._extents = ext
+        self.__dict__['_extents'] = ext
+        self._stroke_context = context
         return ext
 
 
@@ -922,14 +941,7 @@ class Sprite(gtk.Object):
             return False
 
         if extents.left <= x <= extents.right and extents.top <= y <= extents.bottom:
-            context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
-            context.transform(self.get_matrix())
-            for path in self.graphics.paths:
-                context.append_path(path)
-            context.identity_matrix()
-
-
-            return context.in_fill(x, y)
+            return self._stroke_context.in_fill(x, y)
         else:
             return False
 
@@ -994,8 +1006,8 @@ class Sprite(gtk.Object):
     def get_matrix(self):
         """return sprite's current transformation matrix"""
         if self.parent:
-            return self.get_local_matrix() * (self._prev_parent_matrix or self.parent.get_matrix())
-
+            return cairo_matrix_multiply(self.get_local_matrix(),
+                                         (self._prev_parent_matrix or self.parent.get_matrix()))
         else:
             return self.get_local_matrix()
 
@@ -1036,6 +1048,11 @@ class Sprite(gtk.Object):
             self.graphics._draw_as_bitmap(context, self.opacity * opacity)
         else:
             self.graphics._draw(context, self.opacity * opacity)
+
+
+
+        self.__dict__['_prev_extents'] = self._extents or self.get_extents()
+
 
         for sprite in self.sprites:
             sprite._draw(context, self.opacity * opacity, parent_matrix * matrix)
@@ -1622,7 +1639,7 @@ class Scene(gtk.DrawingArea):
         self.__last_cursor = None
 
         self.__drawing_queued = False
-        self._redraw_in_progress = True
+        self._redraw_in_progress = False
 
         #: When specified, upon window resize the content will be scaled
         #: relative to original window size. Defaults to False.
