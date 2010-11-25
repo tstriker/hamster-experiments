@@ -236,8 +236,10 @@ class ShakyWaypoint(Waypoint):
         self.move_on(boid)
 
 
-class Boid(object):
+class Boid(graphics.Sprite):
     def __init__(self, location, max_speed = 2.0):
+        graphics.Sprite.__init__(self, snap_to_pixel=False)
+
         self.visible = True
         self.radius = 3
         self.acceleration = Vector2()
@@ -256,6 +258,8 @@ class Boid(object):
         self.radio = self.radius * 5
 
         self.target_waypoint = None
+
+        self.connect("on-render", self.on_render)
 
     def target(self, waypoint):
         self.radio = self.radius * 5
@@ -285,38 +289,29 @@ class Boid(object):
         if self.virus:
             self.virus(self, self.data)
 
-        #if not self.positions or int(self.location.x) != int(self.positions[-1].x) and int(self.location.y) != int(self.positions[-1].y):
-        #    self.positions.append(Vector2(self.location.x, self.location.y))
-
-
-    def draw(self, context):
-        if not self.visible:
-            return
-
-        context.save()
-
-        context.translate(self.location.x, self.location.y)
-
-
-        context.move_to(0, 0)
-        context.line_to(self.acceleration.x * 50, self.acceleration.y * 50)
-        context.stroke()
+        self.x, self.y = self.location.x, self.location.y
 
         #draw boid triangle
         if self.flight_angle:
-            theta = self.flight_angle
+            self.rotation = self.flight_angle
         else:
-            theta = self.velocity.heading() + math.pi / 2
-        context.rotate(theta)
-
-        context.move_to(0, -self.radius*2)
-        context.line_to(-self.radius, self.radius * 2)
-        context.line_to(self.radius, self.radius * 2)
-        context.line_to(0, -self.radius*2)
+            self.rotation = self.velocity.heading() + math.pi / 2
 
 
 
-        context.restore()
+    def on_render(self, context):
+        self.graphics.move_to(0, 0)
+        self.graphics.line_to(self.acceleration.x * 50, self.acceleration.y * 50)
+        self.graphics.stroke()
+
+
+        self.graphics.move_to(0, -self.radius*2)
+        self.graphics.line_to(-self.radius, self.radius * 2)
+        self.graphics.line_to(self.radius, self.radius * 2)
+        self.graphics.line_to(0, -self.radius*2)
+
+        self.graphics.fill("#aaa")
+
 
 
 
@@ -408,6 +403,7 @@ class Canvas(graphics.Scene):
 
         for i, boid in enumerate(self.boids):
             boid.target(self.waypoints[0])
+            self.add_child(boid)
 
         self.mouse_node = None
 
@@ -465,19 +461,14 @@ class Canvas(graphics.Scene):
             context.stroke()
 
 
-            # sir boid himself
-            c_graphics.set_color("#999")
-            boid.draw(context)
-
             # line between boid and it's target
             """
+            c_graphics.set_color("#999")
             context.move_to(boid.location.x, boid.location.y)
             context.line_to(boid.target_waypoint.location.x,
                                  boid.target_waypoint.location.y)
-            """
-
-            context.fill_preserve()
             context.stroke()
+            """
 
 
         self.redraw()
