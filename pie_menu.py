@@ -24,8 +24,6 @@ class Sector(graphics.Sprite):
         self.connect("on-render", self.on_render)
 
     def on_render(self, sprite):
-        self.graphics.clear()
-        self.rotation = self.start_angle
         angle = self.start_angle - self.end_angle
 
         self.graphics.arc(0, 0, self.inner_radius, angle, 0)
@@ -79,6 +77,8 @@ class Menu(graphics.Sprite):
         angle = math.pi * 2 / len(self.menu)
         for i, item in enumerate(self.menu):
             item.start_angle = current_angle
+            item.rotation = item.start_angle
+
             item.end_angle = current_angle + angle #- angle * 0.1
             item.inner_radius = 25 + len(self.menu) / 2.0 #+ i * 2
             item.outer_radius = 50 + len(self.menu) * 2 #+ i * 2
