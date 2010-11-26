@@ -197,14 +197,14 @@ class Graphics(object):
         self.extents = None     # bounds of the object, only if interactive
         self.paths = None       # paths for mouse hit checks
         self._last_matrix = None
-        self.__new_instructions = deque() # instruction set until it is converted into path-based instructions
-        self.__instruction_cache = None
+        self.__new_instructions = [] # instruction set until it is converted into path-based instructions
+        self.__instruction_cache = []
         self.cache_surface = None
 
     def clear(self):
         """clear all instructions"""
-        self.__new_instructions = deque()
-        self.__instruction_cache = None
+        self.__new_instructions = []
+        self.__instruction_cache = []
         self.paths = []
 
     @staticmethod
@@ -529,94 +529,34 @@ class Graphics(object):
         """draw accumulated instructions in context"""
 
         # if we have been moved around, we should update bounds
-        if self.__new_instructions: #new stuff!
-            self.paths = deque()
-
-            self.__instruction_cache = deque()
-            current_color = None
-            current_line = None
-            instruction_cache = []
-
-            while self.__new_instructions:
-                instruction, args = self.__new_instructions.popleft()
-
-                if instruction in (self._set_source,
-                                   self._set_source_surface,
-                                   self._set_source_pixbuf,
-                                   self._paint,
-                                   self._translate,
-                                   self._save_context,
-                                   self._restore_context,
-                                   self._set_font_face,
-                                   self._set_font_size,
-                                   self._move_to,
-                                   self._mask):
-
-
-                    self.__instruction_cache.append((None, None, None, instruction, args))
-
-                elif instruction in(self._show_layout, self._show_text):
-                    self.__instruction_cache.append((None, current_color, None, instruction, args))
-
-                elif instruction == self._set_color:
-                    current_color = args
-
-                elif instruction == self._set_line_width:
-                    current_line = args
-
-                elif instruction in (self._new_path, self._stroke, self._fill,
-                                     self._stroke_preserve,
-                                     self._fill_preserve, self._clip):
-                    path = context.copy_path()
-                    self.paths.append(path)
-                    self.__instruction_cache.append((path,
-                                                     current_color,
-                                                     current_line,
-                                                     instruction, ()))
-                    instruction_cache = []
-
-                else:
-                    # the rest are non-special
-                    instruction_cache.append((instruction, args))
-
-                if opacity < 1 and instruction == self._set_color:
-                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-                elif opacity < 1 and instruction == self._paint:
-                    context.paint_with_alpha(opacity)
-                else:
-                    instruction(context, *args) # reset even on preserve as the instruction will preserve it instead
-
-
-            # last one
-            if instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
-                self.paths.append(context.copy_path())
-
-            # also empty the temporary cache that was not met by a stroke at the end
-            while instruction_cache: # stroke is missing so we just cache
-                instruction, args = instruction_cache.pop(0)
-                self.__instruction_cache.append((None, None, None, instruction, args))
-
-
+        fresh_draw = self.__new_instructions and len(self.__new_instructions) > 0
+        if fresh_draw: #new stuff!
+            self.paths = []
+            self.__instruction_cache = self.__new_instructions
+            self.__new_instructions = []
         else:
             if not self.__instruction_cache:
                 return
 
-            for path, color, line, instruction, args in self.__instruction_cache:
-                if color:
-                    if opacity < 1:
-                        self._set_color(context, color[0], color[1], color[2], color[3] * opacity)
-                    else:
-                        self._set_color(context, *color)
-                if line: self._set_line_width(context, *line)
+        for instruction, args in self.__instruction_cache:
+            if fresh_draw and instruction in (self._new_path, self._stroke, self._fill,
+                                              self._stroke_preserve,
+                                              self._fill_preserve, self._clip):
+                self.paths.append(context.copy_path())
 
-                if path:
-                    context.append_path(path)
 
-                if instruction:
-                    if instruction == self._paint and opacity < 1:
-                        context.paint_with_alpha(opacity)
-                    else:
-                        instruction(context, *args)
+            if opacity < 1 and instruction == self._set_color:
+                self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+            elif opacity < 1 and instruction == self._paint:
+                context.paint_with_alpha(opacity)
+            else:
+                instruction(context, *args)
+
+
+        # last one
+        if fresh_draw and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
+            self.paths.append(context.copy_path())
+
 
 
 
