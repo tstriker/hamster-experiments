@@ -539,24 +539,16 @@ class Graphics(object):
                 return
 
         for instruction, args in self.__instruction_cache:
-            if fresh_draw and instruction in (self._new_path, self._stroke, self._fill,
-                                              self._stroke_preserve,
-                                              self._fill_preserve, self._clip):
+            if fresh_draw and instruction in (self._new_path, self._stroke, self._fill, self._clip):
                 self.paths.append(context.copy_path())
 
-
-            if opacity < 1 and instruction == self._set_color:
-                self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-            elif opacity < 1 and instruction == self._paint:
-                context.paint_with_alpha(opacity)
+            if opacity < 1:
+                if instruction == self._set_color:
+                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+                elif instruction == self._paint:
+                    context.paint_with_alpha(opacity)
             else:
                 instruction(context, *args)
-
-
-        # last one
-        if fresh_draw and instruction not in (self._fill, self._stroke, self._fill_preserve, self._stroke_preserve):
-            self.paths.append(context.copy_path())
-
 
 
 
@@ -591,7 +583,7 @@ class Graphics(object):
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
 
-                    ext = context.stroke_extents()
+                    ext = context.path_extents()
                     extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
 
 
@@ -613,7 +605,7 @@ class Graphics(object):
             if instruction not in path_end_instructions: # last one
                 self.paths.append(context.copy_path())
 
-                ext = context.stroke_extents()
+                ext = context.path_extents()
                 extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
 
 
@@ -789,6 +781,7 @@ class Sprite(gtk.Object):
 
             if name not in (self.dirty_flags):
                 self.__dict__["_sprite_dirty"] = True
+                self.__dict__['_extents'] = None
 
             if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
                 # invalidating cache for the bitmap version as that paints opacity in the image
@@ -863,7 +856,7 @@ class Sprite(gtk.Object):
             context.append_path(path)
         context.identity_matrix()
 
-        ext = context.stroke_extents()
+        ext = context.path_extents()
         ext = geom.Rectangle(ext[0], ext[1], ext[2] - ext[0], ext[3] - ext[1])
 
         self.__dict__['_extents'] = ext
