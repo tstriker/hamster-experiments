@@ -141,22 +141,35 @@ class Geometry(object):
         def size(self):
             return self.w * self.h
 
-        def union(self, rect2):
-            if not rect2 or not self:
-                return geom.Rectangle(self) or geom.Rectangle(rect2)
+        def union(self, rect2, y = None, x2 = None, y2 = None):
+            if y is not None:
+                # allow sending in also just 4 points. using x2,y2 instead of
+                # w,h because cairo returns those
+                x, x2 = min(self.left, rect2), max(self.right, x2)
+                y, y2 = min(self.top, y), max(self.bottom, y2)
+            else:
+                if not rect2 or not self:
+                    return geom.Rectangle(self) or geom.Rectangle(rect2)
 
-            x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
-            y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
+                x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
+                y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
+
             return geom.Rectangle(x, y, x2-x, y2-y)
 
-        def intersection(self, rect2):
+        def intersection(self, rect2, y = None, x2 = None, y2 = None):
             """returns intersecting area of two rectangles or None if rectangles are not
             intersecting"""
-            if not rect2 or not self:
-                return geom.Rectangle(self) or geom.Rectangle(rect2)
+            if y is not None:
+                # allow sending in also just 4 points. using x2,y2 instead of
+                # w,h because cairo returns those
+                x, x2 = max(self.left, rect2), min(self.right, x2)
+                y, y2 = max(self.top, y), min(self.bottom, y2)
+            else:
+                if not rect2 or not self:
+                    return geom.Rectangle(self) or geom.Rectangle(rect2)
 
-            x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
-            y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
+                x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
+                y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
 
             if x2 < x or y2 < y:
                 return None
