@@ -106,6 +106,8 @@ class Tweener(object):
             if not self.current_tweens[obj]:
                 del self.current_tweens[obj]
 
+        return self.current_tweens
+
 
 class Tween(object):
     __slots__ = ('tweenables', 'target', 'delta', 'duration', 'ease', 'delta',
