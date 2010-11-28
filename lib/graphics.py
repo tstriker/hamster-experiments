@@ -1048,9 +1048,10 @@ class BitmapSprite(Sprite):
             local_context.paint()
 
             # add instructions with the resulting surface
+            self.graphics.rectangle(0, 0, self.width, self.height)
+            self.graphics.clip()
             self.graphics.set_source_surface(surface)
             self.graphics.paint()
-            self.graphics.rectangle(0, 0, self.width, self.height)
             self._surface = surface
 
 
@@ -1379,6 +1380,7 @@ class Label(Sprite):
                 rect_width = self._bounds_width / pango.SCALE
 
         self.graphics.rectangle(0, 0, rect_width, self.height)
+        self.graphics.clip()
 
 
 
