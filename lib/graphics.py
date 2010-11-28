@@ -1053,6 +1053,7 @@ class BitmapSprite(Sprite):
             local_context.paint()
 
             # add instructions with the resulting surface
+            self.graphics.clear()
             self.graphics.rectangle(0, 0, self.width, self.height)
             self.graphics.clip()
             self.graphics.set_source_surface(surface)
