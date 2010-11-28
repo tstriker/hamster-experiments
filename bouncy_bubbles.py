@@ -90,9 +90,14 @@ class Scene(graphics.Scene):
         self.balls = []
         self.window_pos = None
 
-        self.connect("on-enter-frame", self.on_enter_frame)
+        self.connect("on-frame", self.on_enter_frame)
+        self.connect("on-finish-frame", self.on_finish_frame)
 
-    def on_enter_frame(self, scene, context):
+
+    def on_finish_frame(self, scene, context):
+        self.redraw()
+
+    def on_enter_frame(self, scene):
         # render and update positions of the balls
         if not self.balls:
             for i in range(15):

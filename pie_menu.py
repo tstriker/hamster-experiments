@@ -92,13 +92,18 @@ class Scene(graphics.Scene):
         self.max_width = 50
         self.menu = Menu(200, 200)
         self.add_child(self.menu)
+        self.connect("on-frame", self.on_frame)
         self.connect("on-enter-frame", self.on_enter_frame)
         self.framerate = 30
 
-    def on_enter_frame(self, scene, context):
+    def on_frame(self, scene):
         # turn the menu a bit and queue redraw
         self.menu.rotation += 0.004
+
+    def on_enter_frame(self, scene, context):
+        # turn the menu a bit and queue redraw
         self.redraw()
+        print self.fps
 
 
 class BasicWindow:

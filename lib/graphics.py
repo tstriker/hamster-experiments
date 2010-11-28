@@ -141,22 +141,35 @@ class Geometry(object):
         def size(self):
             return self.w * self.h
 
-        def union(self, rect2):
-            if not rect2 or not self:
-                return geom.Rectangle(self) or geom.Rectangle(rect2)
+        def union(self, rect2, y = None, x2 = None, y2 = None):
+            if y is not None:
+                # allow sending in also just 4 points. using x2,y2 instead of
+                # w,h because cairo returns those
+                x, x2 = min(self.left, rect2), max(self.right, x2)
+                y, y2 = min(self.top, y), max(self.bottom, y2)
+            else:
+                if not rect2 or not self:
+                    return geom.Rectangle(self) or geom.Rectangle(rect2)
 
-            x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
-            y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
+                x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
+                y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
+
             return geom.Rectangle(x, y, x2-x, y2-y)
 
-        def intersection(self, rect2):
+        def intersection(self, rect2, y = None, x2 = None, y2 = None):
             """returns intersecting area of two rectangles or None if rectangles are not
             intersecting"""
-            if not rect2 or not self:
-                return geom.Rectangle(self) or geom.Rectangle(rect2)
+            if y is not None:
+                # allow sending in also just 4 points. using x2,y2 instead of
+                # w,h because cairo returns those
+                x, x2 = max(self.left, rect2), min(self.right, x2)
+                y, y2 = max(self.top, y), min(self.bottom, y2)
+            else:
+                if not rect2 or not self:
+                    return geom.Rectangle(self) or geom.Rectangle(rect2)
 
-            x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
-            y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
+                x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
+                y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
 
             if x2 < x or y2 < y:
                 return None
@@ -542,13 +555,13 @@ class Graphics(object):
             if fresh_draw and instruction in (self._new_path, self._stroke, self._fill, self._clip):
                 self.paths.append(context.copy_path())
 
-            if opacity < 1:
-                if instruction == self._set_color:
-                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-                elif instruction == self._paint:
-                    context.paint_with_alpha(opacity)
+            if opacity < 1 and instruction == self._set_color:
+                self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+            elif opacity < 1 and instruction == self._paint:
+                context.paint_with_alpha(opacity)
             else:
                 instruction(context, *args)
+
 
 
 
@@ -582,9 +595,7 @@ class Graphics(object):
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
-
-                    ext = context.path_extents()
-                    extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
+                    extents = extents.union(*context.path_extents())
 
 
                 if instruction in (self._set_source_pixbuf, self._set_source_surface):
@@ -604,9 +615,7 @@ class Graphics(object):
 
             if instruction not in path_end_instructions: # last one
                 self.paths.append(context.copy_path())
-
-                ext = context.path_extents()
-                extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
+                extents = extents.union(*context.path_extents())
 
 
             # avoid re-caching if we have just moved
@@ -778,7 +787,6 @@ class Sprite(gtk.Object):
                 for sprite in self.sprites:
                     sprite._prev_parent_matrix = None
 
-
             if name not in (self.dirty_flags):
                 self.__dict__["_sprite_dirty"] = True
                 self.__dict__['_extents'] = None
@@ -843,7 +851,7 @@ class Sprite(gtk.Object):
         if self._extents:
             return self._extents
 
-        context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
+        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
         context.transform(self.get_matrix())
 
         if not self.graphics.paths:
@@ -958,44 +966,46 @@ class Sprite(gtk.Object):
         """Converts x, y from sprite's local coordinates to scene coordinates"""
         return self.get_matrix().transform_point(x, y)
 
-    def _draw(self, context, opacity = 1, parent_matrix = None):
+    def _draw(self, context, opacity = 1, parent_matrix = None, expose_region = None):
         if self.visible is False:
             return
 
-        if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
-            self.__dict__['_extents'] = None
-            self.emit("on-render")
-            self.__dict__["_sprite_dirty"] = False
-
-
         parent_matrix = parent_matrix or cairo.Matrix()
-
-        # cache parent matrix
-        if parent_matrix != self._prev_parent_matrix:
-            self._prev_parent_matrix = parent_matrix
-
         matrix = self.get_local_matrix()
+
         context.save()
         context.transform(matrix)
 
-
-        if self.cache_as_bitmap:
-            self.graphics._draw_as_bitmap(context, self.opacity * opacity)
-        else:
-            self.graphics._draw(context, self.opacity * opacity)
-
+        if not self._extents or self._extents.intersection(expose_region):
+            if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
+                self.emit("on-render")
+                self.__dict__["_sprite_dirty"] = False
 
 
-        self.__dict__['_prev_extents'] = self._extents or self.get_extents()
+            # cache parent matrix
+            self._prev_parent_matrix = parent_matrix
 
+
+
+            if self.cache_as_bitmap:
+                self.graphics._draw_as_bitmap(context, self.opacity * opacity)
+            else:
+                self.graphics._draw(context, self.opacity * opacity)
+
+            if self._extents is not None:
+                self.__dict__['_prev_extents'] = self._extents
+            else:
+                self.__dict__['_prev_extents'] = self.get_extents()
 
         for sprite in self.sprites:
-            sprite._draw(context, self.opacity * opacity, parent_matrix * matrix)
-
+            sprite._draw(context, self.opacity * opacity, cairo_matrix_multiply(matrix, parent_matrix), expose_region = expose_region)
 
         context.restore()
-
         context.new_path() #forget about us
+
+
+
+
 
 
 class BitmapSprite(Sprite):
@@ -1003,10 +1013,11 @@ class BitmapSprite(Sprite):
        that drawing it will be quick and low on CPU.
        Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
     """
-    def __init__(self, image_data = None, **kwargs):
+    def __init__(self, image_data = None, cache_mode = None, **kwargs):
         Sprite.__init__(self, **kwargs)
 
         self._image_width, self._image_height = None, None
+        self.cache_mode = cache_mode or cairo.CONTENT_COLOR_ALPHA
         #: image data
         self.image_data = image_data
 
@@ -1029,15 +1040,15 @@ class BitmapSprite(Sprite):
                 self.__dict__['_image_width'] = self.image_data.get_width()
                 self.__dict__['_image_height'] = self.image_data.get_height()
 
-    def _draw(self, context, opacity = 1, parent_matrix = None):
+    def _draw(self, context, opacity = 1, parent_matrix = None, expose_region = None):
         if self.image_data is None or self.width is None or self.height is None:
             return
 
         if not self._surface:
             # caching image on surface similar to the target
-            surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA,
-                                                               self.width,
-                                                               self.height)
+            surface = context.get_target().create_similar(self.cache_mode,
+                                                          self.width,
+                                                          self.height)
 
 
             local_context = gtk.gdk.CairoContext(cairo.Context(surface))
@@ -1045,16 +1056,19 @@ class BitmapSprite(Sprite):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.image_data)
+            local_context.rectangle(0.5, 0.5, self.width, self.height)
+            local_context.clip()
             local_context.paint()
 
             # add instructions with the resulting surface
+            self.graphics.rectangle(0, 0, self.width, self.height)
+            self.graphics.clip()
             self.graphics.set_source_surface(surface)
             self.graphics.paint()
-            self.graphics.rectangle(0, 0, self.width, self.height)
             self._surface = surface
 
 
-        Sprite._draw(self,  context, opacity, parent_matrix)
+        Sprite._draw(self,  context, opacity, parent_matrix, expose_region)
 
 
 class Image(BitmapSprite):
@@ -1379,6 +1393,7 @@ class Label(Sprite):
                 rect_width = self._bounds_width / pango.SCALE
 
         self.graphics.rectangle(0, 0, rect_width, self.height)
+        self.graphics.clip()
 
 
 
@@ -1481,6 +1496,7 @@ class Scene(gtk.DrawingArea):
     __gsignals__ = {
         "expose-event": "override",
         "configure_event": "override",
+        "on-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
 
@@ -1652,13 +1668,54 @@ class Scene(gtk.DrawingArea):
         if self.__drawing_queued == False: #if we are moving, then there is a timeout somewhere already
             self.__drawing_queued = True
             self._last_frame_time = dt.datetime.now()
-            gobject.timeout_add(1000 / self.framerate, self.__redraw_loop)
+            gobject.timeout_add(1000 / self.framerate, self.__redraw_loop, priority=gobject.PRIORITY_LOW)
 
     def __redraw_loop(self):
-        """loop until there is nothing more to tween"""
-        self.queue_draw() # this will trigger do_expose_event when the current events have been flushed
+        """loop until there is nothing more to tween
+            we are thinking in terms of the next frame here - there is something
+            already on the screen that was drawn on first expose. now we are
+            checking what to draw for the next frame
 
-        self.__drawing_queued = self.tweener and self.tweener.has_tweens()
+        """
+
+        now = dt.datetime.now()
+        last_frame, self._last_frame_time = self._last_frame_time, now
+
+        # check mouse and let item know if something is going on
+        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
+        self.__check_mouse(self.mouse_x, self.mouse_y)
+
+        delta = (now - last_frame).microseconds / 1000000.0
+
+
+        # move items
+        more_tweens = ()
+        if self.tweener:
+            more_tweens = self.tweener.update(delta)
+        self.fps = 1 / delta
+
+
+        # signal that now is a good time for override
+        self.emit("on-frame")
+
+
+        # now see which sprites have been modified and invalidate the appropriate regions
+        anything = False
+        for sprite in (sprite for sprite in self.all_visible_sprites() if not sprite._extents or sprite._sprite_dirty):
+            for ext in (sprite._prev_extents, sprite.get_extents()):
+                if ext:
+                    anything = True
+                    #the two pixel border comes from rounding plus 1px padding
+                    self.queue_draw_area(int(ext.x)-2, int(ext.y)-2,
+                                         int(ext.w)+4, int(ext.h)+4)
+
+        # redraw the whole screen if there are no changes but we should be doing something
+        if not anything:
+            self.queue_draw()
+
+
+        # keep running in case if the tweener has more to do
+        self.__drawing_queued = len(more_tweens) > 0
         return self.__drawing_queued
 
 
@@ -1672,6 +1729,7 @@ class Scene(gtk.DrawingArea):
             color = self.colors.parse(self.background_color)
             context.set_source_rgb(*color)
             context.fill_preserve()
+
         context.clip()
 
         if self.scale:
@@ -1681,27 +1739,26 @@ class Scene(gtk.DrawingArea):
                 aspect_x = aspect_y = min(aspect_x, aspect_y)
             context.scale(aspect_x, aspect_y)
 
-        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
-
         self._redraw_in_progress = True
 
-        # update tweens
-        now = dt.datetime.now()
-        delta = (now - (self._last_frame_time or dt.datetime.now())).microseconds / 1000000.0
-        self._last_frame_time = now
-        if self.tweener:
-            self.tweener.update(delta)
-
-        self.fps = 1 / delta
-
-
-        # start drawing
         self.emit("on-enter-frame", context)
-        for sprite in self.sprites:
-            sprite._draw(context)
 
-        self.__check_mouse(self.mouse_x, self.mouse_y)
+        expose_region = geom.Rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
+
+        for sprite in self.sprites:
+            sprite._draw(context, expose_region = expose_region)
+
+
         self.emit("on-finish-frame", context)
+
+
+        if False:
+            context.rectangle(event.area.x, event.area.y,
+                              event.area.width, event.area.height)
+            context.set_source_rgb(0,0,0)
+            context.set_line_width(5)
+            context.stroke_preserve()
+
         self._redraw_in_progress = False
 
 

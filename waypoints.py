@@ -69,6 +69,9 @@ class QueueingWaypoint(Waypoint):
         self.boids = []
         self.boid_scales = {}
 
+
+        self.dirty_flags = self.dirty_flags ^ set(('boids', 'boid_scales', 'frames', 'current_frame'))
+
     def see_you(self, boid):
         distance = (self.location - boid.location).magnitude_squared()
         if boid not in self.boids and distance < 400:
@@ -239,6 +242,8 @@ class ShakyWaypoint(Waypoint):
 class Boid(graphics.Sprite):
     def __init__(self, location, max_speed = 2.0):
         graphics.Sprite.__init__(self, snap_to_pixel=False)
+
+        self.dirty_flags = self.dirty_flags ^ set(('velocity', 'acceleration', 'radio', 'target_waypoint'))
 
         self.visible = True
         self.radius = 3
