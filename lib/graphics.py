@@ -542,11 +542,10 @@ class Graphics(object):
             if fresh_draw and instruction in (self._new_path, self._stroke, self._fill, self._clip):
                 self.paths.append(context.copy_path())
 
-            if opacity < 1:
-                if instruction == self._set_color:
-                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-                elif instruction == self._paint:
-                    context.paint_with_alpha(opacity)
+            if opacity < 1 and instruction == self._set_color:
+                self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+            elif opacity < 1 and instruction == self._paint:
+                context.paint_with_alpha(opacity)
             else:
                 instruction(context, *args)
 
