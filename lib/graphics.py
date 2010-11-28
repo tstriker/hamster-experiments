@@ -940,11 +940,7 @@ class Sprite(gtk.Object):
 
     def get_matrix(self):
         """return sprite's current transformation matrix"""
-        if self.parent:
-            return cairo_matrix_multiply(self.get_local_matrix(),
-                                         (self._prev_parent_matrix or self.parent.get_matrix()))
-        else:
-            return self.get_local_matrix()
+        return cairo_matrix_multiply(self.get_local_matrix(), (self._prev_parent_matrix or self.parent.get_matrix()))
 
 
     def from_scene_coords(self, x=0, y=0):
@@ -971,8 +967,7 @@ class Sprite(gtk.Object):
         parent_matrix = parent_matrix or cairo.Matrix()
 
         # cache parent matrix
-        if parent_matrix != self._prev_parent_matrix:
-            self._prev_parent_matrix = parent_matrix
+        self._prev_parent_matrix = parent_matrix
 
         matrix = self.get_local_matrix()
         context.save()
@@ -984,17 +979,13 @@ class Sprite(gtk.Object):
         else:
             self.graphics._draw(context, self.opacity * opacity)
 
-
-
         self.__dict__['_prev_extents'] = self._extents or self.get_extents()
 
-
         for sprite in self.sprites:
-            sprite._draw(context, self.opacity * opacity, parent_matrix * matrix)
+            sprite._draw(context, self.opacity * opacity, cairo_matrix_multiply(matrix, parent_matrix))
 
 
         context.restore()
-
         context.new_path() #forget about us
 
 
