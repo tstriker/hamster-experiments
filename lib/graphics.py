@@ -668,10 +668,8 @@ class Sprite(gtk.Object):
     }
 
     transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'))
-    dirty_flags = transformation_flags ^ set(('opacity', 'visible', 'z_order',
-                                              'drag_x', 'drag_y', 'sprites'
-                                              '_matrix', 'sprites',
-                                              '_stroke_context'))
+    graphics_unrelated_flags = set(('drag_x', 'drag_y', '_matrix', 'sprites', '_stroke_context'))
+    dirty_flags = set(('opacity', 'visible', 'z_order'))
 
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
@@ -779,7 +777,7 @@ class Sprite(gtk.Object):
                     sprite._prev_parent_matrix = None
 
 
-            if name not in (self.dirty_flags):
+            if name not in (self.transformation_flags ^ self.graphics_unrelated_flags ^ self.dirty_flags):
                 self.__dict__["_sprite_dirty"] = True
                 self.__dict__['_extents'] = None
 
@@ -940,7 +938,11 @@ class Sprite(gtk.Object):
 
     def get_matrix(self):
         """return sprite's current transformation matrix"""
-        return cairo_matrix_multiply(self.get_local_matrix(), (self._prev_parent_matrix or self.parent.get_matrix()))
+        if self.parent:
+            return cairo_matrix_multiply(self.get_local_matrix(),
+                                         (self._prev_parent_matrix or self.parent.get_matrix()))
+        else:
+            return self.get_local_matrix()
 
 
     def from_scene_coords(self, x=0, y=0):
@@ -1141,7 +1143,12 @@ class Label(Sprite):
         #: label text
         self.text = text
 
+        self._letter_sizes = {}
+        self._measures = {}
+
         self.connect("on-render", self.on_render)
+
+        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(("_letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
 
 
     def __setattr__(self, name, val):
@@ -1159,11 +1166,14 @@ class Label(Sprite):
                 else:
                     self.__dict__['_bounds_width'] = val * pango.SCALE
 
-
             if name in ("width", "text", "size", "font_desc", "wrap", "ellipsize", "max_width"):
+                self._measures = {}
                 # avoid chicken and egg
                 if hasattr(self, "text") and hasattr(self, "size") and hasattr(self, "font_face"):
                     self.__dict__['width'], self.__dict__['height'], self.__dict__['_ascent'] = self.measure(self.text)
+
+            if name in("font_desc", "size"):
+                self._letter_sizes = {}
 
             if name == 'text':
                 self.emit('on-change')
@@ -1189,7 +1199,7 @@ class Label(Sprite):
         # measure individual letters
         if self.wrap in (pango.WRAP_CHAR, pango.WRAP_WORD_CHAR):
             letters = set(unicode(text))
-            sizes = [context.text_extents(letter)[4] for letter in letters]
+            sizes = [self._letter_sizes.setdefault(letter, context.text_extents(letter)[4]) for letter in letters]
             letters = dict(zip(letters, sizes))
 
 
@@ -1269,6 +1279,10 @@ class Label(Sprite):
         """measures given text with label's font and size.
         returns width, height and ascent. Ascent's null in case if the label
         does not have font face specified (and is thusly using pango)"""
+
+        if text in self._measures:
+            return self._measures[text]
+
         context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
 
         width, height, ascent = None, None, None
@@ -1309,7 +1323,8 @@ class Label(Sprite):
 
             width, height = layout.get_pixel_size()
 
-        return width, height, ascent
+        self._measures[text] = width, height, ascent
+        return self._measures[text]
 
 
     def on_render(self, sprite):
