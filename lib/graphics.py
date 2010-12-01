@@ -90,107 +90,6 @@ class Colors(object):
 
 Colors = Colors() # this is a static class, so an instance will do
 
-class Geometry(object):
-    """geometry related objects"""
-    class Rectangle(object):
-        __slots__ = ('x', 'y', 'w', 'h')
-
-        def __init__(self, x=0, y=0, w=0, h=0):
-            if isinstance(x, geom.Rectangle):
-                # allow cloning rectangles rect = Rectangle(rect)
-                self.x, self.y, self.w, self.h = x.x, x.y, x.w, x.h
-            else:
-                self.x, self.y, self.w, self.h = x, y, w, h
-
-        def __repr__(self):
-            return "<%s %d (%d, %d, %d, %d)>" % (self.__class__.__name__, id(self), self.x, self.y, self.w, self.h)
-
-        def __nonzero__(self):
-            return any((self.x, self.y, self.w, self.h))
-
-        @property
-        def left(self): return self.x
-        @left.setter
-        def left(self, val):
-            self.w, self.x = self.w + val - self.x, val
-            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
-
-        @property
-        def right(self): return self.x + self.w
-        @right.setter
-        def right(self, val):
-            self.w = val - self.x
-            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
-
-
-        @property
-        def top(self): return self.y
-        @top.setter
-        def top(self, val):
-            self.h, self.y = self.h + val - self.y, val
-            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
-
-        @property
-        def bottom(self): return self.y + self.h
-        @bottom.setter
-        def bottom(self, val):
-            self.h = val - self.y
-            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
-
-
-        def size(self):
-            return self.w * self.h
-
-        def union(self, rect2, y = None, x2 = None, y2 = None):
-            if y is not None:
-                # allow sending in also just 4 points. using x2,y2 instead of
-                # w,h because cairo returns those
-                x, x2 = min(self.left, rect2), max(self.right, x2)
-                y, y2 = min(self.top, y), max(self.bottom, y2)
-            else:
-                if not rect2 or not self:
-                    return geom.Rectangle(self) or geom.Rectangle(rect2)
-
-                x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
-                y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
-
-            return geom.Rectangle(x, y, x2-x, y2-y)
-
-        def intersection(self, rect2, y = None, x2 = None, y2 = None):
-            """returns intersecting area of two rectangles or None if rectangles are not
-            intersecting"""
-            if y is not None:
-                # allow sending in also just 4 points. using x2,y2 instead of
-                # w,h because cairo returns those
-                x, x2 = max(self.left, rect2), min(self.right, x2)
-                y, y2 = max(self.top, y), min(self.bottom, y2)
-            else:
-                if not rect2 or not self:
-                    return geom.Rectangle(self) or geom.Rectangle(rect2)
-
-                x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
-                y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
-
-            if x2 < x or y2 < y:
-                return None
-            else:
-                return geom.Rectangle(x, y, x2-x, y2-y)
-
-        def contains(self, target):
-            """checks if our rectangle contains the target. Target can be
-               either another rectangle, x, y coordinates or an (x,y) tuple
-            """
-            if isinstance(target, geom.Rectangle):
-                return all((self.left < target.left,
-                            self.right > target.right,
-                            self.top < target.top,
-                            self.bottom > target.bottom))
-            else:
-                return self.left < target[0] < self.right and \
-                       self.top < target[1] < self.bottom
-
-geom = Geometry()
-
 
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
@@ -590,13 +489,18 @@ class Graphics(object):
 
             # measure the path extents so we know the size of cache surface
             # also to save some time use the context to paint for the first time
-            extents = geom.Rectangle()
+            extents = gtk.gdk.Rectangle()
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
 
                     ext = context.path_extents()
-                    extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
+                    if any((extents.x, extents.y, extents.width, extents.height)):
+                        if ext:
+                            extents = extents.union(gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+                                                                      int(ext[2]-ext[0]), int(ext[3]-ext[1])))
+                    else:
+                        extents = ext
 
 
                 if instruction in (self._set_source_pixbuf, self._set_source_surface):
@@ -618,7 +522,12 @@ class Graphics(object):
                 self.paths.append(context.copy_path())
 
                 ext = context.path_extents()
-                extents = extents.union(geom.Rectangle(ext[0], ext[1], ext[2]-ext[0], ext[3]-ext[1]))
+                if any((extents.x, extents.y, extents.width, extents.height)):
+                    if ext:
+                        extents = extents.union(gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+                                                                  int(ext[2]-ext[0]), int(ext[3]-ext[1])))
+                else:
+                    extents = ext
 
 
             # avoid re-caching if we have just moved
@@ -775,6 +684,10 @@ class Sprite(gtk.Object):
                 return
             self.__dict__[name] = val
 
+            if name == 'parent':
+                self._prev_parent_matrix = None
+                return
+
             if name == '_prev_parent_matrix':
                 self.__dict__['_extents'] = None
                 for sprite in self.sprites:
@@ -858,6 +771,8 @@ class Sprite(gtk.Object):
 
         if not self.graphics.paths:
             self.graphics._draw(context, 1)
+
+
         if not self.graphics.paths:
             return None
 
@@ -867,7 +782,8 @@ class Sprite(gtk.Object):
         context.identity_matrix()
 
         ext = context.path_extents()
-        ext = geom.Rectangle(ext[0], ext[1], ext[2] - ext[0], ext[3] - ext[1])
+        ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+                                int(ext[2] - ext[0]), int(ext[3] - ext[1]))
 
         self.__dict__['_extents'] = ext
         self._stroke_context = context
@@ -885,7 +801,7 @@ class Sprite(gtk.Object):
         if not extents:
             return False
 
-        if extents.left <= x <= extents.right and extents.top <= y <= extents.bottom:
+        if extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
             return self._stroke_context.in_fill(x, y)
         else:
             return False
@@ -922,6 +838,9 @@ class Sprite(gtk.Object):
         scene = self.get_scene()
         if scene:
             scene.animate(self, duration, easing, on_complete, on_update, **kwargs)
+        else:
+            for key, val in kwargs.items():
+                setattr(self, key, val)
 
     def get_local_matrix(self):
         if not self._matrix:
@@ -1750,18 +1669,14 @@ class Scene(gtk.DrawingArea):
         """Returns the topmost visible interactive sprite for given coordinates"""
         over = None
 
+
+
         for sprite in self.all_visible_sprites():
-            if (sprite.interactive or sprite.draggable) and self.__check_hit(sprite, x, y):
+            if (sprite.interactive or sprite.draggable) and sprite.check_hit(x, y):
                 over = sprite
 
         return over
 
-
-    def __check_hit(self, sprite, x, y):
-        if sprite == self._drag_sprite:
-            return True
-
-        return sprite.check_hit(x, y)
 
 
     def __check_mouse(self, x, y):
