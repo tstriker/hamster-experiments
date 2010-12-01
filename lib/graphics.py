@@ -90,107 +90,6 @@ class Colors(object):
 
 Colors = Colors() # this is a static class, so an instance will do
 
-class Geometry(object):
-    """geometry related objects"""
-    class Rectangle(object):
-        __slots__ = ('x', 'y', 'w', 'h')
-
-        def __init__(self, x=0, y=0, w=0, h=0):
-            if isinstance(x, geom.Rectangle):
-                # allow cloning rectangles rect = Rectangle(rect)
-                self.x, self.y, self.w, self.h = x.x, x.y, x.w, x.h
-            else:
-                self.x, self.y, self.w, self.h = x, y, w, h
-
-        def __repr__(self):
-            return "<%s %d (%d, %d, %d, %d)>" % (self.__class__.__name__, id(self), self.x, self.y, self.w, self.h)
-
-        def __nonzero__(self):
-            return any((self.x, self.y, self.w, self.h))
-
-        @property
-        def left(self): return self.x
-        @left.setter
-        def left(self, val):
-            self.w, self.x = self.w + val - self.x, val
-            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
-
-        @property
-        def right(self): return self.x + self.w
-        @right.setter
-        def right(self, val):
-            self.w = val - self.x
-            if self.w < 0: self.x, self.w = self.x + self.w, -self.w
-
-
-        @property
-        def top(self): return self.y
-        @top.setter
-        def top(self, val):
-            self.h, self.y = self.h + val - self.y, val
-            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
-
-        @property
-        def bottom(self): return self.y + self.h
-        @bottom.setter
-        def bottom(self, val):
-            self.h = val - self.y
-            if self.h < 0: self.y, self.h = self.y + self.h, -self.h
-
-
-        def size(self):
-            return self.w * self.h
-
-        def union(self, rect2, y = None, x2 = None, y2 = None):
-            if y is not None:
-                # allow sending in also just 4 points. using x2,y2 instead of
-                # w,h because cairo returns those
-                x, x2 = min(self.left, rect2), max(self.right, x2)
-                y, y2 = min(self.top, y), max(self.bottom, y2)
-            else:
-                if not rect2 or not self:
-                    return geom.Rectangle(self) or geom.Rectangle(rect2)
-
-                x, x2 = min(self.left, rect2.left), max(self.right, rect2.right)
-                y, y2 = min(self.top, rect2.top), max(self.bottom, rect2.bottom)
-
-            return geom.Rectangle(x, y, x2-x, y2-y)
-
-        def intersection(self, rect2, y = None, x2 = None, y2 = None):
-            """returns intersecting area of two rectangles or None if rectangles are not
-            intersecting"""
-            if y is not None:
-                # allow sending in also just 4 points. using x2,y2 instead of
-                # w,h because cairo returns those
-                x, x2 = max(self.left, rect2), min(self.right, x2)
-                y, y2 = max(self.top, y), min(self.bottom, y2)
-            else:
-                if not rect2 or not self:
-                    return geom.Rectangle(self) or geom.Rectangle(rect2)
-
-                x, x2 = max(self.left, rect2.left), min(self.right, rect2.right)
-                y, y2 = max(self.top, rect2.top), min(self.bottom, rect2.bottom)
-
-            if x2 < x or y2 < y:
-                return None
-            else:
-                return geom.Rectangle(x, y, x2-x, y2-y)
-
-        def contains(self, target):
-            """checks if our rectangle contains the target. Target can be
-               either another rectangle, x, y coordinates or an (x,y) tuple
-            """
-            if isinstance(target, geom.Rectangle):
-                return all((self.left < target.left,
-                            self.right > target.right,
-                            self.top < target.top,
-                            self.bottom > target.bottom))
-            else:
-                return self.left < target[0] < self.right and \
-                       self.top < target[1] < self.bottom
-
-geom = Geometry()
-
 
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
@@ -591,11 +490,16 @@ class Graphics(object):
 
             # measure the path extents so we know the size of cache surface
             # also to save some time use the context to paint for the first time
-            extents = geom.Rectangle()
+            extents = gtk.gdk.Rectangle()
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
-                    extents = extents.union(*context.path_extents())
+                    exts = context.path_extents()
+                    exts = gtk.gdk.Rectangle(exts[0], exts[1], exts[2]-exts[0], exts[3]-exts[1])
+                    if any((extents.x, extents.y, extents.width, extents.height)):
+                        extents = extents.union(exts)
+                    else:
+                        extents = exts
 
 
                 if instruction in (self._set_source_pixbuf, self._set_source_surface):
@@ -604,6 +508,7 @@ class Graphics(object):
                     x = args[1] if len(args) > 1 else 0
                     y = args[2] if len(args) > 2 else 0
                     self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
+                    self._stroke((0,0,0), 0)
 
                 if instruction == self._paint and opacity < 1:
                     context.paint_with_alpha(opacity)
@@ -611,11 +516,6 @@ class Graphics(object):
                     self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
                 else:
                     instruction(context, *args)
-
-
-            if instruction not in path_end_instructions: # last one
-                self.paths.append(context.copy_path())
-                extents = extents.union(*context.path_extents())
 
 
             # avoid re-caching if we have just moved
@@ -629,7 +529,6 @@ class Graphics(object):
             self.extents = extents
 
             if not just_transforms:
-
                 # now draw the instructions on the caching surface
                 w = int(extents.w) + 1
                 h = int(extents.h) + 1
@@ -676,20 +575,25 @@ class Sprite(gtk.Object):
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
 
-    transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'))
-    dirty_flags = transformation_flags ^ set(('opacity', 'visible', 'z_order',
-                                              'drag_x', 'drag_y', 'sprites'
-                                              '_matrix', 'sprites',
-                                              '_stroke_context'))
+    transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y',
+                                'pivot_x', 'pivot_y', '_prev_parent_matrix'))
+    dirty_flags = set(('opacity', 'visible', 'z_order'))
+    graphics_unrelated_flags = set(('drag_x', 'drag_y', '_matrix', 'sprites',
+                                    '_stroke_context', '_child_extents',
+                                    'mouse_cursor', '_scene', '_sprite_dirty'))
+
 
     def __init__(self, x = 0, y = 0,
                  opacity = 1, visible = True,
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
+                 interactive_children = True,
                  z_order = 0, mouse_cursor = None,
                  cache_as_bitmap = False, snap_to_pixel = True):
         gtk.Object.__init__(self)
+
+        self._scene = None
 
         #: list of children sprites. Use :func:`add_child` to add sprites
         self.sprites = []
@@ -699,6 +603,9 @@ class Sprite(gtk.Object):
 
         #: boolean denoting whether the sprite responds to mouse events
         self.interactive = interactive
+
+        #: whether children should respond to mouse. defaults to true
+        self.interactive_children = interactive_children
 
         #: boolean marking if sprite can be automatically dragged
         self.draggable = draggable
@@ -762,50 +669,64 @@ class Sprite(gtk.Object):
 
         self._extents = None
         self._prev_extents = None
+        self._child_extents = None
+
+
 
 
 
 
     def __setattr__(self, name, val):
-        try:
-            setter = self.__class__.__dict__[name].__set__
-        except (AttributeError,  KeyError):
-            if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
-                return
-            self.__dict__[name] = val
+        if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
+            return
 
-            if name == '_prev_parent_matrix':
-                self.__dict__['_extents'] = None
-                for sprite in self.sprites:
-                    sprite._prev_parent_matrix = None
-                return
+        self.__dict__[name] = val
 
+        if name in self.graphics_unrelated_flags:
+            return
+        elif name == 'visible' or (hasattr(self, "visible") and self.visible):
+            self.__dict__['_extents'] = None
+            scene = self.get_scene()
+            if scene:
+                scene.draw_me.add(self)
 
-            if name in self.transformation_flags:
-                self.__dict__['_matrix'] = None
-                self.__dict__['_extents'] = None
-                for sprite in self.sprites:
-                    sprite._prev_parent_matrix = None
+        if name == 'parent':
+            self._prev_parent_matrix = None
+            return
 
-            if name not in (self.dirty_flags):
-                self.__dict__["_sprite_dirty"] = True
-                self.__dict__['_extents'] = None
+        if name == '_prev_parent_matrix':
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+            return
 
-            if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and self.__dict__.get("graphics"):
-                # invalidating cache for the bitmap version as that paints opacity in the image
-                self.graphics._last_matrix = None
-            elif name == 'interactive' and self.__dict__.get("graphics"):
-                # when suddenly item becomes interactive, it well can be that the extents had not been
-                # calculated
-                self.graphics._last_matrix = None
-            elif name == 'z_order' and self.__dict__.get('parent'):
-                self.parent._sort()
+        if name in self.transformation_flags:
+            self.__dict__['_matrix'] = None
+            if hasattr(self, 'parent') and self.parent:
+                self.parent._child_extents = None
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
 
-        else:
-            setter(self, val)
+        elif name in ("visible", "z_order"):
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
 
 
-        self.redraw()
+
+        if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and hasattr(self, "graphics"):
+            # invalidating cache for the bitmap version as that paints opacity in the image
+            self.graphics._last_matrix = None
+        elif name == 'z_order' and self.__dict__.get('parent'):
+            self.parent._sort()
+
+
+
+        if name not in (self.transformation_flags ^ self.dirty_flags):
+            self.__dict__["_sprite_dirty"] = True
+            if hasattr(self, 'parent') and self.parent:
+                self.parent._child_extents = None
+            self.redraw()
+
+
 
     def _sort(self):
         """sort sprites by z_order"""
@@ -828,6 +749,7 @@ class Sprite(gtk.Object):
     def remove_child(self, *sprites):
         for sprite in sprites:
             self.sprites.remove(sprite)
+            sprite._scene = None
             sprite.parent = None
 
     def bring_to_front(self):
@@ -851,25 +773,59 @@ class Sprite(gtk.Object):
         if self._extents:
             return self._extents
 
-        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
-        context.transform(self.get_matrix())
-
         if not self.graphics.paths:
-            self.graphics._draw(context, 1)
+            self.graphics._draw(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)), 1)
+
         if not self.graphics.paths:
             return None
 
+        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+        context.transform(self.get_matrix())
 
         for path in self.graphics.paths:
             context.append_path(path)
         context.identity_matrix()
 
         ext = context.path_extents()
-        ext = geom.Rectangle(ext[0], ext[1], ext[2] - ext[0], ext[3] - ext[1])
+        ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+                                int(ext[2] - ext[0]), int(ext[3] - ext[1]))
+
+        if not any((ext.x, ext.y, ext.width, ext.height)):
+            ext = None
 
         self.__dict__['_extents'] = ext
         self._stroke_context = context
+
         return ext
+
+    def get_child_extents(self):
+        if self._child_extents is None and self.sprites:
+            res = gtk.gdk.Rectangle()
+            for sprite in self.sprites:
+                if sprite.visible:
+                    exts = None
+                    if sprite.interactive or sprite.draggable:
+                        exts = sprite.get_extents()
+
+                    child_exts = sprite.get_child_extents()
+                    if exts and child_exts:
+                        exts = exts.union(child_exts)
+                    else:
+                        exts = exts or child_exts
+
+                    if exts:
+                        if any((res.x, res.y, res.width, res.height)):
+                            res = res.union(exts)
+                        else:
+                            res = exts
+
+            if not any((res.x, res.y, res.width, res.height)):
+                res = 0
+
+            self._child_extents = res
+
+
+        return self._child_extents
 
 
 
@@ -883,19 +839,24 @@ class Sprite(gtk.Object):
         if not extents:
             return False
 
-        if extents.left <= x <= extents.right and extents.top <= y <= extents.bottom:
+        if extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
             return self._stroke_context.in_fill(x, y)
         else:
             return False
 
+
     def get_scene(self):
         """returns class:`Scene` the sprite belongs to"""
-        if hasattr(self, 'parent') and self.parent:
-            if isinstance(self.parent, Sprite) == False:
-                return self.parent
-            else:
-                return self.parent.get_scene()
-        return None
+        if not self._scene:
+            if hasattr(self, 'parent') and self.parent:
+                if isinstance(self.parent, Sprite) == False:
+                    scene = self.parent
+                else:
+                    scene = self.parent.get_scene()
+
+                self._scene = scene
+
+        return self._scene
 
     def redraw(self):
         """queue redraw of the sprite. this function is called automatically
@@ -904,7 +865,7 @@ class Sprite(gtk.Object):
            Call scene.redraw() explicitly if you need to redraw in these cases.
         """
         scene = self.get_scene()
-        if scene and scene._redraw_in_progress == False:
+        if scene and scene._redraw_in_progress == False and self.parent:
             self.parent.redraw()
 
     def animate(self, duration = None, easing = None, on_complete = None, on_update = None, **kwargs):
@@ -920,6 +881,9 @@ class Sprite(gtk.Object):
         scene = self.get_scene()
         if scene:
             scene.animate(self, duration, easing, on_complete, on_update, **kwargs)
+        else:
+            for key, val in kwargs.items():
+                setattr(self, key, val)
 
     def get_local_matrix(self):
         if not self._matrix:
@@ -976,16 +940,13 @@ class Sprite(gtk.Object):
         context.save()
         context.transform(matrix)
 
-        if not self._extents or self._extents.intersection(expose_region):
+        if not expose_region or not self._extents or not self._prev_parent_matrix or self._extents.intersect(expose_region):
             if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
                 self.emit("on-render")
                 self.__dict__["_sprite_dirty"] = False
 
-
             # cache parent matrix
             self._prev_parent_matrix = parent_matrix
-
-
 
             if self.cache_as_bitmap:
                 self.graphics._draw_as_bitmap(context, self.opacity * opacity)
@@ -997,13 +958,12 @@ class Sprite(gtk.Object):
             else:
                 self.__dict__['_prev_extents'] = self.get_extents()
 
+        next_matrix = cairo_matrix_multiply(matrix, parent_matrix)
         for sprite in self.sprites:
-            sprite._draw(context, self.opacity * opacity, cairo_matrix_multiply(matrix, parent_matrix), expose_region = expose_region)
+            sprite._draw(context, self.opacity * opacity, next_matrix, expose_region = expose_region)
 
         context.restore()
         context.new_path() #forget about us
-
-
 
 
 
@@ -1016,29 +976,22 @@ class BitmapSprite(Sprite):
     def __init__(self, image_data = None, cache_mode = None, **kwargs):
         Sprite.__init__(self, **kwargs)
 
-        self._image_width, self._image_height = None, None
+        self.width, self.height = None, None
         self.cache_mode = cache_mode or cairo.CONTENT_COLOR_ALPHA
         #: image data
         self.image_data = image_data
 
         self._surface = None
 
-    @property
-    def height(self):
-        return self._image_height
-
-    @property
-    def width(self):
-        return self._image_width
-
+        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(('_surface',))
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
         if name == 'image_data':
             self.__dict__['_surface'] = None
             if self.image_data:
-                self.__dict__['_image_width'] = self.image_data.get_width()
-                self.__dict__['_image_height'] = self.image_data.get_height()
+                self.__dict__['width'] = self.image_data.get_width()
+                self.__dict__['height'] = self.image_data.get_height()
 
     def _draw(self, context, opacity = 1, parent_matrix = None, expose_region = None):
         if self.image_data is None or self.width is None or self.height is None:
@@ -1056,11 +1009,12 @@ class BitmapSprite(Sprite):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.image_data)
-            local_context.rectangle(0.5, 0.5, self.width, self.height)
+            local_context.rectangle(0, 0, self.width, self.height)
             local_context.clip()
             local_context.paint()
 
             # add instructions with the resulting surface
+            self.graphics.clear()
             self.graphics.rectangle(0, 0, self.width, self.height)
             self.graphics.clip()
             self.graphics.set_source_surface(surface)
@@ -1069,6 +1023,54 @@ class BitmapSprite(Sprite):
 
 
         Sprite._draw(self,  context, opacity, parent_matrix, expose_region)
+
+
+class ChildCache(Sprite):
+    """Caches given image data in a surface similar to targets, which ensures
+       that drawing it will be quick and low on CPU.
+       Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
+    """
+    def __init__(self, **kwargs):
+        Sprite.__init__(self, **kwargs)
+
+        self.width, self.height = None, None
+        self.cache_mode = cairo.CONTENT_COLOR_ALPHA
+
+        #: image data
+        self._surface = None
+
+        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(('_surface',))
+
+
+    def _draw(self, context, opacity = 1, parent_matrix = None, expose_region = None):
+        if not self._surface:
+            # caching image on surface similar to the target
+            surface = context.get_target().create_similar(self.cache_mode,
+                                                          self.sprites[-1].x + self.sprites[-1].width,
+                                                          200)
+
+
+            local_context = gtk.gdk.CairoContext(cairo.Context(surface))
+
+            for sprite in self.sprites:
+                sprite._draw(local_context)
+                sprite.visible = False
+
+
+            # add instructions with the resulting surface
+            self.graphics.clear()
+            self.graphics.rectangle(0, 0, self.sprites[-1].x + self.sprites[-1].width, 200)
+            self.graphics.clip()
+            self.graphics.set_source_surface(surface)
+            self.graphics.paint()
+            self._surface = surface
+
+
+        Sprite._draw(self,  context, opacity, parent_matrix, expose_region)
+
+
+
+
 
 
 class Image(BitmapSprite):
@@ -1163,7 +1165,12 @@ class Label(Sprite):
         #: label text
         self.text = text
 
+        self.__letter_sizes = {}
+        self._measures = {}
+
         self.connect("on-render", self.on_render)
+
+        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(("__letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
 
 
     def __setattr__(self, name, val):
@@ -1181,11 +1188,14 @@ class Label(Sprite):
                 else:
                     self.__dict__['_bounds_width'] = val * pango.SCALE
 
-
             if name in ("width", "text", "size", "font_desc", "wrap", "ellipsize", "max_width"):
+                self._measures = {}
                 # avoid chicken and egg
                 if hasattr(self, "text") and hasattr(self, "size") and hasattr(self, "font_face"):
                     self.__dict__['width'], self.__dict__['height'], self.__dict__['_ascent'] = self.measure(self.text)
+
+            if name in("font_desc", "size"):
+                self.__letter_sizes = {}
 
             if name == 'text':
                 self.emit('on-change')
@@ -1211,7 +1221,7 @@ class Label(Sprite):
         # measure individual letters
         if self.wrap in (pango.WRAP_CHAR, pango.WRAP_WORD_CHAR):
             letters = set(unicode(text))
-            sizes = [context.text_extents(letter)[4] for letter in letters]
+            sizes = [self.__letter_sizes.setdefault(letter, context.text_extents(letter)[4]) for letter in letters]
             letters = dict(zip(letters, sizes))
 
 
@@ -1291,6 +1301,10 @@ class Label(Sprite):
         """measures given text with label's font and size.
         returns width, height and ascent. Ascent's null in case if the label
         does not have font face specified (and is thusly using pango)"""
+
+        if text in self._measures:
+            return self._measures[text]
+
         context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
 
         width, height, ascent = None, None, None
@@ -1331,7 +1345,8 @@ class Label(Sprite):
 
             width, height = layout.get_pixel_size()
 
-        return width, height, ascent
+        self._measures[text] = width, height, ascent
+        return self._measures[text]
 
 
     def on_render(self, sprite):
@@ -1602,6 +1617,8 @@ class Scene(gtk.DrawingArea):
 
         self._original_width, self._original_height = None,  None
 
+        self.draw_me = set()
+
 
 
     def add_child(self, *sprites):
@@ -1625,6 +1642,7 @@ class Scene(gtk.DrawingArea):
         """Remove one or several :class:`Sprite` sprites from scene """
         for sprite in sprites:
             self.sprites.remove(sprite)
+            sprite._scene = None
             sprite.parent = None
 
     # these two mimic sprite functions so parent check can be avoided
@@ -1685,6 +1703,10 @@ class Scene(gtk.DrawingArea):
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
         self.__check_mouse(self.mouse_x, self.mouse_y)
 
+        # signal that now is a good time for override
+        self.emit("on-frame")
+
+
         delta = (now - last_frame).microseconds / 1000000.0
 
 
@@ -1695,19 +1717,20 @@ class Scene(gtk.DrawingArea):
         self.fps = 1 / delta
 
 
-        # signal that now is a good time for override
-        self.emit("on-frame")
-
 
         # now see which sprites have been modified and invalidate the appropriate regions
         anything = False
-        for sprite in (sprite for sprite in self.all_visible_sprites() if not sprite._extents or sprite._sprite_dirty):
+
+        for sprite in self.draw_me:
             for ext in (sprite._prev_extents, sprite.get_extents()):
                 if ext:
                     anything = True
                     #the two pixel border comes from rounding plus 1px padding
-                    self.queue_draw_area(int(ext.x)-2, int(ext.y)-2,
-                                         int(ext.w)+4, int(ext.h)+4)
+                    self.queue_draw_area(int(ext.x)-5, int(ext.y)-5,
+                                         int(ext.width)+10, int(ext.height)+10)
+
+        self.draw_me = set()
+
 
         # redraw the whole screen if there are no changes but we should be doing something
         if not anything:
@@ -1743,7 +1766,7 @@ class Scene(gtk.DrawingArea):
 
         self.emit("on-enter-frame", context)
 
-        expose_region = geom.Rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
+        expose_region = gtk.gdk.Rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
 
         for sprite in self.sprites:
             sprite._draw(context, expose_region = expose_region)
@@ -1769,6 +1792,7 @@ class Scene(gtk.DrawingArea):
 
         self.width, self.height = event.width, event.height
 
+
     def all_visible_sprites(self):
         """Returns flat list of the sprite tree for simplified iteration"""
         def all_recursive(sprites):
@@ -1786,18 +1810,26 @@ class Scene(gtk.DrawingArea):
         """Returns the topmost visible interactive sprite for given coordinates"""
         over = None
 
-        for sprite in self.all_visible_sprites():
-            if (sprite.interactive or sprite.draggable) and self.__check_hit(sprite, x, y):
-                over = sprite
+        def all_recursive(sprites):
+            for sprite in reversed(sprites):
+                if sprite.visible:
+                    out = None
 
-        return over
+                    if (sprite.interactive or sprite.draggable) and sprite.check_hit(x, y):
+                        out = sprite
 
+                    if sprite.sprites:
+                        extents = sprite.get_child_extents()
+                        if extents and extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
+                            out = all_recursive(sprite.sprites) or out
 
-    def __check_hit(self, sprite, x, y):
-        if sprite == self._drag_sprite:
-            return True
+                    if out:
+                        return out
 
-        return sprite.check_hit(x, y)
+        if self._mouse_sprite and self._mouse_sprite.check_hit(x, y):
+            return all_recursive(self._mouse_sprite.sprites) or self._mouse_sprite
+        else:
+            return all_recursive(self.sprites)
 
 
     def __check_mouse(self, x, y):
@@ -1857,21 +1889,21 @@ class Scene(gtk.DrawingArea):
         if self._mouse_down_sprite and self._mouse_down_sprite.draggable \
            and gtk.gdk.BUTTON1_MASK & event.state:
             # dragging around
-            drag_started = (self.__drag_start_x is not None and \
-                           (self.__drag_start_x - event.x) ** 2 + \
-                           (self.__drag_start_y - event.y) ** 2 > self.drag_distance ** 2)
+            if not self.__drag_started:
+                drag_started = (self.__drag_start_x is not None and \
+                               (self.__drag_start_x - event.x) ** 2 + \
+                               (self.__drag_start_y - event.y) ** 2 > self.drag_distance ** 2)
 
-            if drag_started and not self.__drag_started:
-                self._drag_sprite = self._mouse_down_sprite
+                if drag_started:
+                    self._drag_sprite = self._mouse_down_sprite
 
-                self._drag_sprite.drag_x, self._drag_sprite.drag_y = self._drag_sprite.x, self._drag_sprite.y
+                    self._drag_sprite.drag_x, self._drag_sprite.drag_y = self._drag_sprite.x, self._drag_sprite.y
 
-                self._drag_sprite.emit("on-drag-start", event)
-                self.emit("on-drag-start", self._drag_sprite, event)
-                self.redraw()
+                    self._drag_sprite.emit("on-drag-start", event)
+                    self.emit("on-drag-start", self._drag_sprite, event)
+                    self.redraw()
 
-
-            self.__drag_started = self.__drag_started or drag_started
+                    self.__drag_started = True
 
             if self.__drag_started:
                 diff_x, diff_y = event.x - self.__drag_start_x, event.y - self.__drag_start_y
