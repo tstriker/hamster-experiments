@@ -112,6 +112,7 @@ class Graphics(object):
         self.__new_instructions = [] # instruction set until it is converted into path-based instructions
         self.__instruction_cache = []
         self.cache_surface = None
+        self._cache_layout = None
 
     def clear(self):
         """clear all instructions"""
@@ -371,8 +372,7 @@ class Graphics(object):
 
 
     @staticmethod
-    def _show_layout(context, text, font_desc, alignment, width, wrap, ellipsize):
-        layout = context.create_layout()
+    def _show_layout(context, layout, text, font_desc, alignment, width, wrap, ellipsize):
         layout.set_font_description(font_desc)
         layout.set_markup(text)
         layout.set_width(width or -1)
@@ -427,7 +427,8 @@ class Graphics(object):
            often handier than calling this function directly, is to create
            a class:Label object
         """
-        self._add_instruction(self._show_layout, text, font_desc, alignment, width, wrap, ellipsize)
+        layout = self._cache_layout = self._cache_layout or gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))).create_layout()
+        self._add_instruction(self._show_layout, layout, text, font_desc, alignment, width, wrap, ellipsize)
 
     def _add_instruction(self, function, *params):
         if self.context:
@@ -1121,6 +1122,11 @@ class Label(Sprite):
         Sprite.__init__(self, **kwargs)
         self.width, self.height = None, None
 
+
+        self._test_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
+        self._test_layout = self._test_context.create_layout()
+
+
         #: pango.FontDescription, default is the system's font
         self.font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         self.font_desc.set_size(size * pango.SCALE)
@@ -1305,10 +1311,9 @@ class Label(Sprite):
         if text in self._measures:
             return self._measures[text]
 
-        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
-
         width, height, ascent = None, None, None
 
+        context = self._test_context
         if self.font_face:
             context.set_font_face(self.font_face)
             context.set_font_size(self.size)
@@ -1332,7 +1337,7 @@ class Label(Sprite):
                 ascent, height = font_ascent, font_ascent + font_descent
 
         else:
-            layout = context.create_layout()
+            layout = self._test_layout
             layout.set_font_description(self.font_desc)
             layout.set_markup(text)
             layout.set_width((self._bounds_width or -1))
