@@ -496,10 +496,11 @@ class Graphics(object):
                     self.paths.append(context.copy_path())
 
                     ext = context.path_extents()
-                    if any((extents.x, extents.y, extents.width, extents.height)):
+                    ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+                                            int(ext[2]-ext[0]), int(ext[3]-ext[1]))
+                    if extents.width and extents.height:
                         if ext:
-                            extents = extents.union(gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
-                                                                      int(ext[2]-ext[0]), int(ext[3]-ext[1])))
+                            extents = extents.union(ext)
                     else:
                         extents = ext
 
@@ -544,8 +545,8 @@ class Graphics(object):
             if not just_transforms:
 
                 # now draw the instructions on the caching surface
-                w = int(extents.w) + 1
-                h = int(extents.h) + 1
+                w = int(extents.width) + 1
+                h = int(extents.height) + 1
                 self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
                 ctx = gtk.gdk.CairoContext(cairo.Context(self.cache_surface))
                 ctx.translate(-extents.x, -extents.y)
@@ -1122,7 +1123,7 @@ class Label(Sprite):
         if not text:
             return [], 0
 
-        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
+        context = self._test_context
         context.set_font_face(self.font_face)
         context.set_font_size(self.size)
 
