@@ -496,8 +496,9 @@ class Graphics(object):
                 if instruction in path_end_instructions:
                     self.paths.append(context.copy_path())
                     exts = context.path_extents()
-                    exts = gtk.gdk.Rectangle(exts[0], exts[1], exts[2]-exts[0], exts[3]-exts[1])
-                    if any((extents.x, extents.y, extents.width, extents.height)):
+                    exts = gtk.gdk.Rectangle(int(exts[0]), int(exts[1]),
+                                             int(exts[2]-exts[0]), int(exts[3]-exts[1]))
+                    if extents.width and extents.height:
                         extents = extents.union(exts)
                     else:
                         extents = exts
@@ -531,8 +532,8 @@ class Graphics(object):
 
             if not just_transforms:
                 # now draw the instructions on the caching surface
-                w = int(extents.w) + 1
-                h = int(extents.h) + 1
+                w = int(extents.width) + 1
+                h = int(extents.height) + 1
                 self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
                 ctx = gtk.gdk.CairoContext(cairo.Context(self.cache_surface))
                 ctx.translate(-extents.x, -extents.y)
@@ -580,7 +581,7 @@ class Sprite(gtk.Object):
                                 'pivot_x', 'pivot_y', '_prev_parent_matrix'))
     dirty_flags = set(('opacity', 'visible', 'z_order'))
     graphics_unrelated_flags = set(('drag_x', 'drag_y', '_matrix', 'sprites',
-                                    '_stroke_context', '_child_extents',
+                                    '_stroke_context',
                                     'mouse_cursor', '_scene', '_sprite_dirty'))
 
 
@@ -683,9 +684,7 @@ class Sprite(gtk.Object):
 
         self.__dict__[name] = val
 
-        if name in self.graphics_unrelated_flags:
-            return
-        elif name == 'visible' or (hasattr(self, "visible") and self.visible):
+        if name == 'visible' or (hasattr(self, "visible") and self.visible):
             self.__dict__['_extents'] = None
             scene = self.get_scene()
             if scene:
@@ -695,17 +694,29 @@ class Sprite(gtk.Object):
             self._prev_parent_matrix = None
             return
 
+        if name == '_child_extents':
+            if self.parent:
+                self.parent._child_extents = None
+            if self.sprites:
+                for sprite in self.sprites:
+                    sprite._child_extents = None
+
         if name == '_prev_parent_matrix':
             for sprite in self.sprites:
                 sprite._prev_parent_matrix = None
             return
 
+        if name in self.graphics_unrelated_flags:
+            return
+
         if name in self.transformation_flags:
             self.__dict__['_matrix'] = None
+            self.__dict__['_child_extents'] = None
             if hasattr(self, 'parent') and self.parent:
                 self.parent._child_extents = None
             for sprite in self.sprites:
                 sprite._prev_parent_matrix = None
+                sprite._child_extents = None
 
         elif name in ("visible", "z_order"):
             for sprite in self.sprites:
@@ -791,11 +802,11 @@ class Sprite(gtk.Object):
         ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
                                 int(ext[2] - ext[0]), int(ext[3] - ext[1]))
 
-        if not any((ext.x, ext.y, ext.width, ext.height)):
+        if not ext.width and not ext.height:
             ext = None
 
         self.__dict__['_extents'] = ext
-        self._stroke_context = context
+        self.__dict__['_stroke_context'] = context
 
         return ext
 
@@ -804,9 +815,7 @@ class Sprite(gtk.Object):
             res = gtk.gdk.Rectangle()
             for sprite in self.sprites:
                 if sprite.visible:
-                    exts = None
-                    if sprite.interactive or sprite.draggable:
-                        exts = sprite.get_extents()
+                    exts = sprite.get_extents()
 
                     child_exts = sprite.get_child_extents()
                     if exts and child_exts:
@@ -815,15 +824,15 @@ class Sprite(gtk.Object):
                         exts = exts or child_exts
 
                     if exts:
-                        if any((res.x, res.y, res.width, res.height)):
+                        if res.width and res.height:
                             res = res.union(exts)
                         else:
                             res = exts
 
-            if not any((res.x, res.y, res.width, res.height)):
+            if not res.width and not res.height:
                 res = 0
 
-            self._child_extents = res
+            self.__dict__['_child_extents'] = res
 
 
         return self._child_extents
@@ -941,7 +950,11 @@ class Sprite(gtk.Object):
         context.save()
         context.transform(matrix)
 
-        if not expose_region or not self._extents or not self._prev_parent_matrix or self._extents.intersect(expose_region):
+        if self._extents and expose_region:
+            intersection = self._extents.intersect(expose_region)
+            intersect = any((intersection.width, intersection.height))
+
+        if not expose_region or not self._extents or not self._prev_parent_matrix or intersect:
             if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
                 self.emit("on-render")
                 self.__dict__["_sprite_dirty"] = False
@@ -959,9 +972,16 @@ class Sprite(gtk.Object):
             else:
                 self.__dict__['_prev_extents'] = self.get_extents()
 
-        next_matrix = cairo_matrix_multiply(matrix, parent_matrix)
-        for sprite in self.sprites:
-            sprite._draw(context, self.opacity * opacity, next_matrix, expose_region = expose_region)
+
+        intersect = False
+        if self._child_extents and expose_region:
+            intersection = self._child_extents.intersect(expose_region)
+            intersect = intersection.width or intersection.height
+
+        if not self._child_extents or not expose_region or intersect:
+            next_matrix = cairo_matrix_multiply(matrix, parent_matrix)
+            for sprite in self.sprites:
+                sprite._draw(context, self.opacity * opacity, next_matrix, expose_region = expose_region)
 
         context.restore()
         context.new_path() #forget about us
@@ -1024,54 +1044,6 @@ class BitmapSprite(Sprite):
 
 
         Sprite._draw(self,  context, opacity, parent_matrix, expose_region)
-
-
-class ChildCache(Sprite):
-    """Caches given image data in a surface similar to targets, which ensures
-       that drawing it will be quick and low on CPU.
-       Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
-    """
-    def __init__(self, **kwargs):
-        Sprite.__init__(self, **kwargs)
-
-        self.width, self.height = None, None
-        self.cache_mode = cairo.CONTENT_COLOR_ALPHA
-
-        #: image data
-        self._surface = None
-
-        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(('_surface',))
-
-
-    def _draw(self, context, opacity = 1, parent_matrix = None, expose_region = None):
-        if not self._surface:
-            # caching image on surface similar to the target
-            surface = context.get_target().create_similar(self.cache_mode,
-                                                          self.sprites[-1].x + self.sprites[-1].width,
-                                                          200)
-
-
-            local_context = gtk.gdk.CairoContext(cairo.Context(surface))
-
-            for sprite in self.sprites:
-                sprite._draw(local_context)
-                sprite.visible = False
-
-
-            # add instructions with the resulting surface
-            self.graphics.clear()
-            self.graphics.rectangle(0, 0, self.sprites[-1].x + self.sprites[-1].width, 200)
-            self.graphics.clip()
-            self.graphics.set_source_surface(surface)
-            self.graphics.paint()
-            self._surface = surface
-
-
-        Sprite._draw(self,  context, opacity, parent_matrix, expose_region)
-
-
-
-
 
 
 class Image(BitmapSprite):
@@ -1818,23 +1790,17 @@ class Scene(gtk.DrawingArea):
         def all_recursive(sprites):
             for sprite in reversed(sprites):
                 if sprite.visible:
-                    out = None
-
-                    if (sprite.interactive or sprite.draggable) and sprite.check_hit(x, y):
-                        out = sprite
-
                     if sprite.sprites:
                         extents = sprite.get_child_extents()
                         if extents and extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
-                            out = all_recursive(sprite.sprites) or out
+                            res = all_recursive(sprite.sprites)
+                            if res:
+                                return res
 
-                    if out:
-                        return out
+                    if (sprite.interactive or sprite.draggable) and sprite.check_hit(x, y):
+                        return sprite
 
-        if self._mouse_sprite and self._mouse_sprite.check_hit(x, y):
-            return all_recursive(self._mouse_sprite.sprites) or self._mouse_sprite
-        else:
-            return all_recursive(self.sprites)
+        return all_recursive(self.sprites)
 
 
     def __check_mouse(self, x, y):
