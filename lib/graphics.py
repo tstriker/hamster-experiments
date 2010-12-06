@@ -1470,7 +1470,7 @@ class Scene(gtk.DrawingArea):
 
         #: instance of :class:`pytweener.Tweener` that is used by
         #: :func:`animate` function, but can be also accessed directly for advanced control.
-        self.tweener = None
+        self.tweener = False
         if pytweener:
             self.tweener = pytweener.Tweener(0.4, pytweener.Easing.Cubic.ease_in_out)
 
