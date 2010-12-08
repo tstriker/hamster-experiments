@@ -666,6 +666,7 @@ class Sprite(gtk.Object):
 
         self._extents = None
         self._prev_extents = None
+        self._stroke_context = None
 
 
     def __setattr__(self, name, val):
@@ -797,7 +798,7 @@ class Sprite(gtk.Object):
             return False
 
         if extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
-            return self._stroke_context.in_fill(x, y)
+            return self._stroke_context is None or self._stroke_context.in_fill(x, y)
         else:
             return False
 
