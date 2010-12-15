@@ -1694,7 +1694,6 @@ class Scene(gtk.DrawingArea):
             if self._mouse_sprite and self._mouse_sprite != over:
                 self._mouse_sprite.emit("on-mouse-out")
                 self.emit("on-mouse-out", self._mouse_sprite)
-                self.redraw()
 
             if over:
                 if over.mouse_cursor is not None:
@@ -1710,7 +1709,6 @@ class Scene(gtk.DrawingArea):
                 if over != self._mouse_sprite:
                     over.emit("on-mouse-over")
                     self.emit("on-mouse-over", over)
-                    self.redraw()
 
             self._mouse_sprite = over
 
@@ -1746,7 +1744,6 @@ class Scene(gtk.DrawingArea):
 
                     self._drag_sprite.emit("on-drag-start", event)
                     self.emit("on-drag-start", self._drag_sprite, event)
-                    self.redraw()
 
                     self.__drag_started = True
 
@@ -1761,7 +1758,6 @@ class Scene(gtk.DrawingArea):
 
                 self._drag_sprite.emit("on-drag", event)
                 self.emit("on-drag", self._drag_sprite, event)
-                self.redraw()
 
         else:
             # avoid double mouse checks - the redraw will also check for mouse!
@@ -1777,7 +1773,6 @@ class Scene(gtk.DrawingArea):
         self._mouse_in = False
         if self._mouse_sprite:
             self.emit("on-mouse-out", self._mouse_sprite)
-            self.redraw()
             self._mouse_sprite = None
 
 
@@ -1806,12 +1801,10 @@ class Scene(gtk.DrawingArea):
                 target.emit("on-click", event)
 
             self.emit("on-click", event, target)
-            self.redraw()
 
         if self._drag_sprite:
             self._drag_sprite.emit("on-drag-finish", event)
             self.emit("on-drag-finish", self._drag_sprite, event)
-            self.redraw()
 
             self._drag_sprite.drag_x, self._drag_sprite.drag_y = None, None
             self._drag_sprite = None
