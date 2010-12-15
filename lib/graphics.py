@@ -375,7 +375,7 @@ class Graphics(object):
     def _show_layout(context, layout, text, font_desc, alignment, width, wrap, ellipsize):
         layout.set_font_description(font_desc)
         layout.set_markup(text)
-        layout.set_width(width or -1)
+        layout.set_width(int(width or -1))
         layout.set_alignment(alignment)
 
         if width > 0:
@@ -464,7 +464,6 @@ class Graphics(object):
 
 
 
-
     def _draw_as_bitmap(self, context, opacity):
         """
             instead of caching paths, this function caches the whole drawn thing
@@ -510,7 +509,7 @@ class Graphics(object):
                     x = args[1] if len(args) > 1 else 0
                     y = args[2] if len(args) > 2 else 0
                     self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
-                    self._stroke((0,0,0), 0)
+                    self._clip()
 
                 if instruction == self._paint and opacity < 1:
                     context.paint_with_alpha(opacity)
@@ -577,12 +576,14 @@ class Sprite(gtk.Object):
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
 
-    transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y',
-                                'pivot_x', 'pivot_y', '_prev_parent_matrix'))
-    dirty_flags = set(('opacity', 'visible', 'z_order'))
-    graphics_unrelated_flags = set(('drag_x', 'drag_y', '_matrix', 'sprites',
-                                    '_stroke_context',
-                                    'mouse_cursor', '_scene', '_sprite_dirty'))
+    transformation_attrs = set(('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'))
+
+    visibility_attrs = set(('opacity', 'visible', 'z_order'))
+
+    cache_attrs = set(('_stroke_context', '_matrix', '_prev_parent_matrix', '_extents', '_scene', '_child_extents'))
+
+    graphics_unrelated_attrs = set(('drag_x', 'drag_y', 'sprites', 'mouse_cursor', '_sprite_dirty'))
+
 
 
     def __init__(self, x = 0, y = 0,
@@ -590,7 +591,6 @@ class Sprite(gtk.Object):
                  rotation = 0, pivot_x = 0, pivot_y = 0,
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
-                 interactive_children = True,
                  z_order = 0, mouse_cursor = None,
                  cache_as_bitmap = False, snap_to_pixel = True):
         gtk.Object.__init__(self)
@@ -605,9 +605,6 @@ class Sprite(gtk.Object):
 
         #: boolean denoting whether the sprite responds to mouse events
         self.interactive = interactive
-
-        #: whether children should respond to mouse. defaults to true
-        self.interactive_children = interactive_children
 
         #: boolean marking if sprite can be automatically dragged
         self.draggable = draggable
@@ -672,72 +669,87 @@ class Sprite(gtk.Object):
         self._extents = None
         self._prev_extents = None
         self._child_extents = None
-
-
-
-
+        self._stroke_context = None
 
 
     def __setattr__(self, name, val):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
             return
-
         self.__dict__[name] = val
 
+        # prev parent matrix walks downwards
+        if name == '_prev_parent_matrix' and self.visible:
+            scene = self.get_scene()
+            if scene:
+                scene.draw_me.add(self)
+            self._extents = None
+
+            # downwards recursive invalidation of parent matrix
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+                self._child_extents = None
+
+        # child extents walks upwards
+        elif name == '_child_extents':
+            if hasattr(self, 'parent') and self.parent:
+                self.parent._child_extents = None
+
+
+        if name in self.cache_attrs or name in self.graphics_unrelated_attrs:
+            return
+
+
+        """all the other changes influence cache vars"""
+
+        # either transforms or path operations - extents have to be recalculated
+        self._extents = None
+
+        # also add us to the redraw list of the scene
         if name == 'visible' or (hasattr(self, "visible") and self.visible):
-            self.__dict__['_extents'] = None
             scene = self.get_scene()
             if scene:
                 scene.draw_me.add(self)
 
+            if hasattr(self, 'parent') and self.parent:
+                self.parent._child_extents = None
+
+        if name == 'visible' and self.visible == False:
+            # when transforms happen while sprite is invisible
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+
+
+        # on moves invalidate our matrix, child extent cache (as that depends on our transforms)
+        # as well as our parent's child extents as we moved
+        # then go into children and invalidate the parent matrix down the tree
+        if name in self.transformation_attrs:
+            self._matrix = None
+            self._child_extents = None
+
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+
+        # if attribute is not in transformation nor visibility, we conclude
+        # that it must be causing the sprite needs re-rendering
+        if name not in self.transformation_attrs and name not in self.visibility_attrs:
+            self.__dict__["_sprite_dirty"] = True
+
+
+        # on parent change invalidate the matrix
         if name == 'parent':
             self._prev_parent_matrix = None
             return
-
-        if name == '_child_extents':
-            if self.parent:
-                self.parent._child_extents = None
-            if self.sprites:
-                for sprite in self.sprites:
-                    sprite._child_extents = None
-
-        if name == '_prev_parent_matrix':
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-            return
-
-        if name in self.graphics_unrelated_flags:
-            return
-
-        if name in self.transformation_flags:
-            self.__dict__['_matrix'] = None
-            self.__dict__['_child_extents'] = None
-            if hasattr(self, 'parent') and self.parent:
-                self.parent._child_extents = None
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-                sprite._child_extents = None
-
-        elif name in ("visible", "z_order"):
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-
 
 
         if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and hasattr(self, "graphics"):
             # invalidating cache for the bitmap version as that paints opacity in the image
             self.graphics._last_matrix = None
-        elif name == 'z_order' and self.__dict__.get('parent'):
+
+        if name == 'z_order' and self.__dict__.get('parent'):
             self.parent._sort()
 
 
-
-        if name not in (self.transformation_flags ^ self.dirty_flags):
-            self.__dict__["_sprite_dirty"] = True
-            if hasattr(self, 'parent') and self.parent:
-                self.parent._child_extents = None
-            self.redraw()
-
+        self.redraw()
 
 
     def _sort(self):
@@ -785,11 +797,21 @@ class Sprite(gtk.Object):
         if self._extents:
             return self._extents
 
-        if not self.graphics.paths:
-            self.graphics._draw(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)), 1)
+
+        if self._sprite_dirty:
+            # redrawing merely because we need fresh extents of the sprite
+            context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+            context.transform(self.get_matrix())
+            self.emit("on-render")
+            self.__dict__["_sprite_dirty"] = False
+            self.graphics._draw(context, 1)
+
+
+
 
         if not self.graphics.paths:
-            return None
+            # avoid from coming back if there are no paths
+            return 0
 
         context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
         context.transform(self.get_matrix())
@@ -850,10 +872,9 @@ class Sprite(gtk.Object):
             return False
 
         if extents.x <= x <= extents.x + extents.width and extents.y <= y <= extents.y + extents.height:
-            return self._stroke_context.in_fill(x, y)
+            return self._stroke_context is None or self._stroke_context.in_fill(x, y)
         else:
             return False
-
 
     def get_scene(self):
         """returns class:`Scene` the sprite belongs to"""
@@ -954,7 +975,7 @@ class Sprite(gtk.Object):
             intersection = self._extents.intersect(expose_region)
             intersect = any((intersection.width, intersection.height))
 
-        if not expose_region or not self._extents or not self._prev_parent_matrix or intersect:
+        if expose_region is None or self._extents is None or self._prev_parent_matrix is None or intersect:
             if (self._sprite_dirty): # send signal to redo the drawing when sprite is dirty
                 self.emit("on-render")
                 self.__dict__["_sprite_dirty"] = False
@@ -967,10 +988,8 @@ class Sprite(gtk.Object):
             else:
                 self.graphics._draw(context, self.opacity * opacity)
 
-            if self._extents is not None:
-                self.__dict__['_prev_extents'] = self._extents
-            else:
-                self.__dict__['_prev_extents'] = self.get_extents()
+            if self.graphics.paths:
+                self.__dict__['_prev_extents'] = self._extents or self.get_extents()
 
 
         intersect = False
@@ -1004,7 +1023,8 @@ class BitmapSprite(Sprite):
 
         self._surface = None
 
-        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(('_surface',))
+        self.graphics_unrelated_attrs = self.graphics_unrelated_attrs ^ set(('_surface',))
+
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
@@ -1030,8 +1050,6 @@ class BitmapSprite(Sprite):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.image_data)
-            local_context.rectangle(0, 0, self.width, self.height)
-            local_context.clip()
             local_context.paint()
 
             # add instructions with the resulting surface
@@ -1143,12 +1161,12 @@ class Label(Sprite):
         #: label text
         self.text = text
 
-        self.__letter_sizes = {}
+        self._letter_sizes = {}
         self._measures = {}
 
         self.connect("on-render", self.on_render)
 
-        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(("__letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
+        self.graphics_unrelated_attrs = self.graphics_unrelated_attrs ^ set(("_letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
 
 
     def __setattr__(self, name, val):
@@ -1173,7 +1191,7 @@ class Label(Sprite):
                     self.__dict__['width'], self.__dict__['height'], self.__dict__['_ascent'] = self.measure(self.text)
 
             if name in("font_desc", "size"):
-                self.__letter_sizes = {}
+                self._letter_sizes = {}
 
             if name == 'text':
                 self.emit('on-change')
@@ -1184,7 +1202,7 @@ class Label(Sprite):
         if not text:
             return [], 0
 
-        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
+        context = self._test_context
         context.set_font_face(self.font_face)
         context.set_font_size(self.size)
 
@@ -1199,7 +1217,7 @@ class Label(Sprite):
         # measure individual letters
         if self.wrap in (pango.WRAP_CHAR, pango.WRAP_WORD_CHAR):
             letters = set(unicode(text))
-            sizes = [self.__letter_sizes.setdefault(letter, context.text_extents(letter)[4]) for letter in letters]
+            sizes = [self._letter_sizes.setdefault(letter, context.text_extents(letter)[4]) for letter in letters]
             letters = dict(zip(letters, sizes))
 
 
@@ -1273,8 +1291,6 @@ class Label(Sprite):
         return lines, context.font_extents()[2]
 
 
-
-
     def measure(self, text):
         """measures given text with label's font and size.
         returns width, height and ascent. Ascent's null in case if the label
@@ -1312,7 +1328,12 @@ class Label(Sprite):
             layout = self._test_layout
             layout.set_font_description(self.font_desc)
             layout.set_markup(text)
-            layout.set_width((self._bounds_width or -1))
+
+            max_width = 0
+            if self.max_width:
+                max_width = self.max_width * pango.SCALE
+
+            layout.set_width(int(self._bounds_width or max_width or -1))
             layout.set_ellipsize(pango.ELLIPSIZE_NONE)
 
             if self.wrap is not None:
@@ -1332,8 +1353,6 @@ class Label(Sprite):
             return
 
         self.graphics.set_color(self.color)
-
-        rect_width = self.width
 
         if self.font_face:
             self.graphics.set_font_size(self.size)
@@ -1375,18 +1394,27 @@ class Label(Sprite):
                 self.graphics.show_text(self.text)
 
         else:
+
+            max_width = 0
+            if self.max_width:
+                max_width = self.max_width * pango.SCALE
+
+                # when max width is specified and we are told to align in center
+                # do that (the pango instruction takes care of aligning within
+                # the lines of the text)
+                if self.alignment == pango.ALIGN_CENTER:
+                    self.graphics.move_to(-(self.max_width - self.width)/2, 0)
+
+            bounds_width = max_width or self._bounds_width or -1
+
             self.graphics.show_layout(self.text, self.font_desc,
                                       self.alignment,
-                                      self._bounds_width,
+                                      bounds_width,
                                       self.wrap,
                                       self.ellipsize)
 
-            if self._bounds_width:
-                rect_width = self._bounds_width / pango.SCALE
-
-        self.graphics.rectangle(0, 0, rect_width, self.height)
+        self.graphics.rectangle(0,0, self.width, self.height)
         self.graphics.clip()
-
 
 
 class Rectangle(Sprite):
@@ -1672,6 +1700,7 @@ class Scene(gtk.DrawingArea):
             checking what to draw for the next frame
 
         """
+        self._redraw_in_progress = True
 
         now = dt.datetime.now()
         last_frame, self._last_frame_time = self._last_frame_time, now
@@ -1698,13 +1727,15 @@ class Scene(gtk.DrawingArea):
         # now see which sprites have been modified and invalidate the appropriate regions
         anything = False
 
-        for sprite in self.draw_me:
+        for sprite in set(self.draw_me):
             for ext in (sprite._prev_extents, sprite.get_extents()):
                 if ext:
                     anything = True
-                    #the two pixel border comes from rounding plus 1px padding
+
+                    # invalidate with a bit of padding to deal with strike width
                     self.queue_draw_area(int(ext.x)-5, int(ext.y)-5,
                                          int(ext.width)+10, int(ext.height)+10)
+            sprite._prev_extents = None # redraw the previous place just once
 
         self.draw_me = set()
 
@@ -1739,7 +1770,6 @@ class Scene(gtk.DrawingArea):
                 aspect_x = aspect_y = min(aspect_x, aspect_y)
             context.scale(aspect_x, aspect_y)
 
-        self._redraw_in_progress = True
 
         self.emit("on-enter-frame", context)
 
@@ -1751,13 +1781,33 @@ class Scene(gtk.DrawingArea):
 
         self.emit("on-finish-frame", context)
 
+        if False:
+            context.set_line_width(2)
+            for sprite in self.all_visible_sprites():
+                if sprite.interactive or sprite.draggable:
+                    context.set_source_rgb(0.8,0,0)
+                else:
+                    context.set_source_rgb(0.5,0.5,0.5)
 
+                ext = sprite.get_extents()
+                if ext:
+                    context.save()
+                    context.rectangle(ext)
+                    context.clip_preserve()
+                    context.rectangle(event.area.x, event.area.y,
+                                      event.area.width, event.area.height)
+
+                    context.stroke()
+                    context.restore()
+
+
+        # print invalidation area
         if False:
             context.rectangle(event.area.x, event.area.y,
                               event.area.width, event.area.height)
             context.set_source_rgb(0,0,0)
             context.set_line_width(5)
-            context.stroke_preserve()
+            context.stroke()
 
         self._redraw_in_progress = False
 
@@ -1820,7 +1870,6 @@ class Scene(gtk.DrawingArea):
             if self._mouse_sprite and self._mouse_sprite != over:
                 self._mouse_sprite.emit("on-mouse-out")
                 self.emit("on-mouse-out", self._mouse_sprite)
-                self.redraw()
 
             if over:
                 if over.mouse_cursor is not None:
@@ -1836,7 +1885,6 @@ class Scene(gtk.DrawingArea):
                 if over != self._mouse_sprite:
                     over.emit("on-mouse-over")
                     self.emit("on-mouse-over", over)
-                    self.redraw()
 
             self._mouse_sprite = over
 
@@ -1872,11 +1920,13 @@ class Scene(gtk.DrawingArea):
 
                     self._drag_sprite.emit("on-drag-start", event)
                     self.emit("on-drag-start", self._drag_sprite, event)
-                    self.redraw()
 
                     self.__drag_started = True
 
             if self.__drag_started:
+                if self._redraw_in_progress:
+                    return
+
                 diff_x, diff_y = event.x - self.__drag_start_x, event.y - self.__drag_start_y
                 if isinstance(self._drag_sprite.parent, Sprite):
                     matrix = self._drag_sprite.parent.get_matrix()
@@ -1887,7 +1937,6 @@ class Scene(gtk.DrawingArea):
 
                 self._drag_sprite.emit("on-drag", event)
                 self.emit("on-drag", self._drag_sprite, event)
-                self.redraw()
 
         else:
             # avoid double mouse checks - the redraw will also check for mouse!
@@ -1903,7 +1952,6 @@ class Scene(gtk.DrawingArea):
         self._mouse_in = False
         if self._mouse_sprite:
             self.emit("on-mouse-out", self._mouse_sprite)
-            self.redraw()
             self._mouse_sprite = None
 
 
@@ -1932,12 +1980,10 @@ class Scene(gtk.DrawingArea):
                 target.emit("on-click", event)
 
             self.emit("on-click", event, target)
-            self.redraw()
 
         if self._drag_sprite:
             self._drag_sprite.emit("on-drag-finish", event)
             self.emit("on-drag-finish", self._drag_sprite, event)
-            self.redraw()
 
             self._drag_sprite.drag_x, self._drag_sprite.drag_y = None, None
             self._drag_sprite = None
