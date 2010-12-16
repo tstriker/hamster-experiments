@@ -375,7 +375,7 @@ class Graphics(object):
     def _show_layout(context, layout, text, font_desc, alignment, width, wrap, ellipsize):
         layout.set_font_description(font_desc)
         layout.set_markup(text)
-        layout.set_width(width or -1)
+        layout.set_width(int(width or -1))
         layout.set_alignment(alignment)
 
         if width > 0:
@@ -576,12 +576,14 @@ class Sprite(gtk.Object):
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
 
-    transformation_flags = set(('x', 'y', 'rotation', 'scale_x', 'scale_y',
-                                'pivot_x', 'pivot_y', '_prev_parent_matrix'))
-    dirty_flags = set(('opacity', 'visible', 'z_order'))
-    graphics_unrelated_flags = set(('drag_x', 'drag_y', '_matrix', 'sprites',
-                                    '_stroke_context',
-                                    'mouse_cursor', '_scene', '_sprite_dirty'))
+    transformation_attrs = set(('x', 'y', 'rotation', 'scale_x', 'scale_y', 'pivot_x', 'pivot_y'))
+
+    visibility_attrs = set(('opacity', 'visible', 'z_order'))
+
+    cache_attrs = set(('_stroke_context', '_matrix', '_prev_parent_matrix', '_extents', '_scene'))
+
+    graphics_unrelated_attrs = set(('drag_x', 'drag_y', 'sprites', 'mouse_cursor', '_sprite_dirty'))
+
 
 
     def __init__(self, x = 0, y = 0,
@@ -672,49 +674,59 @@ class Sprite(gtk.Object):
     def __setattr__(self, name, val):
         if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
             return
-
         self.__dict__[name] = val
 
-        if name == 'visible' or (hasattr(self, "visible") and self.visible):
-            self.__dict__['_extents'] = None
+        # prev parent matrix walks downwards
+        if name == '_prev_parent_matrix' and self.visible:
+            self._extents = None
 
+            # downwards recursive invalidation of parent matrix
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+
+
+        if name in self.cache_attrs or name in self.graphics_unrelated_attrs:
+            return
+
+
+        """all the other changes influence cache vars"""
+
+        # either transforms or path operations - extents have to be recalculated
+        self._extents = None
+
+        if name == 'visible' and self.visible == False:
+            # when transforms happen while sprite is invisible
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+
+
+        # on moves invalidate our matrix, child extent cache (as that depends on our transforms)
+        # as well as our parent's child extents as we moved
+        # then go into children and invalidate the parent matrix down the tree
+        if name in self.transformation_attrs:
+            self._matrix = None
+            for sprite in self.sprites:
+                sprite._prev_parent_matrix = None
+
+        # if attribute is not in transformation nor visibility, we conclude
+        # that it must be causing the sprite needs re-rendering
+        if name not in self.transformation_attrs and name not in self.visibility_attrs:
+            self.__dict__["_sprite_dirty"] = True
+
+        # on parent change invalidate the matrix
         if name == 'parent':
             self._prev_parent_matrix = None
             return
 
-        if name == '_prev_parent_matrix':
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-            return
-
-        if name in self.graphics_unrelated_flags:
-            return
-
-        if name in self.transformation_flags:
-            self.__dict__['_matrix'] = None
-
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-
-
-        elif name in ("visible", "z_order"):
-            for sprite in self.sprites:
-                sprite._prev_parent_matrix = None
-
-
-
         if name == 'opacity' and self.__dict__.get("cache_as_bitmap") and hasattr(self, "graphics"):
             # invalidating cache for the bitmap version as that paints opacity in the image
             self.graphics._last_matrix = None
-        elif name == 'z_order' and self.__dict__.get('parent'):
+
+        if name == 'z_order' and self.__dict__.get('parent'):
             self.parent._sort()
 
 
-
-        if name not in (self.transformation_flags ^ self.dirty_flags):
-            self.__dict__["_sprite_dirty"] = True
-            self.redraw()
-
+        self.redraw()
 
 
     def _sort(self):
@@ -761,6 +773,16 @@ class Sprite(gtk.Object):
            will use that to draw the paths"""
         if self._extents:
             return self._extents
+
+
+        if self._sprite_dirty:
+            # redrawing merely because we need fresh extents of the sprite
+            context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+            context.transform(self.get_matrix())
+            self.emit("on-render")
+            self.__dict__["_sprite_dirty"] = False
+            self.graphics._draw(context, 1)
+
 
         if not self.graphics.paths:
             self.graphics._draw(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)), 1)
@@ -938,7 +960,7 @@ class BitmapSprite(Sprite):
 
         self._surface = None
 
-        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(('_surface',))
+        self.cache_attrs = self.cache_attrs ^ set(('_surface',))
 
     def __setattr__(self, name, val):
         Sprite.__setattr__(self, name, val)
@@ -1080,7 +1102,7 @@ class Label(Sprite):
 
         self.connect("on-render", self.on_render)
 
-        self.graphics_unrelated_flags = self.graphics_unrelated_flags ^ set(("_letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
+        self.cache_attrs = self.cache_attrs ^ set(("_letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
 
 
     def __setattr__(self, name, val):
@@ -1205,8 +1227,6 @@ class Label(Sprite):
         return lines, context.font_extents()[2]
 
 
-
-
     def measure(self, text):
         """measures given text with label's font and size.
         returns width, height and ascent. Ascent's null in case if the label
@@ -1244,7 +1264,12 @@ class Label(Sprite):
             layout = self._test_layout
             layout.set_font_description(self.font_desc)
             layout.set_markup(text)
-            layout.set_width((self._bounds_width or -1))
+
+            max_width = 0
+            if self.max_width:
+                max_width = self.max_width * pango.SCALE
+
+            layout.set_width(int(self._bounds_width or max_width or -1))
             layout.set_ellipsize(pango.ELLIPSIZE_NONE)
 
             if self.wrap is not None:
@@ -1307,9 +1332,22 @@ class Label(Sprite):
                 self.graphics.show_text(self.text)
 
         else:
+
+            max_width = 0
+            if self.max_width:
+                max_width = self.max_width * pango.SCALE
+
+                # when max width is specified and we are told to align in center
+                # do that (the pango instruction takes care of aligning within
+                # the lines of the text)
+                if self.alignment == pango.ALIGN_CENTER:
+                    self.graphics.move_to(-(self.max_width - self.width)/2, 0)
+
+            bounds_width = max_width or self._bounds_width or -1
+
             self.graphics.show_layout(self.text, self.font_desc,
                                       self.alignment,
-                                      self._bounds_width,
+                                      bounds_width,
                                       self.wrap,
                                       self.ellipsize)
 
