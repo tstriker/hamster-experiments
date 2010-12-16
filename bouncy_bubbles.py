@@ -26,8 +26,9 @@ FRICTION = -0.9;
 
 class Ball(graphics.Circle):
     def __init__(self, x, y, radius):
+        graphics.Circle.__init__(self, radius * 2, radius * 2, fill="#aaa", x = x, y = y)
+
         self.width = self.height = radius * 2
-        graphics.Circle.__init__(self, self.width, self.height, fill="#aaa", x = x, y = y)
 
         self.radius = radius
 
