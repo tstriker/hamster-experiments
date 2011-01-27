@@ -1041,9 +1041,8 @@ class Label(Sprite):
         "on-change": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, text = "", size = 10, color = None,
-                 alignment = pango.ALIGN_LEFT, font_face = None,
+                 alignment = pango.ALIGN_LEFT,
                  max_width = None, wrap = None, ellipsize = None,
-                 outline_color = None, outline_width = 5,
                  **kwargs):
         Sprite.__init__(self, **kwargs)
         self.width, self.height = None, None
@@ -1060,12 +1059,6 @@ class Label(Sprite):
         #: color of label either as hex string or an (r,g,b) tuple
         self.color = color
 
-        #: color for text outline (currently works only with a custom font face)
-        self.outline_color = outline_color
-
-        #: text outline thickness (currently works only with a custom font face)
-        self.outline_width = outline_width
-
         self._bounds_width = None
 
         #: wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
@@ -1079,25 +1072,18 @@ class Label(Sprite):
         #: alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]
         self.alignment = alignment
 
-        #: label's `FontFace <http://www.cairographics.org/documentation/pycairo/2/reference/text.html#cairo.FontFace>`_
-        self.font_face = font_face
-
         #: font size
         self.size = size
-
 
         #: maximum  width of the label in pixels. if specified, the label
         #: will be wrapped or ellipsized depending on the wrap and ellpisize settings
         self.max_width = max_width
-
-        self._ascent = None # used to determine Y position for when we have a font face
 
         self.__surface = None
 
         #: label text
         self.text = text
 
-        self._letter_sizes = {}
         self._measures = {}
 
         self.connect("on-render", self.on_render)
@@ -1123,108 +1109,11 @@ class Label(Sprite):
             if name in ("width", "text", "size", "font_desc", "wrap", "ellipsize", "max_width"):
                 self._measures = {}
                 # avoid chicken and egg
-                if hasattr(self, "text") and hasattr(self, "size") and hasattr(self, "font_face"):
-                    self.__dict__['width'], self.__dict__['height'], self.__dict__['_ascent'] = self.measure(self.text)
-
-            if name in("font_desc", "size"):
-                self._letter_sizes = {}
+                if hasattr(self, "text") and hasattr(self, "size"):
+                    self.__dict__['width'], self.__dict__['height'] = self.measure(self.text)
 
             if name == 'text':
                 self.emit('on-change')
-
-
-    def _wrap(self, text):
-        """wrapping text ourselves when we can't use pango"""
-        if not text:
-            return [], 0
-
-        context = self._test_context
-        context.set_font_face(self.font_face)
-        context.set_font_size(self.size)
-
-
-        if (not self._bounds_width and not self.max_width) or self.wrap is None:
-            return [(text, context.text_extents(text)[4])], context.font_extents()[2]
-
-
-        width = self.max_width or self.width
-
-        letters = {}
-        # measure individual letters
-        if self.wrap in (pango.WRAP_CHAR, pango.WRAP_WORD_CHAR):
-            letters = set(unicode(text))
-            sizes = [self._letter_sizes.setdefault(letter, context.text_extents(letter)[4]) for letter in letters]
-            letters = dict(zip(letters, sizes))
-
-
-        line = ""
-        lines = []
-        running_width = 0
-
-        if self.wrap in (pango.WRAP_WORD, pango.WRAP_WORD_CHAR):
-            # if we wrap by word then we split the whole thing in words
-            # and stick together while they fit. in case if the word does not
-            # fit at all, we break it in pieces
-            while text:
-                fragment, fragment_length = "", 0
-
-                word = re.search("\s", text)
-                if word:
-                    fragment = text[:word.start()+1]
-                else:
-                    fragment = text
-
-                fragment_length = context.text_extents(fragment)[4]
-
-
-                if (fragment_length > width) and self.wrap == pango.WRAP_WORD_CHAR:
-                    # too big to fit in any way
-                    # split in pieces so that we fit in current row as much
-                    # as we can and trust the task of putting things in next row
-                    # to the next run
-                    while fragment and running_width + fragment_length > width:
-                        fragment_length -= letters[fragment[-1]]
-                        fragment = fragment[:-1]
-
-                    lines.append((line + fragment, running_width + fragment_length))
-                    running_width = 0
-                    fragment_length = 0
-                    line = ""
-
-
-
-                else:
-                    # otherwise the usual squishing
-                    if running_width + fragment_length <= width:
-                        line += fragment
-                    else:
-                        lines.append((line, running_width))
-                        running_width = 0
-                        line = fragment
-
-
-
-                running_width += fragment_length
-                text = text[len(fragment):]
-
-        elif self.wrap == pango.WRAP_CHAR:
-            # brute force glueing while we have space
-            for fragment in text:
-                fragment_length = letters[fragment]
-
-                if running_width + fragment_length <= width:
-                    line += fragment
-                else:
-                    lines.append((line, running_width))
-                    running_width = 0
-                    line = fragment
-
-                running_width += fragment_length
-
-        if line:
-            lines.append((line, running_width))
-
-        return lines, context.font_extents()[2]
 
 
     def measure(self, text):
@@ -1235,51 +1124,29 @@ class Label(Sprite):
         if text in self._measures:
             return self._measures[text]
 
-        width, height, ascent = None, None, None
+        width, height = None, None
 
         context = self._test_context
-        if self.font_face:
-            context.set_font_face(self.font_face)
-            context.set_font_size(self.size)
-            font_ascent, font_descent, font_height = context.font_extents()[:3]
 
-            if self._bounds_width or self.max_width:
-                lines, line_height = self._wrap(text)
+        layout = self._test_layout
+        layout.set_font_description(self.font_desc)
+        layout.set_markup(text)
 
-                if self._bounds_width:
-                    width = self._bounds_width / pango.SCALE
-                else:
-                    max_width = 0
-                    for line, line_width in lines:
-                        max_width = max(max_width, line_width)
-                    width = max_width
+        max_width = 0
+        if self.max_width:
+            max_width = self.max_width * pango.SCALE
 
-                height = len(lines) * line_height
-                ascent = font_ascent
-            else:
-                width = context.text_extents(text)[4]
-                ascent, height = font_ascent, font_ascent + font_descent
+        layout.set_width(int(self._bounds_width or max_width or -1))
+        layout.set_ellipsize(pango.ELLIPSIZE_NONE)
 
+        if self.wrap is not None:
+            layout.set_wrap(self.wrap)
         else:
-            layout = self._test_layout
-            layout.set_font_description(self.font_desc)
-            layout.set_markup(text)
+            layout.set_ellipsize(self.ellipsize or pango.ELLIPSIZE_END)
 
-            max_width = 0
-            if self.max_width:
-                max_width = self.max_width * pango.SCALE
+        width, height = layout.get_pixel_size()
 
-            layout.set_width(int(self._bounds_width or max_width or -1))
-            layout.set_ellipsize(pango.ELLIPSIZE_NONE)
-
-            if self.wrap is not None:
-                layout.set_wrap(self.wrap)
-            else:
-                layout.set_ellipsize(self.ellipsize or pango.ELLIPSIZE_END)
-
-            width, height = layout.get_pixel_size()
-
-        self._measures[text] = width, height, ascent
+        self._measures[text] = width, height
         return self._measures[text]
 
 
@@ -1292,67 +1159,26 @@ class Label(Sprite):
 
         rect_width = self.width
 
-        if self.font_face:
-            self.graphics.set_font_size(self.size)
-            self.graphics.set_font_face(self.font_face)
-            if self._bounds_width or self.max_width:
-                lines, line_height = self._wrap(self.text)
+        max_width = 0
+        if self.max_width:
+            max_width = self.max_width * pango.SCALE
 
-                x, y = 0.5, int(self._ascent) + 0.5
-                for line, line_width in lines:
-                    if self.alignment == pango.ALIGN_RIGHT:
-                        x = self.width - line_width
-                    elif self.alignment == pango.ALIGN_CENTER:
-                        x = (self.width - line_width) / 2
+            # when max width is specified and we are told to align in center
+            # do that (the pango instruction takes care of aligning within
+            # the lines of the text)
+            if self.alignment == pango.ALIGN_CENTER:
+                self.graphics.move_to(-(self.max_width - self.width)/2, 0)
 
-                    if self.outline_color:
-                        self.graphics.save_context()
-                        self.graphics.move_to(x, y)
-                        self.graphics.text_path(line)
-                        self.graphics.set_line_style(width=self.outline_width)
-                        self.graphics.fill_stroke(self.outline_color, self.outline_color)
-                        self.graphics.restore_context()
+        bounds_width = max_width or self._bounds_width or -1
 
-                    self.graphics.move_to(x, y)
-                    self.graphics.set_color(self.color)
-                    self.graphics.show_text(line)
+        self.graphics.show_layout(self.text, self.font_desc,
+                                  self.alignment,
+                                  bounds_width,
+                                  self.wrap,
+                                  self.ellipsize)
 
-                    y += line_height
-
-            else:
-                if self.outline_color:
-                    self.graphics.save_context()
-                    self.graphics.move_to(0, self._ascent)
-                    self.graphics.text_path(self.text)
-                    self.graphics.set_line_style(width=self.outline_width)
-                    self.graphics.fill_stroke(self.outline_color, self.outline_color)
-                    self.graphics.restore_context()
-
-                self.graphics.move_to(0, self._ascent)
-                self.graphics.show_text(self.text)
-
-        else:
-
-            max_width = 0
-            if self.max_width:
-                max_width = self.max_width * pango.SCALE
-
-                # when max width is specified and we are told to align in center
-                # do that (the pango instruction takes care of aligning within
-                # the lines of the text)
-                if self.alignment == pango.ALIGN_CENTER:
-                    self.graphics.move_to(-(self.max_width - self.width)/2, 0)
-
-            bounds_width = max_width or self._bounds_width or -1
-
-            self.graphics.show_layout(self.text, self.font_desc,
-                                      self.alignment,
-                                      bounds_width,
-                                      self.wrap,
-                                      self.ellipsize)
-
-            if self._bounds_width:
-                rect_width = self._bounds_width / pango.SCALE
+        if self._bounds_width:
+            rect_width = self._bounds_width / pango.SCALE
 
         self.graphics.rectangle(0, 0, rect_width, self.height)
         self.graphics.clip()
