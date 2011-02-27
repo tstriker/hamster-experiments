@@ -231,7 +231,7 @@ class Graphics(object):
     @staticmethod
     def _rel_line_to(context, x, y): context.rel_line_to(x, y)
     def rel_line_to(self, x, y = None):
-        if x and y:
+        if x is not None and y is not None:
             self._add_instruction(self._rel_line_to, x, y)
         elif isinstance(x, list) and y is None:
             for x2, y2 in x:
