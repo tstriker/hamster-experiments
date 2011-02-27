@@ -29,8 +29,8 @@ class Node(graphics.Sprite):
         self.connect("on-drag", self.on_drag)
 
     def on_drag(self, sprite, event):
-        self.point.x = event.x - sprite.drag_x
-        self.point.y = event.y - sprite.drag_y
+        self.point.x = event.x
+        self.point.y = event.y 
         self.draw_node()
 
     def draw_node(self):
