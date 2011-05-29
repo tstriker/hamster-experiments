@@ -843,8 +843,9 @@ class Sprite(gtk.Object):
            during scene redraw are ignored in order to avoid echoes.
            Call scene.redraw() explicitly if you need to redraw in these cases.
         """
+
         scene = self.get_scene()
-        if scene and scene._redraw_in_progress == False and self.parent:
+        if scene and self.parent:
             self.parent.redraw()
 
     def animate(self, duration = None, easing = None, on_complete = None, on_update = None, **kwargs):
@@ -1377,7 +1378,6 @@ class Scene(gtk.DrawingArea):
         self.__last_cursor = None
 
         self.__drawing_queued = False
-        self._redraw_in_progress = False
 
         #: When specified, upon window resize the content will be scaled
         #: relative to original window size. Defaults to False.
@@ -1487,8 +1487,6 @@ class Scene(gtk.DrawingArea):
 
         self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
-        self._redraw_in_progress = True
-
         # update tweens
         now = dt.datetime.now()
         delta = (now - (self._last_frame_time or dt.datetime.now())).microseconds / 1000000.0
@@ -1506,7 +1504,6 @@ class Scene(gtk.DrawingArea):
 
         self.__check_mouse(self.mouse_x, self.mouse_y)
         self.emit("on-finish-frame", context)
-        self._redraw_in_progress = False
 
 
     def do_configure_event(self, event):
