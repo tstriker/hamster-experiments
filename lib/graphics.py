@@ -235,7 +235,7 @@ class Graphics(object):
     @staticmethod
     def _rel_line_to(context, x, y): context.rel_line_to(x, y)
     def rel_line_to(self, x, y = None):
-        if x and y:
+        if x is not None and y is not None:
             self._add_instruction(self._rel_line_to, x, y)
         elif isinstance(x, list) and y is None:
             for x2, y2 in x:
@@ -457,7 +457,7 @@ class Graphics(object):
 
         for instruction, args in self.__instruction_cache:
             if fresh_draw and instruction in (self._new_path, self._stroke, self._fill, self._clip):
-                self.paths.append(context.copy_path())
+                self.paths.append((instruction, context.copy_path()))
 
             if opacity < 1 and instruction == self._set_color:
                 self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
@@ -503,7 +503,7 @@ class Graphics(object):
             extents = gtk.gdk.Region()
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
-                    self.paths.append(context.copy_path())
+                    self.paths.append((instruction, context.copy_path()))
                     exts = context.path_extents()
                     exts = gtk.gdk.Rectangle(int(exts[0]), int(exts[1]),
                                              int(exts[2]-exts[0]), int(exts[3]-exts[1]))
@@ -577,10 +577,12 @@ class Sprite(gtk.Object):
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "on-mouse-down": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-click": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag-start": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-drag-finish": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-key-press": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-render": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
 
@@ -600,10 +602,12 @@ class Sprite(gtk.Object):
                  scale_x = 1, scale_y = 1,
                  interactive = False, draggable = False,
                  z_order = 0, mouse_cursor = None,
-                 cache_as_bitmap = False, snap_to_pixel = True):
+                 cache_as_bitmap = False, snap_to_pixel = True, debug = False):
         gtk.Object.__init__(self)
 
         self._scene = None
+
+        self.debug = debug
 
         #: list of children sprites. Use :func:`add_child` to add sprites
         self.sprites = []
@@ -668,6 +672,14 @@ class Sprite(gtk.Object):
         #: to rounding errors in positioning.
         self.snap_to_pixel = snap_to_pixel
 
+
+        #: whether the widget can gain focus
+        self.can_focus = False
+
+        #: focus state
+        self.focused = False
+
+
         self.__dict__["_sprite_dirty"] = True # flag that indicates that the graphics object of the sprite should be rendered
         self.__dict__["_sprite_moved"] = True # flag that indicates that the graphics object of the sprite should be rendered
 
@@ -678,6 +690,9 @@ class Sprite(gtk.Object):
         self._prev_extents = None
         self._child_extents = None
         self._stroke_context = None
+
+        self.connect("on-click", self.__on_click)
+
 
 
     def __setattr__(self, name, val):
@@ -764,6 +779,16 @@ class Sprite(gtk.Object):
         """sort sprites by z_order"""
         self.sprites = sorted(self.sprites, key=lambda sprite:sprite.z_order)
 
+
+    def log(self, *lines):
+        """will print out the lines in console if debug is enabled for the
+           specific sprite"""
+        if getattr(self, "debug", False):
+            print dt.datetime.now().time(),
+            for line in lines:
+                print line,
+            print
+
     def add_child(self, *sprites):
         """Add child sprite. Child will be nested within parent"""
         for sprite in sprites:
@@ -798,13 +823,40 @@ class Sprite(gtk.Object):
             return
         self.z_order = self.parent.sprites[0].z_order - 1
 
+    def is_focus(self):
+        scene = self.get_scene()
+        return scene and scene._focus_sprite == self
+
+    def grab_focus(self):
+        scene = self.get_scene()
+        if not scene:
+            return
+
+        if scene._focus_sprite:
+            scene._focus_sprite.focused = False
+
+        scene._focus_sprite = self
+        self.focused = True
+
+    def __on_click(self, sprite, event):
+        if self.interactive and self.can_focus:
+            self.grab_focus()
+
+    def get_parents(self):
+        """returns all the parent sprites up until scene"""
+        res = []
+        parent = self.parent
+        while parent and isinstance(parent, Scene) == False:
+            res.insert(0, parent)
+            parent = parent.parent
+
+        return res
+
 
     def get_extents(self):
-        """measure the extents of the sprite's graphics. if context is provided
-           will use that to draw the paths"""
+        """measure the extents of the sprite's graphics."""
         if self._extents:
             return self._extents
-
 
         if self._sprite_dirty:
             # redrawing merely because we need fresh extents of the sprite
@@ -812,28 +864,46 @@ class Sprite(gtk.Object):
             context.transform(self.get_matrix())
             self.emit("on-render")
             self.__dict__["_sprite_dirty"] = False
-            if self.cache_as_bitmap:
-                self.graphics._draw_as_bitmap(context, 1)
-            else:
-                self.graphics._draw(context, 1)
-
-
+            self.graphics._draw(context, 1)
 
 
         if not self.graphics.paths:
-            # avoid from coming back if there are no paths
-            return 0
+            self.graphics._draw(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)), 1)
+
+        if not self.graphics.paths:
+            return None
 
         context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
-        context.transform(self.get_matrix())
 
-        for path in self.graphics.paths:
+        # bit of a hack around the problem - looking for clip instructions in parent
+        # so extents would not get out of it
+        clip_extents = None
+        for parent in self.get_parents():
+            context.transform(parent.get_local_matrix())
+            if parent.graphics.paths:
+                for instruction, path in parent.graphics.paths:
+                    if instruction == Graphics._clip:
+                        context.append_path(path)
+                        context.save()
+                        context.identity_matrix()
+
+                        ext = context.fill_extents()
+                        ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]), int(ext[2] - ext[0]), int(ext[3] - ext[1]))
+                        clip_extents = (clip_extents or ext).intersect(ext)
+                        context.restore()
+                        context.new_path()
+        context.transform(self.get_local_matrix())
+
+        for instruction, path in self.graphics.paths:
             context.append_path(path)
         context.identity_matrix()
+
 
         ext = context.path_extents()
         ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
                                 int(ext[2] - ext[0]), int(ext[3] - ext[1]))
+        if clip_extents:
+            ext = clip_extents.intersect(ext)
 
         if not ext.width and not ext.height:
             ext = None
@@ -863,9 +933,7 @@ class Sprite(gtk.Object):
 
 
     def check_hit(self, x, y):
-        """check if the given coordinates are inside the sprite's fill or stroke
-           path"""
-
+        """check if the given coordinates are inside the sprite's fill or stroke path"""
         extents = self.get_extents()
 
         if not extents:
@@ -895,6 +963,7 @@ class Sprite(gtk.Object):
            during scene redraw are ignored in order to avoid echoes.
            Call scene.redraw() explicitly if you need to redraw in these cases.
         """
+
         scene = self.get_scene()
         if scene and scene._redraw_in_progress == False and self.parent:
             self.parent.redraw()
@@ -1106,7 +1175,7 @@ class Label(Sprite):
     }
     def __init__(self, text = "", size = 10, color = None,
                  alignment = pango.ALIGN_LEFT,
-                 max_width = None, wrap = None, ellipsize = None,
+                 max_width = None, wrap = None, ellipsize = None, escape = False,
                  **kwargs):
         Sprite.__init__(self, **kwargs)
         self.width, self.height = None, None
@@ -1128,6 +1197,10 @@ class Label(Sprite):
         #: wrapping method. Can be set to pango. [WRAP_WORD, WRAP_CHAR,
         #: WRAP_WORD_CHAR]
         self.wrap = wrap
+
+
+        #: should the text be pango-escaped before display
+        self.escape = escape
 
         #: Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
         #: ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]
@@ -1185,6 +1258,9 @@ class Label(Sprite):
         returns width, height and ascent. Ascent's null in case if the label
         does not have font face specified (and is thusly using pango)"""
 
+        if self.escape:
+            text = text.replace ("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
         if text in self._measures:
             return self._measures[text]
 
@@ -1221,6 +1297,8 @@ class Label(Sprite):
 
         self.graphics.set_color(self.color)
 
+        rect_width = self.width
+
         max_width = 0
         if self.max_width:
             max_width = self.max_width * pango.SCALE
@@ -1233,14 +1311,23 @@ class Label(Sprite):
 
         bounds_width = max_width or self._bounds_width or -1
 
-        self.graphics.show_layout(self.text, self.font_desc,
+        text = self.text
+        if self.escape:
+            text = text.replace ("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+        self.graphics.show_layout(text, self.font_desc,
                                   self.alignment,
                                   bounds_width,
                                   self.wrap,
                                   self.ellipsize)
 
-        self.graphics.rectangle(0,0, self.width, self.height)
+        if self._bounds_width:
+            rect_width = self._bounds_width / pango.SCALE
+
+        self.graphics.rectangle(0, 0, rect_width, self.height)
         self.graphics.clip()
+
 
 
 class Rectangle(Sprite):
@@ -1356,25 +1443,28 @@ class Scene(gtk.DrawingArea):
         "on-mouse-up": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-over": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "on-mouse-out": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-mouse-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
 
-        "on-scroll": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "on-key-press": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
     def __init__(self, interactive = True, framerate = 60,
                        background_color = None, scale = False, keep_aspect = True):
         gtk.DrawingArea.__init__(self)
         if interactive:
+            self.set_flags(gtk.CAN_FOCUS)
             self.set_events(gtk.gdk.POINTER_MOTION_MASK
                             | gtk.gdk.LEAVE_NOTIFY_MASK | gtk.gdk.ENTER_NOTIFY_MASK
                             | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK
                             | gtk.gdk.SCROLL_MASK
                             | gtk.gdk.KEY_PRESS_MASK)
-            self.connect("motion_notify_event", self.__on_mouse_move)
-            self.connect("enter_notify_event", self.__on_mouse_enter)
-            self.connect("leave_notify_event", self.__on_mouse_leave)
-            self.connect("button_press_event", self.__on_button_press)
-            self.connect("button_release_event", self.__on_button_release)
+            self.connect("motion-notify-event", self.__on_mouse_move)
+            self.connect("enter-notify-event", self.__on_mouse_enter)
+            self.connect("leave-notify-event", self.__on_mouse_leave)
+            self.connect("button-press-event", self.__on_button_press)
+            self.connect("button-release-event", self.__on_button_release)
             self.connect("scroll-event", self.__on_scroll)
+            self.connect("key-press-event", self.__on_key_press)
 
         #: list of sprites in scene. use :func:`add_child` to add sprites
         self.sprites = []
@@ -1421,6 +1511,8 @@ class Scene(gtk.DrawingArea):
         blank_pixmap = gtk.gdk.Pixmap(None, 1, 1, 1)
         self._blank_cursor = gtk.gdk.Cursor(blank_pixmap, blank_pixmap, gtk.gdk.Color(), gtk.gdk.Color(), 0, 0)
 
+        self.__previous_mouse_signal_time = None
+
 
         #: Miminum distance in pixels for a drag to occur
         self.drag_distance = 1
@@ -1449,6 +1541,7 @@ class Scene(gtk.DrawingArea):
         self._original_width, self._original_height = None,  None
 
         self.draw_me = set()
+        self._focus_sprite = None # our internal focus management
 
 
 
@@ -1637,6 +1730,9 @@ class Scene(gtk.DrawingArea):
 
         self._redraw_in_progress = False
 
+        # reset the mouse signal time as redraw means we are good now
+        self.__previous_mouse_signal_time = None
+
 
     def do_configure_event(self, event):
         if self._original_width is None:
@@ -1727,7 +1823,11 @@ class Scene(gtk.DrawingArea):
 
 
     """ mouse events """
-    def __on_mouse_move(self, area, event):
+    def __on_mouse_move(self, scene, event):
+        # don't emit mouse move signals more often than every 0.05 seconds
+        if self.__previous_mouse_signal_time and dt.datetime.now() - self.__previous_mouse_signal_time < dt.timedelta(seconds=0.05):
+            return
+
         state = event.state
 
 
@@ -1770,18 +1870,20 @@ class Scene(gtk.DrawingArea):
                 self.__check_mouse(event.x, event.y)
 
         self.emit("on-mouse-move", event)
+        self.__previous_mouse_signal_time = dt.datetime.now()
 
-    def __on_mouse_enter(self, area, event):
+
+    def __on_mouse_enter(self, scene, event):
         self._mouse_in = True
 
-    def __on_mouse_leave(self, area, event):
+    def __on_mouse_leave(self, scene, event):
         self._mouse_in = False
         if self._mouse_sprite:
             self.emit("on-mouse-out", self._mouse_sprite)
             self._mouse_sprite = None
 
 
-    def __on_button_press(self, area, event):
+    def __on_button_press(self, scene, event):
         target = self.get_sprite_at_position(event.x, event.y)
         self.__drag_start_x, self.__drag_start_y = event.x, event.y
 
@@ -1791,7 +1893,7 @@ class Scene(gtk.DrawingArea):
             target.emit("on-mouse-down", event)
         self.emit("on-mouse-down", event)
 
-    def __on_button_release(self, area, event):
+    def __on_button_release(self, scene, event):
         target = self.get_sprite_at_position(event.x, event.y)
 
         if target:
@@ -1802,7 +1904,7 @@ class Scene(gtk.DrawingArea):
         click = not self.__drag_started or (event.x - self.__drag_start_x) ** 2 + \
                                            (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
-            if target:
+            if target and target == self._mouse_down_sprite:
                 target.emit("on-click", event)
 
             self.emit("on-click", event, target)
@@ -1818,5 +1920,13 @@ class Scene(gtk.DrawingArea):
         self.__drag_started = False
         self.__drag_start_x, self__drag_start_y = None, None
 
-    def __on_scroll(self, area, event):
-        self.emit("on-scroll", event)
+    def __on_scroll(self, scene, event):
+        if self._focus_sprite:
+            self._focus_sprite.emit("on-mouse-scroll", event)
+        self.emit("on-mouse-scroll", event)
+
+    def __on_key_press(self, scene, event):
+        if self._focus_sprite:
+            self._focus_sprite.emit("on-key-press", event)
+
+        self.emit("on-key-press", event)
