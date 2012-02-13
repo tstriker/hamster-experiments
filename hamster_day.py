@@ -8,14 +8,14 @@
 import gtk
 from lib import graphics
 import hamster.client
+from hamster.lib import stuff
 import datetime as dt
 
-colors = ["#A9C2AA", "#9DA1DD", "#DDA59D"]
-connector_colors = ["#839684", "#797CAB", "#B88982"]
-entry_colors = ["#A9C2AA", "#9DA1DD", "#DDA59D"]
+colors = ["#95CACF", "#A2CFB6", "#D1DEA1", "#E4C384", "#DE9F7B"]
+connector_colors = ["#51868C", "#76A68B", "#ADBF69", "#D9A648", "#BF6A39"]
+entry_colors = ["#95CACF", "#A2CFB6", "#D1DEA1", "#E4C384", "#DE9F7B"]
 
 fact_names = []
-
 
 
 def delta_minutes(start, end):
@@ -42,13 +42,25 @@ class Entry(graphics.Sprite):
         self.fact = fact
         self.color = color
 
-        time_label = graphics.Label("", color="#000", size=11, x=15, y = 5)
+        time_label = graphics.Label("", color="#333", size=11, x=15, y = 5)
         time_label.text = "%s - " % fact.start_time.strftime("%H:%M")
         if fact.end_time:
             time_label.text += fact.end_time.strftime("%H:%M")
         self.add_child(time_label)
 
-        self.add_child(graphics.Label(fact.activity, color="#000", size=11, x=140, y = 5))
+        activity_label = graphics.Label(fact.activity, color="#333", size=11, x=110, y = 5)
+        self.add_child(activity_label)
+
+        category_label = graphics.Label("", color="#333", size=9, y = 7)
+        category_label.text = stuff.escape_pango(" - %s" % fact.category)
+        category_label.x = activity_label.x + activity_label.width
+        self.add_child(category_label)
+
+
+        duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333")
+        duration_label.x = self.width - duration_label.width - 5
+        duration_label.y = 5
+        self.add_child(duration_label)
 
 
         self.connect("on-render", self.on_render)
@@ -204,5 +216,8 @@ class BasicWindow:
         self.scene.render_facts()
 
 if __name__ == '__main__':
+    from hamster.lib import i18n
+    i18n.setup_i18n()
+
     window = BasicWindow()
     gtk.main()
