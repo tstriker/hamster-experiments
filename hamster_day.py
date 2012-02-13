@@ -12,6 +12,7 @@ import datetime as dt
 
 colors = ["#A9C2AA", "#9DA1DD", "#DDA59D"]
 connector_colors = ["#839684", "#797CAB", "#B88982"]
+entry_colors = ["#A9C2AA", "#9DA1DD", "#DDA59D"]
 
 fact_names = []
 
@@ -37,7 +38,7 @@ class Entry(graphics.Sprite):
     def __init__(self, width, fact, color, **kwargs):
         graphics.Sprite.__init__(self, **kwargs)
         self.width = width
-        self.height = 25
+        self.height = 27
         self.fact = fact
         self.color = color
 
@@ -66,13 +67,12 @@ class Scene(graphics.Scene):
         self.height = 500
         self.pixels_in_minute =  float(self.height) / (self.total_hours * 60)
 
-
-
+        self.spacing = 1
 
         self.fact_list = graphics.Sprite(x=40, y=50)
         self.add_child(self.fact_list)
 
-        self.fragments = Container(100)
+        self.fragments = Container(70)
         self.connectors = graphics.Sprite(x=self.fragments.x + self.fragments.width)
         self.connectors.width = 30
 
@@ -106,7 +106,8 @@ class Scene(graphics.Scene):
             if fact.activity not in fact_names:
                 fact_names.append(fact.activity)
 
-            color = colors[fact_names.index(fact.activity) % len(colors)]
+            color_index = fact_names.index(fact.activity) % len(colors)
+            color = colors[color_index]
 
             #fragments are simple
             fragment_y = int(delta_minutes(self.date, fact.start_time) * self.pixels_in_minute)
@@ -114,7 +115,7 @@ class Scene(graphics.Scene):
             self.fragments.add_child(graphics.Rectangle(self.fragments.width, fragment_height, fill=color, y=fragment_y))
 
 
-            entry = Entry(self.entries.width, fact, color, y=entry_y)
+            entry = Entry(self.entries.width, fact, entry_colors[color_index], y=entry_y)
             self.entries.add_child(entry)
             entry_y += entry.height
 
@@ -133,7 +134,7 @@ class Scene(graphics.Scene):
 
             if i < len(self.entries.sprites) - 1:
                 next_sprite = self.entries.sprites[i+1]
-                max_y = next_sprite.y - entry.height - 5
+                max_y = next_sprite.y - entry.height - self.spacing
 
                 entry.y = min(entry.y, max_y)
 
