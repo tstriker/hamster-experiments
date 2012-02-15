@@ -42,6 +42,9 @@ class Entry(graphics.Sprite):
         self.fact = fact
         self.color = color
 
+        self.interactive = True
+        self.mouse_cursor = gtk.gdk.XTERM
+
         time_label = graphics.Label("", color="#333", size=11, x=15, y = 5)
         time_label.text = "%s - " % fact.start_time.strftime("%H:%M")
         if fact.end_time:
@@ -64,10 +67,16 @@ class Entry(graphics.Sprite):
 
 
         self.connect("on-render", self.on_render)
+        self.connect("on-click", self.on_click)
 
     def on_render(self, sprite):
         self.graphics.fill_area(0, 0, self.width, self.height, self.color)
 
+    def on_click(self, sprite, event):
+        def grow_parent(sprite):
+            self.get_scene().align(sprite)
+
+        self.animate(height=80, on_update=grow_parent)
 
 
 
@@ -105,15 +114,13 @@ class Scene(graphics.Scene):
 
     def render_facts(self):
         facts = self.storage.get_facts(self.date)
-
         self.fragments.sprites = []
         self.connectors.sprites = []
         self.entries.sprites = []
 
-        entry_y = 0
-
         self.date_label.text = self.date.strftime("%d. %b %Y")
 
+        entry_y = 0
         for i, fact in enumerate(facts):
             if fact.activity not in fact_names:
                 fact_names.append(fact.activity)
@@ -131,9 +138,26 @@ class Scene(graphics.Scene):
             self.entries.add_child(entry)
             entry_y += entry.height
 
+            self.align()
 
-        # now order out entries - move them down as much as possible
+
+    def align(self, unmovable = None):
+        """align out entries - move them down as much as possible"""
+
+        """first put them where they should be"""
+        entry_y = 0
+
+        for entry in self.entries.sprites:
+            if entry != unmovable:
+                entry.y = entry_y
+
+            entry_y = entry.y + entry.height
+
+
         for i, entry in reversed(list(enumerate(self.entries.sprites))):
+            if entry is unmovable:
+                continue
+
             fragment = self.fragments.sprites[i]
 
             min_y = 0
