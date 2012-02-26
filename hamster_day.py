@@ -39,6 +39,7 @@ class Entry(graphics.Sprite):
         graphics.Sprite.__init__(self, **kwargs)
         self.width = width
         self.height = 27
+        self.natural_height = 27
         self.fact = fact
         self.color = color
 
@@ -65,18 +66,10 @@ class Entry(graphics.Sprite):
         duration_label.y = 5
         self.add_child(duration_label)
 
-
         self.connect("on-render", self.on_render)
-        self.connect("on-click", self.on_click)
 
     def on_render(self, sprite):
         self.graphics.fill_area(0, 0, self.width, self.height, self.color)
-
-    def on_click(self, sprite, event):
-        def grow_parent(sprite):
-            self.get_scene().align(sprite)
-
-        self.animate(height=80, on_update=grow_parent)
 
 
 
@@ -102,14 +95,19 @@ class Scene(graphics.Scene):
         self.fact_list.add_child(self.fragments, self.connectors, self.entries)
 
         self.storage = hamster.client.Storage()
-        self.date = dt.datetime.combine(dt.date.today(), dt.time()) - dt.timedelta(days=1) + dt.timedelta(hours=5)
+
+        start_date = dt.date(2012, 2, 7)
+        self.date = dt.datetime.combine(start_date, dt.time()) + dt.timedelta(hours=5)
 
         self.date_label = graphics.Label("", size=18, y = 10, color="#444")
         self.add_child(self.date_label)
 
+
+        self.entry_positions = []
         self.render_facts()
 
         self.connect("on-enter-frame", self.on_enter_frame)
+
 
 
     def render_facts(self):
@@ -136,53 +134,89 @@ class Scene(graphics.Scene):
 
             entry = Entry(self.entries.width, fact, entry_colors[color_index], y=entry_y)
             self.entries.add_child(entry)
+            entry.connect("on-click", self.on_entry_click)
             entry_y += entry.height
 
-            self.align()
-
-
-    def align(self, unmovable = None):
-        """align out entries - move them down as much as possible"""
-
-        """first put them where they should be"""
+        # now move entries
+        # first move them all to the top
         entry_y = 0
-
         for entry in self.entries.sprites:
-            if entry != unmovable:
-                entry.y = entry_y
-
+            entry.y = entry_y
             entry_y = entry.y + entry.height
 
-
-        for i, entry in reversed(list(enumerate(self.entries.sprites))):
-            if entry is unmovable:
-                continue
-
-            fragment = self.fragments.sprites[i]
+        # then try centering them with the fragments
+        for entry in reversed(self.entries.sprites):
+            idx = self.entries.sprites.index(entry)
+            fragment = self.fragments.sprites[idx]
 
             min_y = 0
-            if i > 0:
-                prev_sprite = self.entries.sprites[i-1]
-                min_y = prev_sprite.y + prev_sprite.height
+            if idx > 0:
+                prev_sprite = self.entries.sprites[idx-1]
+                min_y = prev_sprite.y + prev_sprite.height + 1
 
             entry.y = fragment.y + (fragment.height - entry.height) / 2
             entry.y = max(entry.y, min_y)
 
-            if i < len(self.entries.sprites) - 1:
-                next_sprite = self.entries.sprites[i+1]
+            if idx < len(self.entries.sprites) - 1:
+                next_sprite = self.entries.sprites[idx+1]
                 max_y = next_sprite.y - entry.height - self.spacing
 
                 entry.y = min(entry.y, max_y)
 
+        self.entry_positions = [entry.y for entry in self.entries.sprites]
+        self.draw_connectors()
+
+
+
+    def on_entry_click(self, clicked_entry, event):
+        idx = self.entries.sprites.index(clicked_entry)
+
+        def grow_parent(sprite):
+            self.draw_connectors()
+
+
+        for entry in self.entries.sprites:
+            if entry != clicked_entry and entry.height != entry.natural_height:
+                entry.animate(height = entry.natural_height)
+
+
+        target_height = 80
+        fragment = self.fragments.sprites[idx]
+        y = fragment.y + (fragment.height - target_height) / 2
+        clicked_entry.animate(height=target_height, y = y, on_update=grow_parent)
+
+
+        # entries above current move upwards when necessary
+        prev_entries = self.entries.sprites[:idx]
+        max_y = y - 1
+        for entry in reversed(prev_entries):
+            pos = self.entry_positions[self.entries.sprites.index(entry)]
+            target_y = min(pos, max_y - entry.natural_height)
+            entry.animate(y=target_y)
+            max_y = max_y - entry.natural_height - 1
+
+
+        # entries below current move down when necessary
+        next_entries = self.entries.sprites[idx+1:]
+        min_y = y + target_height + 1
+        for entry in next_entries:
+            pos = self.entry_positions[self.entries.sprites.index(entry)]
+            target_y = max(pos, min_y)
+            entry.animate(y = target_y)
+            min_y += entry.height + 1
+
+
+
+
+    def draw_connectors(self):
         # draw connectors
         g = self.connectors.graphics
         g.clear()
         g.set_line_style(width=1)
-        self.connectors._sprite_dirty = True
+        g.clear()
 
         for fragment, entry in zip(self.fragments.sprites, self.entries.sprites):
             x2 = self.connectors.width
-
 
             g.move_to(0, fragment.y)
             g.line_to([(x2, entry.y),
@@ -191,7 +225,6 @@ class Scene(graphics.Scene):
                        (0, fragment.y)])
             g.fill(connector_colors[colors.index(fragment.fill)])
 
-        self.connectors.redraw()
 
 
     def on_enter_frame(self, scene, context):
@@ -208,7 +241,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_default_size(700, 650)
+        window.set_default_size(700, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         vbox = gtk.VBox(spacing=10)
