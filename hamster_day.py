@@ -203,7 +203,7 @@ class Scene(graphics.Scene):
             pos = self.entry_positions[self.entries.sprites.index(entry)]
             target_y = max(pos, min_y)
             entry.animate(y = target_y)
-            min_y += entry.height + 1
+            min_y += entry.natural_height + 1
 
 
 
