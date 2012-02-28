@@ -5,7 +5,7 @@
 """Potential edit activities replacement"""
 
 
-import gtk
+import gtk, gobject
 from lib import graphics
 import hamster.client
 from hamster.lib import stuff
@@ -35,6 +35,11 @@ class Container(graphics.Sprite):
 
 
 class Entry(graphics.Sprite):
+    __gsignals__ = {
+        #: fires when any of the child widgets are clicked
+        "on-activate": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+    }
+
     def __init__(self, width, fact, color, **kwargs):
         graphics.Sprite.__init__(self, **kwargs)
         self.width = width
@@ -46,36 +51,53 @@ class Entry(graphics.Sprite):
         self.interactive = True
         self.mouse_cursor = gtk.gdk.XTERM
 
-        time_label = graphics.Label("", color="#333", size=11, x=15, y = 5)
-        time_label.text = "%s - " % fact.start_time.strftime("%H:%M")
+        self.start_label = graphics.Label("", color="#333", size=11, x=15, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.start_label.text = "%s - " % fact.start_time.strftime("%H:%M")
+        self.add_child(self.start_label)
+
+        self.end_label = graphics.Label("", color="#333", size=11, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.end_label.x = self.start_label.x + self.start_label.width
         if fact.end_time:
-            time_label.text += fact.end_time.strftime("%H:%M")
-        self.add_child(time_label)
+            self.end_label.text = fact.end_time.strftime("%H:%M")
+        self.add_child(self.end_label)
 
-        activity_label = graphics.Label(fact.activity, color="#333", size=11, x=110, y = 5)
-        self.add_child(activity_label)
+        self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=110, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.add_child(self.activity_label)
 
-        category_label = graphics.Label("", color="#333", size=9, y = 7)
-        category_label.text = stuff.escape_pango(" - %s" % fact.category)
-        category_label.x = activity_label.x + activity_label.width
-        self.add_child(category_label)
+        self.category_label = graphics.Label("", color="#333", size=9, y=7, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.category_label.text = stuff.escape_pango(" - %s" % fact.category)
+        self.category_label.x = self.activity_label.x + self.activity_label.width
+        self.add_child(self.category_label)
 
 
-        duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333")
-        duration_label.x = self.width - duration_label.width - 5
-        duration_label.y = 5
-        self.add_child(duration_label)
+        self.duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333", interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.duration_label.x = self.width - self.duration_label.width - 5
+        self.duration_label.y = 5
+        self.add_child(self.duration_label)
+
+        for sprite in self.sprites:
+            sprite.connect("on-click", self.on_sprite_click)
 
         self.connect("on-render", self.on_render)
+        self.connect("on-click", self.on_click)
+
+    def on_sprite_click(self, sprite, event):
+        self.emit("on-activate", sprite)
+
+    def on_click(self, sprite, event):
+        self.emit("on-activate", self.activity_label)
 
     def on_render(self, sprite):
         self.graphics.fill_area(0, 0, self.width, self.height, self.color)
 
 
 
+
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
+
+        self.tweener.default_duration = 0.1
 
         self.total_hours = 24
         self.height = 500
@@ -106,6 +128,8 @@ class Scene(graphics.Scene):
         self.entry_positions = []
         self.render_facts()
 
+        self.set_size_request(650, 500)
+
         self.connect("on-enter-frame", self.on_enter_frame)
 
 
@@ -134,7 +158,7 @@ class Scene(graphics.Scene):
 
             entry = Entry(self.entries.width, fact, entry_colors[color_index], y=entry_y)
             self.entries.add_child(entry)
-            entry.connect("on-click", self.on_entry_click)
+            entry.connect("on-activate", self.on_entry_click)
             entry_y += entry.height
 
         # now move entries
@@ -166,13 +190,39 @@ class Scene(graphics.Scene):
         self.entry_positions = [entry.y for entry in self.entries.sprites]
         self.draw_connectors()
 
-
-
-    def on_entry_click(self, clicked_entry, event):
+    def on_entry_click(self, clicked_entry, target):
+        self.container.edit_box.hide()
         idx = self.entries.sprites.index(clicked_entry)
 
-        def grow_parent(sprite):
+        def on_update(sprite):
             self.draw_connectors()
+            scene_y = int(fragment.parent.to_scene_coords(0, sprite.y)[1])
+            self.container.fixed.move(self.container.edit_box, 150, scene_y)
+            self.container.edit_box.set_size_request(int(sprite.width - 10), int(sprite.height))
+
+        def on_complete(sprite):
+            self.draw_connectors()
+
+
+        def show_edit(entry):
+            def get(widget_name):
+                return getattr(self.container, widget_name)
+
+            get("start_entry").set_text(entry.fact.start_time.strftime("%H:%M"))
+            get("end_entry").set_text(entry.fact.end_time.strftime("%H:%M"))
+            get("activity_entry").set_text("%s@%s" % (entry.fact.activity, entry.fact.category))
+            get("description_entry").set_text(entry.fact.description or "")
+            get("edit_box").show_all()
+
+            clicks = {clicked_entry.start_label: "start_entry",
+                      clicked_entry.end_label: "end_entry",
+                      clicked_entry.activity_label: "activity_entry",
+                      clicked_entry.category_label: "activity_entry",
+                      clicked_entry.duration_label: "activity_entry",
+            }
+            get(clicks[target]).grab_focus()
+
+
 
 
         for entry in self.entries.sprites:
@@ -183,8 +233,14 @@ class Scene(graphics.Scene):
         target_height = 80
         fragment = self.fragments.sprites[idx]
         y = fragment.y + (fragment.height - target_height) / 2
-        clicked_entry.animate(height=target_height, y = y, on_update=grow_parent)
 
+
+
+
+        show_edit(clicked_entry)
+        clicked_entry.animate(height=target_height, y=y,
+                              on_update=on_update,
+                              on_complete=on_complete)
 
         # entries above current move upwards when necessary
         prev_entries = self.entries.sprites[:idx]
@@ -204,7 +260,6 @@ class Scene(graphics.Scene):
             target_y = max(pos, min_y)
             entry.animate(y = target_y)
             min_y += entry.natural_height + 1
-
 
 
 
@@ -247,7 +302,51 @@ class BasicWindow:
         vbox = gtk.VBox(spacing=10)
         vbox.set_border_width(12)
         self.scene = Scene()
-        vbox.pack_start(self.scene)
+
+        self.fixed = gtk.Fixed()
+        self.fixed.put(self.scene, 0, 0)
+
+        self.scene.container = self
+
+
+        self.edit_box = gtk.Viewport()
+        self.fixed.put(self.edit_box, 150, 280)
+
+
+        container = gtk.HBox()
+        self.edit_box.add(container)
+
+        start_entry = gtk.Entry()
+        start_entry.set_width_chars(5)
+        start_entry.set_alignment(0)
+        self.start_entry = start_entry
+        box = gtk.VBox()
+        box.pack_start(start_entry, False)
+        container.pack_start(box, False)
+
+        end_entry = gtk.Entry()
+        end_entry.set_width_chars(5)
+        end_entry.visible = False
+        self.end_entry = end_entry
+        box = gtk.VBox()
+        box.pack_start(end_entry, False)
+        container.pack_start(box, False)
+
+        entry_box = gtk.VBox()
+        container.pack_start(entry_box, False)
+
+        activity_entry = gtk.Entry()
+        activity_entry.set_width_chars(30)
+        self.activity_entry = activity_entry
+        entry_box.pack_start(activity_entry, False)
+
+        description_entry = gtk.Entry()
+        description_entry.set_width_chars(30)
+        self.description_entry = description_entry
+        entry_box.pack_start(description_entry, False)
+
+        container.pack_start(gtk.HBox(), True)
+        vbox.pack_start(self.fixed)
 
         button_box = gtk.HBox(spacing=5)
         vbox.pack_start(button_box, False)
@@ -263,6 +362,7 @@ class BasicWindow:
         next_day.connect("clicked", self.on_next_day_click)
 
         window.show_all()
+        self.edit_box.hide()
 
     def on_prev_day_click(self, button):
         self.scene.date -= dt.timedelta(days=1)
