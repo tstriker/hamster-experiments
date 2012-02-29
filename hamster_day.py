@@ -51,17 +51,16 @@ class Entry(graphics.Sprite):
         self.interactive = True
         self.mouse_cursor = gtk.gdk.XTERM
 
-        self.start_label = graphics.Label("", color="#333", size=11, x=15, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.start_label = graphics.Label("", color="#333", size=11, x=10, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         self.start_label.text = "%s - " % fact.start_time.strftime("%H:%M")
         self.add_child(self.start_label)
 
-        self.end_label = graphics.Label("", color="#333", size=11, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
-        self.end_label.x = self.start_label.x + self.start_label.width
+        self.end_label = graphics.Label("", color="#333", size=11, x=65, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         if fact.end_time:
             self.end_label.text = fact.end_time.strftime("%H:%M")
         self.add_child(self.end_label)
 
-        self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=110, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=120, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         self.add_child(self.activity_label)
 
         self.category_label = graphics.Label("", color="#333", size=9, y=7, interactive=True, mouse_cursor=gtk.gdk.XTERM)
@@ -191,28 +190,33 @@ class Scene(graphics.Scene):
         self.draw_connectors()
 
     def on_entry_click(self, clicked_entry, target):
-        self.container.edit_box.hide()
+        prev_entry = None
+        #self.container.edit_box.hide()
         idx = self.entries.sprites.index(clicked_entry)
+
+        def get(widget_name):
+            return getattr(self.container, widget_name)
+
 
         def on_update(sprite):
             self.draw_connectors()
-            scene_y = int(fragment.parent.to_scene_coords(0, sprite.y)[1])
-            self.container.fixed.move(self.container.edit_box, 150, scene_y)
+
+            if sprite.height < 65 and prev_entry:
+                sprite = prev_entry
+            else:
+                show_edit(clicked_entry)
+
+
+            scene_y = int(sprite.parent.to_scene_coords(0, sprite.y)[1])
+            self.container.fixed.move(self.container.edit_box, 140, scene_y)
             self.container.edit_box.set_size_request(int(sprite.width - 10), int(sprite.height))
+
+            get("edit_box").set_visible(sprite.height > 35)
+            get("description_entry").set_visible(sprite.height > 65)
+
 
         def on_complete(sprite):
             self.draw_connectors()
-
-
-        def show_edit(entry):
-            def get(widget_name):
-                return getattr(self.container, widget_name)
-
-            get("start_entry").set_text(entry.fact.start_time.strftime("%H:%M"))
-            get("end_entry").set_text(entry.fact.end_time.strftime("%H:%M"))
-            get("activity_entry").set_text("%s@%s" % (entry.fact.activity, entry.fact.category))
-            get("description_entry").set_text(entry.fact.description or "")
-            get("edit_box").show_all()
 
             clicks = {clicked_entry.start_label: "start_entry",
                       clicked_entry.end_label: "end_entry",
@@ -224,20 +228,30 @@ class Scene(graphics.Scene):
 
 
 
+        def show_edit(entry):
+            get("start_entry").set_text(entry.fact.start_time.strftime("%H:%M"))
+            get("end_entry").set_text(entry.fact.end_time.strftime("%H:%M"))
+            get("activity_entry").set_text("%s@%s" % (entry.fact.activity, entry.fact.category))
+            get("description_entry").set_text(entry.fact.description or "")
+
+            scene_y = int(clicked_entry.parent.to_scene_coords(0, clicked_entry.y)[1])
+            self.container.fixed.move(self.container.edit_box, 140, scene_y)
+
+
 
         for entry in self.entries.sprites:
             if entry != clicked_entry and entry.height != entry.natural_height:
+                prev_entry = entry
                 entry.animate(height = entry.natural_height)
 
 
-        target_height = 80
+        target_height = 75
         fragment = self.fragments.sprites[idx]
         y = fragment.y + (fragment.height - target_height) / 2
 
 
 
 
-        show_edit(clicked_entry)
         clicked_entry.animate(height=target_height, y=y,
                               on_update=on_update,
                               on_complete=on_complete)
@@ -309,12 +323,13 @@ class BasicWindow:
         self.scene.container = self
 
 
-        self.edit_box = gtk.Viewport()
-        self.fixed.put(self.edit_box, 150, 280)
+        self.edit_box = gtk.HBox()
+        self.edit_box.set_border_width(6)
+        self.fixed.put(self.edit_box, 140, 0)
 
 
-        container = gtk.HBox()
-        self.edit_box.add(container)
+        container = gtk.HBox(spacing=5)
+        self.edit_box.pack_start(container)
 
         start_entry = gtk.Entry()
         start_entry.set_width_chars(5)
@@ -332,16 +347,16 @@ class BasicWindow:
         box.pack_start(end_entry, False)
         container.pack_start(box, False)
 
-        entry_box = gtk.VBox()
+        entry_box = gtk.VBox(spacing=5)
         container.pack_start(entry_box, False)
 
         activity_entry = gtk.Entry()
-        activity_entry.set_width_chars(30)
+        activity_entry.set_width_chars(35)
         self.activity_entry = activity_entry
         entry_box.pack_start(activity_entry, False)
 
         description_entry = gtk.Entry()
-        description_entry.set_width_chars(30)
+        description_entry.set_width_chars(35)
         self.description_entry = description_entry
         entry_box.pack_start(description_entry, False)
 
