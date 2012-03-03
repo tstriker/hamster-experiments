@@ -9,6 +9,9 @@ import gtk, gobject
 from lib import graphics
 import hamster.client
 from hamster.lib import stuff
+from hamster import widgets
+
+
 import datetime as dt
 
 colors = ["#95CACF", "#A2CFB6", "#D1DEA1", "#E4C384", "#DE9F7B"]
@@ -51,30 +54,43 @@ class Entry(graphics.Sprite):
         self.interactive = True
         self.mouse_cursor = gtk.gdk.XTERM
 
+        self.fact_labels = graphics.Sprite()
+
         self.start_label = graphics.Label("", color="#333", size=11, x=10, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         self.start_label.text = "%s - " % fact.start_time.strftime("%H:%M")
-        self.add_child(self.start_label)
+        self.fact_labels.add_child(self.start_label)
 
         self.end_label = graphics.Label("", color="#333", size=11, x=65, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         if fact.end_time:
             self.end_label.text = fact.end_time.strftime("%H:%M")
-        self.add_child(self.end_label)
+        self.fact_labels.add_child(self.end_label)
 
         self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=120, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
-        self.add_child(self.activity_label)
+        self.fact_labels.add_child(self.activity_label)
 
         self.category_label = graphics.Label("", color="#333", size=9, y=7, interactive=True, mouse_cursor=gtk.gdk.XTERM)
         self.category_label.text = stuff.escape_pango(" - %s" % fact.category)
         self.category_label.x = self.activity_label.x + self.activity_label.width
-        self.add_child(self.category_label)
+        self.fact_labels.add_child(self.category_label)
 
 
         self.duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333", interactive=True, mouse_cursor=gtk.gdk.XTERM)
         self.duration_label.x = self.width - self.duration_label.width - 5
         self.duration_label.y = 5
-        self.add_child(self.duration_label)
+        self.fact_labels.add_child(self.duration_label)
 
-        for sprite in self.sprites:
+        self.add_child(self.fact_labels)
+
+        self.edit_links = graphics.Sprite(x=10, y = 110, opacity=0)
+
+        self.delete_link = graphics.Label("Delete", size=11, color="#555", interactive=True)
+        self.save_link = graphics.Label("Save", size=11, x=390, color="#555", interactive=True)
+        self.cancel_link = graphics.Label("Cancel", size=11, x=440, color="#555", interactive=True)
+        self.edit_links.add_child(self.delete_link, self.save_link, self.cancel_link)
+
+        self.add_child(self.edit_links)
+
+        for sprite in self.fact_labels.sprites:
             sprite.connect("on-click", self.on_sprite_click)
 
         self.connect("on-render", self.on_render)
@@ -86,9 +102,19 @@ class Entry(graphics.Sprite):
     def on_click(self, sprite, event):
         self.emit("on-activate", self.activity_label)
 
-    def on_render(self, sprite):
-        self.graphics.fill_area(0, 0, self.width, self.height, self.color)
+    def set_edit(self, edit_mode):
+        self.edit_mode = edit_mode
+        if edit_mode:
+            self.fact_labels.animate(opacity=0)
+            self.edit_links.animate(opacity=1)
+        else:
+            self.fact_labels.animate(opacity=1)
+            self.edit_links.animate(opacity=0)
 
+    def on_render(self, sprite):
+        self.graphics.rectangle(0, 0, self.width, self.height)
+        self.graphics.fill_preserve(self.color)
+        self.graphics.clip()
 
 
 
@@ -107,7 +133,8 @@ class Scene(graphics.Scene):
         self.fact_list = graphics.Sprite(x=40, y=50)
         self.add_child(self.fact_list)
 
-        self.fragments = Container(70)
+        self.fragments = Container(30)
+
         self.connectors = graphics.Sprite(x=self.fragments.x + self.fragments.width)
         self.connectors.width = 30
 
@@ -117,31 +144,33 @@ class Scene(graphics.Scene):
 
         self.storage = hamster.client.Storage()
 
-        start_date = dt.date(2012, 2, 7)
-        self.date = dt.datetime.combine(start_date, dt.time()) + dt.timedelta(hours=5)
+        self._date = dt.datetime.combine(dt.date.today(), dt.time()) + dt.timedelta(hours=5)
+
 
         self.date_label = graphics.Label("", size=18, y = 10, color="#444")
         self.add_child(self.date_label)
 
 
         self.entry_positions = []
-        self.render_facts()
 
-        self.set_size_request(650, 500)
+        self.set_size_request(610, 500)
+
+        self.current_entry = None
 
         self.connect("on-enter-frame", self.on_enter_frame)
 
 
+    def render_facts(self, date = None):
+        date = date or self._date
 
-    def render_facts(self):
-        facts = self.storage.get_facts(self.date)
+        self.container.edit_box.hide()
+        facts = self.storage.get_facts(date)
         self.fragments.sprites = []
         self.connectors.sprites = []
         self.entries.sprites = []
 
-        self.date_label.text = self.date.strftime("%d. %b %Y")
+        self.date_label.text = date.strftime("%d. %b %Y")
 
-        entry_y = 0
         for i, fact in enumerate(facts):
             if fact.activity not in fact_names:
                 fact_names.append(fact.activity)
@@ -149,23 +178,25 @@ class Scene(graphics.Scene):
             color_index = fact_names.index(fact.activity) % len(colors)
             color = colors[color_index]
 
-            #fragments are simple
-            fragment_y = int(delta_minutes(self.date, fact.start_time) * self.pixels_in_minute)
             fragment_height = int(delta_minutes(fact.start_time, fact.end_time) * self.pixels_in_minute)
-            self.fragments.add_child(graphics.Rectangle(self.fragments.width, fragment_height, fill=color, y=fragment_y))
+            self.fragments.add_child(graphics.Rectangle(self.fragments.width, fragment_height, fill=color))
 
-
-            entry = Entry(self.entries.width, fact, entry_colors[color_index], y=entry_y)
+            entry = Entry(self.entries.width, fact, entry_colors[color_index])
             self.entries.add_child(entry)
             entry.connect("on-activate", self.on_entry_click)
+
+        self.position_entries(date)
+
+
+    def position_entries(self, date):
+        entry_y = 0
+
+        for fragment, entry in zip(self.fragments.sprites, self.entries.sprites):
+            fragment.y = int(delta_minutes(date, entry.fact.start_time) * self.pixels_in_minute)
+
+            entry.y = entry_y
             entry_y += entry.height
 
-        # now move entries
-        # first move them all to the top
-        entry_y = 0
-        for entry in self.entries.sprites:
-            entry.y = entry_y
-            entry_y = entry.y + entry.height
 
         # then try centering them with the fragments
         for entry in reversed(self.entries.sprites):
@@ -189,7 +220,11 @@ class Scene(graphics.Scene):
         self.entry_positions = [entry.y for entry in self.entries.sprites]
         self.draw_connectors()
 
+
     def on_entry_click(self, clicked_entry, target):
+        self.select(clicked_entry, target)
+
+    def select(self, clicked_entry, target):
         prev_entry = None
         #self.container.edit_box.hide()
         idx = self.entries.sprites.index(clicked_entry)
@@ -204,11 +239,18 @@ class Scene(graphics.Scene):
             if sprite.height < 65 and prev_entry:
                 sprite = prev_entry
             else:
+                if self.current_entry != clicked_entry:
+                    self.current_entry = clicked_entry
+                    clicked_entry.set_edit(True)
+                    if prev_entry:
+                        prev_entry.set_edit(False)
+
+
                 show_edit(clicked_entry)
 
 
             scene_y = int(sprite.parent.to_scene_coords(0, sprite.y)[1])
-            self.container.fixed.move(self.container.edit_box, 140, scene_y)
+            self.container.fixed.move(self.container.edit_box, 100, scene_y)
             self.container.edit_box.set_size_request(int(sprite.width - 10), int(sprite.height))
 
             get("edit_box").set_visible(sprite.height > 35)
@@ -229,13 +271,16 @@ class Scene(graphics.Scene):
 
 
         def show_edit(entry):
-            get("start_entry").set_text(entry.fact.start_time.strftime("%H:%M"))
-            get("end_entry").set_text(entry.fact.end_time.strftime("%H:%M"))
+            get("start_entry").set_time(entry.fact.start_time)
+            get("end_entry").set_start_time(entry.fact.start_time)
+            if entry.fact.end_time:
+                get("end_entry").set_time(entry.fact.end_time)
             get("activity_entry").set_text("%s@%s" % (entry.fact.activity, entry.fact.category))
+            get("tags_entry").set_text(", ".join(entry.fact.tags))
             get("description_entry").set_text(entry.fact.description or "")
 
             scene_y = int(clicked_entry.parent.to_scene_coords(0, clicked_entry.y)[1])
-            self.container.fixed.move(self.container.edit_box, 140, scene_y)
+            self.container.fixed.move(self.container.edit_box, 100, scene_y)
 
 
 
@@ -245,7 +290,7 @@ class Scene(graphics.Scene):
                 entry.animate(height = entry.natural_height)
 
 
-        target_height = 75
+        target_height = 135
         fragment = self.fragments.sprites[idx]
         y = fragment.y + (fragment.height - target_height) / 2
 
@@ -299,8 +344,8 @@ class Scene(graphics.Scene):
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
         for i in range (self.total_hours):
-            hour = self.date + dt.timedelta(hours=i)
-            y = delta_minutes(self.date, hour) * self.pixels_in_minute
+            hour = self._date + dt.timedelta(hours=i)
+            y = delta_minutes(self._date, hour) * self.pixels_in_minute
             g.move_to(0, self.fact_list.y + y)
             g.show_label(hour.strftime("%H:%M"), 10, "#666")
 
@@ -310,7 +355,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_default_size(700, 500)
+        window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         vbox = gtk.VBox(spacing=10)
@@ -325,23 +370,19 @@ class BasicWindow:
 
         self.edit_box = gtk.HBox()
         self.edit_box.set_border_width(6)
-        self.fixed.put(self.edit_box, 140, 0)
+        self.fixed.put(self.edit_box, 100, 0)
 
 
         container = gtk.HBox(spacing=5)
         self.edit_box.pack_start(container)
 
-        start_entry = gtk.Entry()
-        start_entry.set_width_chars(5)
-        start_entry.set_alignment(0)
+        start_entry = widgets.TimeInput()
         self.start_entry = start_entry
         box = gtk.VBox()
         box.pack_start(start_entry, False)
         container.pack_start(box, False)
 
-        end_entry = gtk.Entry()
-        end_entry.set_width_chars(5)
-        end_entry.visible = False
+        end_entry = widgets.TimeInput()
         self.end_entry = end_entry
         box = gtk.VBox()
         box.pack_start(end_entry, False)
@@ -350,15 +391,23 @@ class BasicWindow:
         entry_box = gtk.VBox(spacing=5)
         container.pack_start(entry_box, False)
 
-        activity_entry = gtk.Entry()
+        activity_entry = widgets.ActivityEntry()
         activity_entry.set_width_chars(35)
         self.activity_entry = activity_entry
         entry_box.pack_start(activity_entry, False)
+
+        tags_entry = widgets.TagsEntry()
+        self.tags_entry = tags_entry
+        entry_box.pack_start(tags_entry, False)
 
         description_entry = gtk.Entry()
         description_entry.set_width_chars(35)
         self.description_entry = description_entry
         entry_box.pack_start(description_entry, False)
+
+        save_button = gtk.Button("Save")
+        entry_box.pack_start(save_button, False)
+
 
         container.pack_start(gtk.HBox(), True)
         vbox.pack_start(self.fixed)
@@ -376,15 +425,17 @@ class BasicWindow:
         prev_day.connect("clicked", self.on_prev_day_click)
         next_day.connect("clicked", self.on_next_day_click)
 
+        self.scene.render_facts()
+
         window.show_all()
         self.edit_box.hide()
 
     def on_prev_day_click(self, button):
-        self.scene.date -= dt.timedelta(days=1)
+        self.scene._date -= dt.timedelta(days=1)
         self.scene.render_facts()
 
     def on_next_day_click(self, button):
-        self.scene.date += dt.timedelta(days=1)
+        self.scene._date += dt.timedelta(days=1)
         self.scene.render_facts()
 
 if __name__ == '__main__':
