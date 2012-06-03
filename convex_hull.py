@@ -13,7 +13,7 @@ import gtk
 from lib import graphics
 
 import math
-from lib.euclid import Point2
+from contrib.euclid import Point2
 
 class Node(graphics.Rectangle):
     def __init__(self, x, y):
@@ -38,7 +38,6 @@ class Canvas(graphics.Scene):
         self.nodes = []
         self.connect("on-click", self.on_mouse_click)
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-frame", self.on_frame)
 
     def on_mouse_click(self, area, event, target):
         if not target:
@@ -49,10 +48,6 @@ class Canvas(graphics.Scene):
         else:
             target.fill = "#f00"
 
-    def on_frame(self, scene):
-        for node, node2 in self.convex_hull():
-            node.rotation += 0.01
-
     def on_enter_frame(self, scene, context):
         g = graphics.Graphics(context)
         g.set_color("#999")
@@ -61,6 +56,7 @@ class Canvas(graphics.Scene):
             g.move_to(node.x + node.pivot_x, node.y + node.pivot_y)
             g.line_to(node2.x + node2.pivot_x, node2.y + node2.pivot_y)
 
+            node.rotation += 0.01
 
         g.stroke()
         self.redraw()

@@ -26,8 +26,9 @@ FRICTION = -0.9;
 
 class Ball(graphics.Circle):
     def __init__(self, x, y, radius):
+        graphics.Circle.__init__(self, radius * 2, radius * 2, fill="#aaa", x = x, y = y)
+
         self.width = self.height = radius * 2
-        graphics.Circle.__init__(self, self.width, self.height, fill="#aaa", x = x, y = y)
 
         self.radius = radius
 
@@ -90,14 +91,9 @@ class Scene(graphics.Scene):
         self.balls = []
         self.window_pos = None
 
-        self.connect("on-frame", self.on_enter_frame)
-        self.connect("on-finish-frame", self.on_finish_frame)
+        self.connect("on-enter-frame", self.on_enter_frame)
 
-
-    def on_finish_frame(self, scene, context):
-        self.redraw()
-
-    def on_enter_frame(self, scene):
+    def on_enter_frame(self, scene, context):
         # render and update positions of the balls
         if not self.balls:
             for i in range(15):

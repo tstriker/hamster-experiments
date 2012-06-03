@@ -22,8 +22,8 @@ from lib import graphics
 import math
 from random import random
 
-from lib.euclid import Vector2, Point2
-from lib.proximity import LQProximityStore
+from contrib.euclid import Vector2, Point2
+from contrib.proximity import LQProximityStore
 
 
 class Boid(object):

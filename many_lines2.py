@@ -18,7 +18,7 @@
 
 import gtk
 from lib import graphics
-from lib.euclid import Vector2
+from contrib.euclid import Vector2
 from random import random, randint
 import collections
 

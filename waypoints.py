@@ -14,8 +14,8 @@ from lib import graphics
 import math
 import random
 
-from lib.euclid import Vector2, Point2
-from lib.proximity import LQProximityStore
+from contrib.euclid import Vector2, Point2
+from contrib.proximity import LQProximityStore
 
 class Waypoint(graphics.Sprite):
     def __init__(self, x, y):
@@ -68,9 +68,6 @@ class QueueingWaypoint(Waypoint):
         self.current_frame = 0
         self.boids = []
         self.boid_scales = {}
-
-
-        self.dirty_flags = self.dirty_flags ^ set(('boids', 'boid_scales', 'frames', 'current_frame'))
 
     def see_you(self, boid):
         distance = (self.location - boid.location).magnitude_squared()
@@ -242,8 +239,6 @@ class ShakyWaypoint(Waypoint):
 class Boid(graphics.Sprite):
     def __init__(self, location, max_speed = 2.0):
         graphics.Sprite.__init__(self, snap_to_pixel=False)
-
-        self.dirty_flags = self.dirty_flags ^ set(('velocity', 'acceleration', 'radio', 'target_waypoint'))
 
         self.visible = True
         self.radius = 3

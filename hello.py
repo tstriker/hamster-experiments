@@ -16,15 +16,9 @@ class Scene(graphics.Scene):
         for i in range(14):
             self.add_child(graphics.Rectangle(40, 40, 3,
                                               y = 420, x = i * 45 + 6,
-                                              fill = "#999",
-                                              stroke="#444",
-                                              interactive = True))
+                                              fill = "#999", stroke="#444", interactive = True))
 
         self.connect("on-mouse-over", self.on_mouse_over)
-        self.connect("on-enter-frame", self.on_enter_frame)
-
-    def on_enter_frame(self, scene, context):
-        print int(self.fps)
 
     def on_mouse_over(self, scene, sprite):
         if not sprite: return #ignore blank clicks

@@ -34,7 +34,7 @@ class DropShadow(graphics.Sprite):
         image_context = gtk.gdk.CairoContext(cairo.Context(image_surface))
         self.original_sprite._draw(image_context)
 
-        extents = self.original_sprite.graphics.extents
+        extents = self.original_sprite.get_extents()
         width  = int(extents[2] - extents[0]) + 10
         height = int(extents[3] - extents[1]) + 10
 
@@ -68,7 +68,7 @@ class DropShadow(graphics.Sprite):
         kernel_range = range(-1, 2) # surrounding the pixel
 
 
-        extents = self.original_sprite.graphics.extents
+        extents = self.original_sprite.get_extents()
         width  = int(extents[2] - extents[0]) + 10
         height = int(extents[3] - extents[1]) + 10
 
@@ -110,7 +110,7 @@ class SomeShape(graphics.Sprite):
         self.add_child(label)
 
         self.graphics.rectangle(0, 0, label.width, label.height)
-        self.graphics.stroke("#fff", 0)
+        self.graphics.new_path()
 
         #self.graphics.fill_area(5, 5, 80, 80, "#fff")
 
@@ -138,7 +138,7 @@ class Scene(graphics.Scene):
         self.redraw()
 
     def on_sprite_drag(self, scene, sprite, event):
-        extents = sprite.graphics.extents
+        extents = sprite.get_extents()
         width, height = extents[2] - extents[0], extents[3] - extents[1]
 
         sprite.shadow.x = sprite.x + (sprite.x + (width - self.width) / 2.0) / float(self.width) * 8

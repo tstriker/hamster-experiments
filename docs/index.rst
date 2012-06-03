@@ -1,10 +1,15 @@
+.. toctree::
+   :hidden:
+
+   ui
+
 .. _graphics:
-.. currentmodule:: graphics
 
-
-****************
-hamster.graphics
-****************
+:mod:`graphics` -- hamster graphics library
+====================================================
+.. module:: graphics
+   :synopsis: sprite-styled abstraction layer on top of pygtk and cairo.
+.. py:currentmodule:: graphics
 
 The hamster graphics library is a sprite-styled abstraction layer on top of
 pygtk and cairo.
@@ -32,7 +37,6 @@ adding and manipulating sprites.
 
 The Scene
 ========================
-
 .. autoclass:: Scene
    :members:
    :inherited-members:
@@ -136,6 +140,17 @@ into constructor the :class:`Graphics` class can also be used on it's own.
 .. autoclass:: Graphics
    :members:
    :undoc-members:
+
+
+.. _colors:
+
+Color utilities
+========================
+The :class:`ColorUtils` class is available as :class:`graphics.Colors`. Also
+it is the same instance accessible via :attr:`Scene.colors`.
+
+.. autoclass:: ColorUtils
+   :members:
 
 
 .. _primitives:

@@ -16,6 +16,7 @@ class Entry(graphics.Sprite):
         graphics.Sprite.__init__(self, **kwargs)
         self.entry = gtk.Entry()
         self.entry.set_has_frame(False)
+        self.entry.set_text("Edit me and drag the circle around too")
         self.fixed = None
         self.connect("on-render", self.on_render)
         self.width, self.height = -1, -1
@@ -26,7 +27,7 @@ class Entry(graphics.Sprite):
 
         graphics.Sprite.__setattr__(self, name, value)
 
-    def _draw(self, context, opacity=1):
+    def _draw(self, context, opacity=1, *args, **kwargs):
         graphics.Sprite._draw(self, context, opacity)
         matrix = self.get_matrix()
         x, y = int(matrix[4]), int(matrix[5])
