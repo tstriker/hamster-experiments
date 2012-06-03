@@ -6,7 +6,8 @@
 
 
 import gtk
-from lib import graphics, euclid
+from lib import graphics
+from contrib import euclid
 
 import cairo
 import math

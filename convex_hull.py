@@ -13,7 +13,7 @@ import gtk
 from lib import graphics
 
 import math
-from lib.euclid import Point2
+from contrib.euclid import Point2
 
 class Node(graphics.Rectangle):
     def __init__(self, x, y):

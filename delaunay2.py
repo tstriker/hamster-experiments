@@ -12,7 +12,7 @@
 
 import gtk
 from lib import graphics
-from lib.euclid import Point2, Vector2
+from contrib.euclid import Point2, Vector2
 
 import math
 import itertools

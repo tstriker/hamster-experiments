@@ -16,7 +16,7 @@ import math
 from random import random, randint
 from copy import deepcopy
 
-from lib.euclid import Vector2
+from contrib.euclid import Vector2
 import itertools
 
 EPSILON = 0.00001

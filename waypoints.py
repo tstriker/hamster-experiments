@@ -14,8 +14,8 @@ from lib import graphics
 import math
 import random
 
-from lib.euclid import Vector2, Point2
-from lib.proximity import LQProximityStore
+from contrib.euclid import Vector2, Point2
+from contrib.proximity import LQProximityStore
 
 class Waypoint(graphics.Sprite):
     def __init__(self, x, y):

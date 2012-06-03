@@ -26,7 +26,8 @@ class Tweener(object):
         return len(self.current_tweens) > 0
 
 
-    def add_tween(self, obj, duration = None, easing = None, on_complete = None, on_update = None, **kwargs):
+    def add_tween(self, obj, duration = None, easing = None, on_complete = None,
+                  on_update = None, round = False, **kwargs):
         """
             Add tween for the object to go from current values to set ones.
             Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
@@ -43,7 +44,7 @@ class Tweener(object):
 
         easing = easing or self.default_easing
 
-        tw = Tween(obj, duration, easing, on_complete, on_update, **kwargs )
+        tw = Tween(obj, duration, easing, on_complete, on_update, round, **kwargs )
 
         if obj in self.current_tweens:
             for current_tween in tuple(self.current_tweens[obj]):
@@ -111,22 +112,35 @@ class Tweener(object):
 
 class Tween(object):
     __slots__ = ('tweenables', 'target', 'delta', 'duration', 'ease', 'delta',
-                 'on_complete', 'on_update', 'complete')
+                 'on_complete', 'on_update', 'complete', 'round')
 
-    def __init__(self, obj, duration, easing, on_complete, on_update, **kwargs):
+    def __init__(self, obj, duration, easing, on_complete, on_update, round,
+                 **kwargs):
         """Tween object use Tweener.add_tween( ... ) to create"""
+
+        #: should the tween values truncated to integers or not. Default is False.
+        self.round = round
+
+        #: duration of the tween
         self.duration = duration
         self.target = obj
+
+        #: easing function
         self.ease = easing
 
         # list of (property, start_value, delta)
         self.tweenables = set()
         for key, value in kwargs.items():
-            self.tweenables.add((key, Tweenable(self.target.__dict__[key], value)))
+            self.tweenables.add((key, Tweenable(getattr(self.target, key), value)))
 
         self.delta = 0
+
+        #: callback to execute on complete
         self.on_complete = on_complete
+
+        #: callback to execute on update
         self.on_update = on_update
+
         self.complete = False
 
     def finish(self):
@@ -140,12 +154,15 @@ class Tween(object):
 
         if self.delta == self.duration:
             for key, tweenable in self.tweenables:
-                self.target.__setattr__(key, tweenable.target_value)
+                setattr(self.target, key, tweenable.target_value)
         else:
             fraction = self.ease(self.delta / self.duration)
 
             for key, tweenable in self.tweenables:
-                self.target.__setattr__(key, tweenable.update(fraction))
+                res = tweenable.update(fraction)
+                if isinstance(res, float) and self.round:
+                    res = int(res)
+                setattr(self.target, key, res)
 
         if self.delta == self.duration or len(self.tweenables) == 0:
             self.complete = True
