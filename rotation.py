@@ -14,7 +14,7 @@ import math
 
 class Rotator(graphics.Sprite):
     def __init__(self, x=100, y=100, radius=10):
-        graphics.Sprite.__init__(self, x=x, y=y, draggable=True)
+        graphics.Sprite.__init__(self, x, y, interactive=True, draggable=True)
         self.radius = radius
 
         self.graphics.circle(0, 0, radius)

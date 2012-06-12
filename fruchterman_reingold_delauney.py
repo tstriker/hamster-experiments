@@ -235,7 +235,8 @@ class Graph(object):
 
 class DisplayNode(graphics.Sprite):
     def __init__(self, x, y, real_node):
-        graphics.Sprite.__init__(self, x=x, y=y, pivot_x=5, pivot_y=5, draggable=True)
+        graphics.Sprite.__init__(self, x=x, y=y, pivot_x=5, pivot_y=5,
+                                 interactive=True, draggable=True)
         self.real_node = real_node
         self.fill = "#999"
 
