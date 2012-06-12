@@ -52,7 +52,14 @@ Subscribe to signals using the `connect(signal, callback)` function of scene.
 **on-finish-frame** *(context)*
 - fired after sprites have been drawn
 
+**on-resize** *(context)*
+- fired when window has been resized
+
 **on-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_, target_sprite)
+
+**on-double-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_, target_sprite)
+
+**on-triple-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_, target_sprite)
 
 **on-drag-start** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_,
 drag_sprite)
@@ -77,9 +84,14 @@ drag_sprite)
 **on-mouse-out** (target_sprite)
 - fired when mouse cursor leaves an interactive sprite.
 
-**on-scroll** (`scroll_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2981883>`_)
+**on-mouse-scroll** (`scroll_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2981883>`_)
 - fired on scroll wheel motion
 
+**on-key-press** (`key_press event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2905326>`_)
+- fired when a key is pressed
+
+**on-key-release** (`key_press event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2905326>`_)
+- fired when a key is released
 
 :class:`Sprite` objects
 ========================
@@ -96,10 +108,26 @@ Subscribe to signals using the `connect(signal, callback)` function of sprite.
 **on-mouse-over()**
 - fired when cursor moves over the sprite.
 
+**on-mouse-move()**
+- fired when cursor moves on the sprite.
+
 **on-mouse-out()**
 - fired when cursor leaves the sprite.
 
+**on-mouse-down()**
+- fired when a mouse button has been pressed while cursor is on sprite.
+
+**on-mouse-up()**
+- fired when a mouse button is released while cursor is on sprite.
+
 **on-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
+
+**on-double-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
+
+**on-tripple-click** (`button_press_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2898704>`_)
+
+**on-mouse-scroll** (`scroll_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2981883>`_)
+- fired on scroll wheel motion
 
 **on-drag-start** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
 
@@ -107,6 +135,20 @@ Subscribe to signals using the `connect(signal, callback)` function of sprite.
 - fired on every drag motion
 
 **on-drag-finish** (`motion_notify_event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2920267>`_)
+
+**on-focus()**
+- fired when sprite receives focus either via grab_focus or when clicked. to
+gain focus the sprite's can_focus has to be set to True
+
+**on-blur()**
+- fired when sprite loses focus. To lose focus it has to gain focus first and so
+sprite's can_focus has to be set to True
+
+**on-key-press** (`key_press event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2905326>`_)
+- fired when a key is pressed
+
+**on-key-release** (`key_press event <http://www.pygtk.org/docs/pygtk/class-gdkevent.html#id2905326>`_)
+- fired when a key is released
 
 **on-render** *()* fired before rendering the sprite in case if any of the class attributes have changed (except for transformations as those are handled by matrixes, not sprite graphics).
 Example::
