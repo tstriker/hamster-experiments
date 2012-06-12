@@ -137,7 +137,7 @@ class Scene(graphics.Scene):
 
         self.connect("on-enter-frame", self.on_enter_frame)
         self.connect("on-mouse-move", self.on_mouse_move)
-        self.connect("on-scroll", self.on_scroll)
+        self.connect("on-mouse-scroll", self.on_scroll)
 
 
     def on_scroll(self, scene, event):
