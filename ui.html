@@ -1,0 +1,1752 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ui – User interface toolkit &mdash; hamster graphics 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="hamster graphics 0.1 documentation" href="index.html" />
+    <link rel="prev" title="graphics – hamster graphics library" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="index.html" title="graphics – hamster graphics library"
+             accesskey="P">previous</a></li>
+        <li><a href="index.html">hamster graphics 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-ui">
+<span id="ui-user-interface-toolkit"></span><h1><a class="reference internal" href="#module-ui" title="ui: User interaction widgets (sophisticated sprites)."><tt class="xref py py-mod docutils literal"><span class="pre">ui</span></tt></a> &#8211; User interface toolkit<a class="headerlink" href="#module-ui" title="Permalink to this headline">¶</a></h1>
+<p>The user interface toolkit lets you extend your graphical applications by adding
+fully customizable interface elements to them. Widgets include
+<a class="reference internal" href="#ui.buttons.Button" title="ui.buttons.Button"><tt class="xref py py-class docutils literal"><span class="pre">Button</span></tt></a> for buttons, <a class="reference internal" href="#ui.entry.Entry" title="ui.entry.Entry"><tt class="xref py py-class docutils literal"><span class="pre">Entry</span></tt></a> and
+<a class="reference internal" href="#ui.entry.TextArea" title="ui.entry.TextArea"><tt class="xref py py-class docutils literal"><span class="pre">TextArea</span></tt></a> for single and multi-line text input,
+<a class="reference internal" href="#ui.listitem.ListItem" title="ui.listitem.ListItem"><tt class="xref py py-class docutils literal"><span class="pre">ListItem</span></tt></a> for list items, and many more.
+Containers for packing widgets are available too. see <a class="reference internal" href="#containers"><em>Containers</em></a> for the
+full list.</p>
+<p><strong>Hello ui world</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">gtk</span>
+<span class="kn">from</span> <span class="nn">lib</span> <span class="kn">import</span> <span class="n">graphics</span>
+<span class="kn">import</span> <span class="nn">ui</span>
+
+<span class="k">class</span> <span class="nc">Scene</span><span class="p">(</span><span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">graphics</span><span class="o">.</span><span class="n">Scene</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c"># here we pack the button in VBox and then in HBox.</span>
+        <span class="c"># And by disabling fill effectively center it.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">ui</span><span class="o">.</span><span class="n">VBox</span><span class="p">(</span><span class="n">ui</span><span class="o">.</span><span class="n">HBox</span><span class="p">(</span><span class="n">ui</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="s">&quot;Click me!&quot;</span><span class="p">),</span> <span class="n">fill</span><span class="o">=</span><span class="bp">False</span><span class="p">)))</span>
+
+<span class="n">window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Scene</span><span class="p">())</span>
+<span class="n">window</span><span class="o">.</span><span class="n">show_all</span><span class="p">()</span>
+<span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The toolkit is copying widget and attribute names from gtk where it is
+possible and makes sense, but sometimes it goes beyond that to make it
+more pythonic and more easy to work with. On the other hand, it also does less -
+the functionality gets added to when necessary. So your milage may vary, but
+don&#8217;t be afraid to go into the source and read the code.</p>
+<p>The standard gtk toolkit is recommended in most cases. But sometimes when you
+need to go beyond the limits of static layouts and don&#8217;t want to struggle with
+gtk.Fixed to arbitrary position input elements, as well if you want to override
+the looks of some of the widgets - this is where hamster ui toolkit comes in.</p>
+<p>All of the widgets and containers descend from <a class="reference internal" href="index.html#graphics.Sprite" title="graphics.Sprite"><tt class="xref py py-class docutils literal"><span class="pre">graphics.Sprite</span></tt></a> so
+you can do everything that you can do with a sprite.</p>
+<div class="section" id="base-class-widget">
+<h2>Base class - Widget<a class="headerlink" href="#base-class-widget" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.widget.Widget">
+<em class="property">class </em><tt class="descclassname">ui.widget.</tt><tt class="descname">Widget</tt><big>(</big><em>width=None</em>, <em>height=None</em>, <em>expand=None</em>, <em>fill=None</em>, <em>expand_vert=None</em>, <em>x_align=None</em>, <em>y_align=None</em>, <em>padding_top=None</em>, <em>padding_right=None</em>, <em>padding_bottom=None</em>, <em>padding_left=None</em>, <em>padding=None</em>, <em>margin_top=None</em>, <em>margin_right=None</em>, <em>margin_bottom=None</em>, <em>margin_left=None</em>, <em>margin=None</em>, <em>enabled=None</em>, <em>tooltip=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.widget.Widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for all widgets. You can use the width and height attributes
+to request a specific width.</p>
+<dl class="attribute">
+<dt id="ui.widget.Widget.alloc_h">
+<tt class="descname">alloc_h</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.alloc_h" title="Permalink to this definition">¶</a></dt>
+<dd><p>height in pixels that have been allocated to the widget by parent</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.alloc_w">
+<tt class="descname">alloc_w</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.alloc_w" title="Permalink to this definition">¶</a></dt>
+<dd><p>width in pixels that have been allocated to the widget by parent</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.do_render">
+<tt class="descname">do_render</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.widget.Widget.do_render" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function is called in the on-render event. override it to do
+any drawing. subscribing to the &#8220;on-render&#8221; event will work too, but
+overriding this method is preferred for easier subclassing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.enabled">
+<tt class="descname">enabled</tt><a class="headerlink" href="#ui.widget.Widget.enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the widget is enabled</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.expand">
+<tt class="descname">expand</tt><em class="property"> = True</em><a class="headerlink" href="#ui.widget.Widget.expand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the child should receive extra space when the parent grows.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.expand_vert">
+<tt class="descname">expand_vert</tt><em class="property"> = True</em><a class="headerlink" href="#ui.widget.Widget.expand_vert" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the child should receive extra space when the parent grows
+vertically. Applicable to only when the widget is in a table.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.fill">
+<tt class="descname">fill</tt><em class="property"> = True</em><a class="headerlink" href="#ui.widget.Widget.fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether extra space given to the child should be allocated to the
+child or used as padding. Edit <a class="reference internal" href="#ui.widget.Widget.x_align" title="ui.widget.Widget.x_align"><tt class="xref py py-attr docutils literal"><span class="pre">x_align</span></tt></a> and
+<a class="reference internal" href="#ui.widget.Widget.y_align" title="ui.widget.Widget.y_align"><tt class="xref py py-attr docutils literal"><span class="pre">y_align</span></tt></a> properties to adjust alignment when fill is set to False.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.get_min_size">
+<tt class="descname">get_min_size</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.widget.Widget.get_min_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns size required by the widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.height">
+<tt class="descname">height</tt><a class="headerlink" href="#ui.widget.Widget.height" title="Permalink to this definition">¶</a></dt>
+<dd><p>height in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.horizontal_padding">
+<tt class="descname">horizontal_padding</tt><a class="headerlink" href="#ui.widget.Widget.horizontal_padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>total calculated horizontal padding. A read-only property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.insert">
+<tt class="descname">insert</tt><big>(</big><em>index=0</em>, <em>*widgets</em><big>)</big><a class="headerlink" href="#ui.widget.Widget.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert widget in the sprites list at the given index.
+by default will prepend.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.insert_after">
+<tt class="descname">insert_after</tt><big>(</big><em>target</em><big>)</big><a class="headerlink" href="#ui.widget.Widget.insert_after" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert this widget into the targets parent container after the target</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.insert_before">
+<tt class="descname">insert_before</tt><big>(</big><em>target</em><big>)</big><a class="headerlink" href="#ui.widget.Widget.insert_before" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert this widget into the targets parent before the target</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.margin">
+<tt class="descname">margin</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.widget.Widget.margin" title="Permalink to this definition">¶</a></dt>
+<dd><p>widget margins - shorthand to manipulate margin in pixels ala CSS. tuple
+of one to four elements. Setting this value overwrites values of
+<a class="reference internal" href="#ui.widget.Widget.margin_top" title="ui.widget.Widget.margin_top"><tt class="xref py py-attr docutils literal"><span class="pre">margin_top</span></tt></a>, <a class="reference internal" href="#ui.widget.Widget.margin_right" title="ui.widget.Widget.margin_right"><tt class="xref py py-attr docutils literal"><span class="pre">margin_right</span></tt></a>, <a class="reference internal" href="#ui.widget.Widget.margin_bottom" title="ui.widget.Widget.margin_bottom"><tt class="xref py py-attr docutils literal"><span class="pre">margin_bottom</span></tt></a> and
+<a class="reference internal" href="#ui.widget.Widget.margin_left" title="ui.widget.Widget.margin_left"><tt class="xref py py-attr docutils literal"><span class="pre">margin_left</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.margin_bottom">
+<tt class="descname">margin_bottom</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.widget.Widget.margin_bottom" title="Permalink to this definition">¶</a></dt>
+<dd><p>bottom margin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.margin_left">
+<tt class="descname">margin_left</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.widget.Widget.margin_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>left margin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.margin_right">
+<tt class="descname">margin_right</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.widget.Widget.margin_right" title="Permalink to this definition">¶</a></dt>
+<dd><p>right margin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.margin_top">
+<tt class="descname">margin_top</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.widget.Widget.margin_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>top margin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.min_height">
+<tt class="descname">min_height</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.min_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>minimum height of the widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.min_width">
+<tt class="descname">min_width</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.min_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>minimum width of the widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.mouse_cursor">
+<tt class="descname">mouse_cursor</tt><em class="property"> = False</em><a class="headerlink" href="#ui.widget.Widget.mouse_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mouse cursor. see <a class="reference internal" href="index.html#graphics.Sprite.mouse_cursor" title="graphics.Sprite.mouse_cursor"><tt class="xref py py-attr docutils literal"><span class="pre">graphics.Sprite.mouse_cursor</span></tt></a> for values</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.padding">
+<tt class="descname">padding</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>child padding - shorthand to manipulate padding in pixels ala CSS. tuple
+of one to four elements. Setting this value overwrites values of
+<a class="reference internal" href="#ui.widget.Widget.padding_top" title="ui.widget.Widget.padding_top"><tt class="xref py py-attr docutils literal"><span class="pre">padding_top</span></tt></a>, <a class="reference internal" href="#ui.widget.Widget.padding_right" title="ui.widget.Widget.padding_right"><tt class="xref py py-attr docutils literal"><span class="pre">padding_right</span></tt></a>, <a class="reference internal" href="#ui.widget.Widget.padding_bottom" title="ui.widget.Widget.padding_bottom"><tt class="xref py py-attr docutils literal"><span class="pre">padding_bottom</span></tt></a>
+and <a class="reference internal" href="#ui.widget.Widget.padding_left" title="ui.widget.Widget.padding_left"><tt class="xref py py-attr docutils literal"><span class="pre">padding_left</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.padding_bottom">
+<tt class="descname">padding_bottom</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.padding_bottom" title="Permalink to this definition">¶</a></dt>
+<dd><p>child padding - bottom</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.padding_left">
+<tt class="descname">padding_left</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.padding_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>child padding - left</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.padding_right">
+<tt class="descname">padding_right</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.padding_right" title="Permalink to this definition">¶</a></dt>
+<dd><p>child padding - right</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.padding_top">
+<tt class="descname">padding_top</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.padding_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>child padding - top</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Widget.queue_resize">
+<tt class="descname">queue_resize</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.widget.Widget.queue_resize" title="Permalink to this definition">¶</a></dt>
+<dd><p>request the element to re-check it&#8217;s child sprite sizes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.tooltip">
+<tt class="descname">tooltip</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.tooltip" title="Permalink to this definition">¶</a></dt>
+<dd><p>tooltip data (normally string). See <a class="reference internal" href="#ui.widget.Tooltip" title="ui.widget.Tooltip"><tt class="xref py py-class docutils literal"><span class="pre">Tooltip</span></tt></a> for details</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.tooltip_offset">
+<tt class="descname">tooltip_offset</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Widget.tooltip_offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>(x, y) offset from the calculated position of the tooltip to appear</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.tooltip_position">
+<tt class="descname">tooltip_position</tt><em class="property"> = 'auto'</em><a class="headerlink" href="#ui.widget.Widget.tooltip_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>tooltip position - currently supports only &#8220;auto&#8221; and &#8220;mouse&#8221;
+&#8220;auto&#8221; positions the tooltip below the widget and &#8220;mouse&#8221; positions at
+the mouse cursor position</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.vertical_padding">
+<tt class="descname">vertical_padding</tt><a class="headerlink" href="#ui.widget.Widget.vertical_padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>total calculated vertical padding.  A read-only property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.width">
+<tt class="descname">width</tt><a class="headerlink" href="#ui.widget.Widget.width" title="Permalink to this definition">¶</a></dt>
+<dd><p>width in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.x_align">
+<tt class="descname">x_align</tt><em class="property"> = 0.5</em><a class="headerlink" href="#ui.widget.Widget.x_align" title="Permalink to this definition">¶</a></dt>
+<dd><p>horizontal alignment within the parent. Works when <a class="reference internal" href="#ui.widget.Widget.fill" title="ui.widget.Widget.fill"><tt class="xref py py-attr docutils literal"><span class="pre">fill</span></tt></a> is False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Widget.y_align">
+<tt class="descname">y_align</tt><em class="property"> = 0.5</em><a class="headerlink" href="#ui.widget.Widget.y_align" title="Permalink to this definition">¶</a></dt>
+<dd><p>vertical alignment within the parent. Works when <a class="reference internal" href="#ui.widget.Widget.fill" title="ui.widget.Widget.fill"><tt class="xref py py-attr docutils literal"><span class="pre">fill</span></tt></a> is False</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="containers">
+<span id="id1"></span><h2>Containers<a class="headerlink" href="#containers" title="Permalink to this headline">¶</a></h2>
+<p>Use containers to align and pack widgets. All containers accept contents as
+the first parameter so you can add children right at the moment of
+construction. It should be either a sprite or list of sprites and you can
+use it to add children directly in the moment of construction.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># create a vertical box with three labels in it</span>
+<span class="n">vbox</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">VBox</span><span class="p">([</span><span class="n">ui</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;one&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;two&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;three&quot;</span><span class="p">)])</span>
+</pre></div>
+</div>
+<span class="target" id="module-ui.containers"></span><dl class="class">
+<dt id="ui.containers.Bin">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Bin</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container with only one child. Adding new children will throw the
+previous ones out</p>
+<dl class="attribute">
+<dt id="ui.containers.Bin.child">
+<tt class="descname">child</tt><a class="headerlink" href="#ui.containers.Bin.child" title="Permalink to this definition">¶</a></dt>
+<dd><p>child sprite. shorthand for self.sprites[0]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Box">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Box</tt><big>(</big><em>contents=None</em>, <em>horizontal=None</em>, <em>spacing=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Align children either horizontally or vertically.
+Normally you would use <a class="reference internal" href="#ui.containers.HBox" title="ui.containers.HBox"><tt class="xref py py-class docutils literal"><span class="pre">HBox</span></tt></a> or <a class="reference internal" href="#ui.containers.VBox" title="ui.containers.VBox"><tt class="xref py py-class docutils literal"><span class="pre">VBox</span></tt></a> to be
+specific but this one is suited so you can change the packing direction
+dynamically.</p>
+<dl class="attribute">
+<dt id="ui.containers.Box.orient_horizontal">
+<tt class="descname">orient_horizontal</tt><em class="property"> = True</em><a class="headerlink" href="#ui.containers.Box.orient_horizontal" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the box is packing children horizontally (from left to right) or vertically (from top to bottom)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Box.spacing">
+<tt class="descname">spacing</tt><em class="property"> = 5</em><a class="headerlink" href="#ui.containers.Box.spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>spacing in pixels between children</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Container">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Container</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Container" title="Permalink to this definition">¶</a></dt>
+<dd><p>The base container class that all other containers inherit from.
+You can insert any sprite in the container, just make sure that it either
+has width and height defined so that the container can do alignment, or
+for more sophisticated cases, make sure it has get_min_size function that
+returns how much space is needed.</p>
+<p>Normally while performing layout the container will update child sprites
+and set their alloc_h and alloc_w properties. The <cite>alloc</cite> part is short
+for allocated. So use that when making rendering decisions.</p>
+<dl class="attribute">
+<dt id="ui.containers.Container.contents">
+<tt class="descname">contents</tt><a class="headerlink" href="#ui.containers.Container.contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>contents of the container - either a widget or a list of widgets</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.containers.Container.resize_children">
+<tt class="descname">resize_children</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.containers.Container.resize_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>default container alignment is to pile stuff just up, respecting only
+padding, margin and element&#8217;s alignment properties</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Fixed">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Fixed</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Fixed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic container that does not care about child positions. Handy if
+you want to place stuff yourself or do animations.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Flow">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Flow</tt><big>(</big><em>horizontal=None</em>, <em>horizontal_spacing=None</em>, <em>vertical_spacing=None</em>, <em>wrap=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Flow" title="Permalink to this definition">¶</a></dt>
+<dd><p>container that flows the child sprites either horizontally or vertically.
+Currently it does not support any smart width/height sizing and so labels
+and other height-for-width-for-height type of containers should be told
+a fixed size in order to work properly</p>
+<dl class="method">
+<dt id="ui.containers.Flow.get_rows">
+<tt class="descname">get_rows</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.containers.Flow.get_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns extents of each row (x, y, x2, y2) and the sprites it
+contains</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Flow.horizontal">
+<tt class="descname">horizontal</tt><em class="property"> = True</em><a class="headerlink" href="#ui.containers.Flow.horizontal" title="Permalink to this definition">¶</a></dt>
+<dd><p>flow direction</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Flow.horizontal_spacing">
+<tt class="descname">horizontal_spacing</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.containers.Flow.horizontal_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>horizontal spacing</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Flow.vertical_spacing">
+<tt class="descname">vertical_spacing</tt><em class="property"> = 0</em><a class="headerlink" href="#ui.containers.Flow.vertical_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>vertical spacing</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Flow.wrap">
+<tt class="descname">wrap</tt><em class="property"> = True</em><a class="headerlink" href="#ui.containers.Flow.wrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>should the items wrap when not fitting in the direction</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Group">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Group</tt><big>(</big><em>contents=None</em>, <em>allow_no_selection=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Group" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container for radio and toggle buttons.</p>
+<p><strong>Signals</strong>:</p>
+<p><strong>on-change</strong> <em>(sprite, toggled_item)</em>
+- fired after the toggle.</p>
+<dl class="attribute">
+<dt id="ui.containers.Group.allow_no_selection">
+<tt class="descname">allow_no_selection</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Group.allow_no_selection" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to true, repeat toggle of the selected item will un-toggle it
+and thus there will be no current item</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Group.elements">
+<tt class="descname">elements</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Group.elements" title="Permalink to this definition">¶</a></dt>
+<dd><p>all group elements, not necessarily packed in the group</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.HBox">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">HBox</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.HBox" title="Permalink to this definition">¶</a></dt>
+<dd><p>A horizontally aligned box. identical to ui.Box(horizontal=True)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Panes">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Panes</tt><big>(</big><em>position=150</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Panes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a container that has a grip area between elements that allows to change
+the space allocated to each one</p>
+<dl class="attribute">
+<dt id="ui.containers.Panes.split_position">
+<tt class="descname">split_position</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Panes.split_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>current position of the grip</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.PanesGrip">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">PanesGrip</tt><big>(</big><em>width=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.PanesGrip" title="Permalink to this definition">¶</a></dt>
+<dd><p>a grip element between panes</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Table">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Table</tt><big>(</big><em>cols=1</em>, <em>rows=1</em>, <em>horizontal_spacing=0</em>, <em>vertical_spacing=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Table allows aligning children in a grid. Elements can span several
+rows or columns</p>
+<dl class="method">
+<dt id="ui.containers.Table.attach">
+<tt class="descname">attach</tt><big>(</big><em>sprite</em>, <em>left</em>, <em>right</em>, <em>top</em>, <em>bottom</em><big>)</big><a class="headerlink" href="#ui.containers.Table.attach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attach a widget to the table. Use the left, right, top and bottom
+attributes to specify the attachment. Use this function instead of
+<tt class="xref py py-func docutils literal"><span class="pre">graphics.Sprite.add_child()</span></tt> to add sprites to the table</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Table.cols">
+<tt class="descname">cols</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Table.cols" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of columns</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Table.horizontal_spacing">
+<tt class="descname">horizontal_spacing</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Table.horizontal_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>horizontal spacing in pixels between the elements</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Table.rows">
+<tt class="descname">rows</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Table.rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of rows</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.containers.Table.vertical_spacing">
+<tt class="descname">vertical_spacing</tt><em class="property"> = None</em><a class="headerlink" href="#ui.containers.Table.vertical_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>vertical spacing in pixels between the elements</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.VBox">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">VBox</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.VBox" title="Permalink to this definition">¶</a></dt>
+<dd><p>A vertically aligned box. identical to ui.Box(horizontal=False)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.containers.Viewport">
+<em class="property">class </em><tt class="descclassname">ui.containers.</tt><tt class="descname">Viewport</tt><big>(</big><em>contents=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.containers.Viewport" title="Permalink to this definition">¶</a></dt>
+<dd><p>View a fragment of the child. Most commonly seen in
+<a class="reference internal" href="#ui.scroll.ScrollArea" title="ui.scroll.ScrollArea"><tt class="xref py py-class docutils literal"><span class="pre">ScrollArea</span></tt></a></p>
+<dl class="method">
+<dt id="ui.containers.Viewport.get_container_size">
+<tt class="descname">get_container_size</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.containers.Viewport.get_container_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the size of inner contents</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.containers.Viewport.resize_children">
+<tt class="descname">resize_children</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.containers.Viewport.resize_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>help sprites a bit and tell them how much space we have in
+case they care (which they mostly should not as in fixed you can do
+anything</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="label">
+<h2>Label<a class="headerlink" href="#label" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.widgets.Label">
+<em class="property">class </em><tt class="descclassname">ui.widgets.</tt><tt class="descname">Label</tt><big>(</big><em>text=''</em>, <em>markup=''</em>, <em>spacing=5</em>, <em>image=None</em>, <em>image_position=None</em>, <em>size=None</em>, <em>font_desc=None</em>, <em>overflow=False</em>, <em>color='#000'</em>, <em>background_color=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.widgets.Label" title="Permalink to this definition">¶</a></dt>
+<dd><p>a widget that displays a limited amount of read-only text</p>
+<dl class="attribute">
+<dt id="ui.widgets.Label.color">
+<tt class="descname">color</tt><a class="headerlink" href="#ui.widgets.Label.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>label color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.font_desc">
+<tt class="descname">font_desc</tt><em class="property"> = 'Sans Serif 10'</em><a class="headerlink" href="#ui.widgets.Label.font_desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>pango.FontDescription to use for the label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.image">
+<tt class="descname">image</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widgets.Label.image" title="Permalink to this definition">¶</a></dt>
+<dd><p>image to put next to the label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.image_position">
+<tt class="descname">image_position</tt><em class="property"> = 'left'</em><a class="headerlink" href="#ui.widgets.Label.image_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>image attachment. one of top, right, bottom, left</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.markup">
+<tt class="descname">markup</tt><a class="headerlink" href="#ui.widgets.Label.markup" title="Permalink to this definition">¶</a></dt>
+<dd><p>pango markup to use in the label.
+This attribute and <tt class="xref py py-attr docutils literal"><span class="pre">text</span></tt> are mutually exclusive.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.overflow">
+<tt class="descname">overflow</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widgets.Label.overflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>either the pango <a class="reference external" href="http://www.pygtk.org/pygtk2reference/pango-constants.html#pango-wrap-mode-constants">wrap</a>
+or <a class="reference external" href="http://www.pygtk.org/pygtk2reference/pango-constants.html#pango-ellipsize-mode-constants">ellipsize</a> constant.
+if set to False will refuse to become smaller</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.size">
+<tt class="descname">size</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widgets.Label.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>font size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widgets.Label.text">
+<tt class="descname">text</tt><a class="headerlink" href="#ui.widgets.Label.text" title="Permalink to this definition">¶</a></dt>
+<dd><p>label text. This attribute and <tt class="xref py py-attr docutils literal"><span class="pre">markup</span></tt> are mutually exclusive.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.buttons">
+<span id="buttons"></span><h2>Buttons<a class="headerlink" href="#module-ui.buttons" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.buttons.Button">
+<em class="property">class </em><tt class="descclassname">ui.buttons.</tt><tt class="descname">Button</tt><big>(</big><em>label=''</em>, <em>bevel=True</em>, <em>repeat_down_delay=0</em>, <em>pressed_offset=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.buttons.Button" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple button</p>
+<dl class="attribute">
+<dt id="ui.buttons.Button.bevel">
+<tt class="descname">bevel</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.Button.bevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>draw border</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.Button.label">
+<tt class="descname">label</tt><a class="headerlink" href="#ui.buttons.Button.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.Button.pressed_offset">
+<tt class="descname">pressed_offset</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.Button.pressed_offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>by how many pixels should the label move towards bottom right when pressed
+defaults to 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.Button.repeat_down_delay">
+<tt class="descname">repeat_down_delay</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.Button.repeat_down_delay" title="Permalink to this definition">¶</a></dt>
+<dd><p>if set, will repeat the on-mouse-down signal every specified miliseconds while the button is pressed
+when setting: 100 is a good initial value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.Button.state">
+<tt class="descname">state</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.Button.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>current state</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.Button.times_clicked">
+<tt class="descname">times_clicked</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.Button.times_clicked" title="Permalink to this definition">¶</a></dt>
+<dd><p>a rather curious figure telling how many times the button has been
+pressed since gaining focus. resets on losing the focus</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.buttons.CheckButton">
+<em class="property">class </em><tt class="descclassname">ui.buttons.</tt><tt class="descname">CheckButton</tt><big>(</big><em>label=''</em>, <em>pressed_offset=0</em>, <em>spacing=10</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.buttons.CheckButton" title="Permalink to this definition">¶</a></dt>
+<dd><p>a toggle button widget styled as a checkbox and label</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.buttons.RadioButton">
+<em class="property">class </em><tt class="descclassname">ui.buttons.</tt><tt class="descname">RadioButton</tt><big>(</big><em>label=''</em>, <em>pressed_offset=0</em>, <em>spacing=10</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.buttons.RadioButton" title="Permalink to this definition">¶</a></dt>
+<dd><p>A choice of one of multiple check buttons. Pack radiobuttons in
+<a class="reference internal" href="#ui.containers.Group" title="ui.containers.Group"><tt class="xref py py-class docutils literal"><span class="pre">ui.containers.Group</span></tt></a>.</p>
+<dl class="attribute">
+<dt id="ui.buttons.RadioButton.Mark">
+<tt class="descname">Mark</tt><a class="headerlink" href="#ui.buttons.RadioButton.Mark" title="Permalink to this definition">¶</a></dt>
+<dd><p>class that renders the checkmark</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">RadioMark</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.RadioButton.tick_mark">
+<tt class="descname">tick_mark</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.RadioButton.tick_mark" title="Permalink to this definition">¶</a></dt>
+<dd><p>visual tick mark. it replaces the label&#8217;s image</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.buttons.ScrollButton">
+<em class="property">class </em><tt class="descclassname">ui.buttons.</tt><tt class="descname">ScrollButton</tt><big>(</big><em>direction='up'</em>, <em>repeat_down_delay=50</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.buttons.ScrollButton" title="Permalink to this definition">¶</a></dt>
+<dd><p>a button well suited for scrollbars and other scrollies</p>
+<dl class="attribute">
+<dt id="ui.buttons.ScrollButton.direction">
+<tt class="descname">direction</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.ScrollButton.direction" title="Permalink to this definition">¶</a></dt>
+<dd><p>which way is the arrow looking. one of &#8220;up&#8221;, &#8220;down&#8221;, &#8220;left&#8221;, &#8220;right&#8221;</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.buttons.ToggleButton">
+<em class="property">class </em><tt class="descclassname">ui.buttons.</tt><tt class="descname">ToggleButton</tt><big>(</big><em>label=''</em>, <em>toggled=False</em>, <em>group=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.buttons.ToggleButton" title="Permalink to this definition">¶</a></dt>
+<dd><p>A button that retains its state. If you pack toggle buttons in
+<a class="reference internal" href="#ui.containers.Group" title="ui.containers.Group"><tt class="xref py py-class docutils literal"><span class="pre">Group</span></tt></a> then toggle one button will untoggle all the others in
+that group.</p>
+<dl class="method">
+<dt id="ui.buttons.ToggleButton.toggle">
+<tt class="descname">toggle</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.buttons.ToggleButton.toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>toggle button state</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.buttons.ToggleButton.toggled">
+<tt class="descname">toggled</tt><em class="property"> = None</em><a class="headerlink" href="#ui.buttons.ToggleButton.toggled" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the button currently is toggled or not</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.entry">
+<span id="text-input"></span><h2>Text input<a class="headerlink" href="#module-ui.entry" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.entry.Entry">
+<em class="property">class </em><tt class="descclassname">ui.entry.</tt><tt class="descname">Entry</tt><big>(</big><em>text=''</em>, <em>draw_border=True</em>, <em>valid_chars=None</em>, <em>validate_on_type=True</em>, <em>single_paragraph=True</em>, <em>text_formatter=None</em>, <em>alignment=None</em>, <em>font_desc=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.entry.Entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>A text entry field</p>
+<dl class="attribute">
+<dt id="ui.entry.Entry.alignment">
+<tt class="descname">alignment</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.alignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>text alignment in the entry</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.color">
+<tt class="descname">color</tt><em class="property"> = '#000'</em><a class="headerlink" href="#ui.entry.Entry.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>font color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.cursor_color">
+<tt class="descname">cursor_color</tt><em class="property"> = '#000'</em><a class="headerlink" href="#ui.entry.Entry.cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>cursor color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.cursor_position">
+<tt class="descname">cursor_position</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.cursor_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>current cursor position</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.draw_border">
+<tt class="descname">draw_border</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.draw_border" title="Permalink to this definition">¶</a></dt>
+<dd><p>if True, a border will be drawn around the input element</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.font_desc">
+<tt class="descname">font_desc</tt><em class="property"> = 'Sans Serif 10'</em><a class="headerlink" href="#ui.entry.Entry.font_desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>pango.FontDescription to use for the label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.selection_color">
+<tt class="descname">selection_color</tt><em class="property"> = '#A8C2E0'</em><a class="headerlink" href="#ui.entry.Entry.selection_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>fill color of the selection region</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.selection_end">
+<tt class="descname">selection_end</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.selection_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>end position of the selection</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.selection_start">
+<tt class="descname">selection_start</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.selection_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>start position of the selection</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.single_paragraph">
+<tt class="descname">single_paragraph</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.single_paragraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>should the text input support multiple lines</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.entry.Entry.text_formatter">
+<tt class="descname">text_formatter</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#ui.entry.Entry.text_formatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>function to style the entry text - change color and such
+the function receives one param - the text, and must return
+processed text back. will be using original text if the function
+does not return anything.
+Note: this function can change only the style, not the actual content
+as the latter will mess up text selection because of off-sync between
+the label value and what is displayed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.entry.Entry.update_text">
+<tt class="descname">update_text</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#ui.entry.Entry.update_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>updates the text field value and the last good known value,
+respecting the valid_chars and validate_on_type flags</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.valid_chars">
+<tt class="descname">valid_chars</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.valid_chars" title="Permalink to this definition">¶</a></dt>
+<dd><p>a string, function or regexp or valid chars for the input
+in case of function, it will receive the string to be tested
+as input and expects to receive back a boolean of whether the string
+is valid or not</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.Entry.validate_on_type">
+<tt class="descname">validate_on_type</tt><em class="property"> = None</em><a class="headerlink" href="#ui.entry.Entry.validate_on_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>should the content be validate right when typing and invalid version prohibited</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.entry.TextArea">
+<em class="property">class </em><tt class="descclassname">ui.entry.</tt><tt class="descname">TextArea</tt><big>(</big><em>text=''</em>, <em>valid_chars=None</em>, <em>validate_on_type=True</em>, <em>text_formatter=None</em>, <em>alignment=None</em>, <em>font_desc=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.entry.TextArea" title="Permalink to this definition">¶</a></dt>
+<dd><p>A text input field that displays scrollbar when text does not fit anymore</p>
+<dl class="attribute">
+<dt id="ui.entry.TextArea.color">
+<tt class="descname">color</tt><em class="property"> = '#000'</em><a class="headerlink" href="#ui.entry.TextArea.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>font color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.TextArea.cursor_color">
+<tt class="descname">cursor_color</tt><em class="property"> = '#000'</em><a class="headerlink" href="#ui.entry.TextArea.cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>cursor color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.TextArea.font_desc">
+<tt class="descname">font_desc</tt><em class="property"> = 'Sans Serif 10'</em><a class="headerlink" href="#ui.entry.TextArea.font_desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>pango.FontDescription to use for the label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.entry.TextArea.selection_color">
+<tt class="descname">selection_color</tt><em class="property"> = '#A8C2E0'</em><a class="headerlink" href="#ui.entry.TextArea.selection_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>fill color of the selection region</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.listitem">
+<span id="list-items-and-combo-boxes"></span><h2>List items and combo boxes<a class="headerlink" href="#module-ui.listitem" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.listitem.ListItem">
+<em class="property">class </em><tt class="descclassname">ui.listitem.</tt><tt class="descname">ListItem</tt><big>(</big><em>rows=</em><span class="optional">[</span><span class="optional">]</span>, <em>renderers=None</em>, <em>headers=None</em>, <em>select_on_drag=False</em>, <em>spacing=0</em>, <em>scroll_border=1</em>, <em>row_height=None</em>, <em>fixed_headers=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.listitem.ListItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list view with headers and an optional scroll when rows don&#8217;t fit</p>
+<dl class="attribute">
+<dt id="ui.listitem.ListItem.class_header_col">
+<tt class="descname">class_header_col</tt><a class="headerlink" href="#ui.listitem.ListItem.class_header_col" title="Permalink to this definition">¶</a></dt>
+<dd><p>list headers column class</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ListHeaderCol</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListItem.class_headers_container">
+<tt class="descname">class_headers_container</tt><a class="headerlink" href="#ui.listitem.ListItem.class_headers_container" title="Permalink to this definition">¶</a></dt>
+<dd><p>list headers container class</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ListHeader</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListItem.class_list_view">
+<tt class="descname">class_list_view</tt><a class="headerlink" href="#ui.listitem.ListItem.class_list_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>list view class</p>
+<p>alias of <a class="reference internal" href="#ui.listitem.ListView" title="ui.listitem.ListView"><tt class="xref py py-class docutils literal"><span class="pre">ListView</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListItem.class_scroll_area">
+<tt class="descname">class_scroll_area</tt><a class="headerlink" href="#ui.listitem.ListItem.class_scroll_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll area class</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ScrollArea</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.listitem.ListView">
+<em class="property">class </em><tt class="descclassname">ui.listitem.</tt><tt class="descname">ListView</tt><big>(</big><em>rows=</em><span class="optional">[</span><span class="optional">]</span>, <em>renderers=None</em>, <em>select_on_drag=False</em>, <em>spacing=0</em>, <em>row_height=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.listitem.ListView" title="Permalink to this definition">¶</a></dt>
+<dd><p>a widget for displaying selection lists</p>
+<dl class="attribute">
+<dt id="ui.listitem.ListView.background_current">
+<tt class="descname">background_current</tt><em class="property"> = '#7AA1D2'</em><a class="headerlink" href="#ui.listitem.ListView.background_current" title="Permalink to this definition">¶</a></dt>
+<dd><p>color of the selected row</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.background_current_disabled">
+<tt class="descname">background_current_disabled</tt><em class="property"> = '#ddd'</em><a class="headerlink" href="#ui.listitem.ListView.background_current_disabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>background of disabled row</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.background_even">
+<tt class="descname">background_even</tt><em class="property"> = '#f9f9f9'</em><a class="headerlink" href="#ui.listitem.ListView.background_even" title="Permalink to this definition">¶</a></dt>
+<dd><p>background of the even rows. Set to None to avoid painting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.background_hover">
+<tt class="descname">background_hover</tt><em class="property"> = '#efefef'</em><a class="headerlink" href="#ui.listitem.ListView.background_hover" title="Permalink to this definition">¶</a></dt>
+<dd><p>color of the mouse hovered row</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.background_odd">
+<tt class="descname">background_odd</tt><em class="property"> = ''</em><a class="headerlink" href="#ui.listitem.ListView.background_odd" title="Permalink to this definition">¶</a></dt>
+<dd><p>background of the odd rows. Set to None to avoid painting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.current_index">
+<tt class="descname">current_index</tt><a class="headerlink" href="#ui.listitem.ListView.current_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns index of the current row, or -1 if no row is selected</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.current_row">
+<tt class="descname">current_row</tt><em class="property"> = None</em><a class="headerlink" href="#ui.listitem.ListView.current_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>currently selected item</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.listitem.ListView.find">
+<tt class="descname">find</tt><big>(</big><em>label</em>, <em>fragment=False</em><big>)</big><a class="headerlink" href="#ui.listitem.ListView.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>looks for a label in the list item. starts from current position including.
+if does not find anything, will wrap around.
+if an item matches, will select it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.listitem.ListView.get_cell">
+<tt class="descname">get_cell</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#ui.listitem.ListView.get_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>get row number, col number, renderer, and extents</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.listitem.ListView.get_visible_range">
+<tt class="descname">get_visible_range</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.listitem.ListView.get_visible_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns index of the first and last row visible</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.listitem.ListView.paint_row_background">
+<tt class="descname">paint_row_background</tt><big>(</big><em>graphics</em>, <em>row_idx</em>, <em>state</em>, <em>enabled=True</em><big>)</big><a class="headerlink" href="#ui.listitem.ListView.paint_row_background" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function fills row background. the rectangle has been already
+drawn, so all that is left is fill. The graphics property is instance
+of graphics.Graphics for the current context, and state is one of
+normal, highlight and current</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.renderers">
+<tt class="descname">renderers</tt><em class="property"> = [&lt;class 'ui.listitem.LabelRenderer'&gt;]</em><a class="headerlink" href="#ui.listitem.ListView.renderers" title="Permalink to this definition">¶</a></dt>
+<dd><p>renderer classes that get initiated upon listitem construction</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.row_height">
+<tt class="descname">row_height</tt><em class="property"> = None</em><a class="headerlink" href="#ui.listitem.ListView.row_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>row height in pixels. if specified, will be using that instead of
+asking cell renderers. defaults to None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.rows">
+<tt class="descname">rows</tt><em class="property"> = None</em><a class="headerlink" href="#ui.listitem.ListView.rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>the list of text strings available for selection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.listitem.ListView.select">
+<tt class="descname">select</tt><big>(</big><em>row</em><big>)</big><a class="headerlink" href="#ui.listitem.ListView.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>select row. accepts either the row object or the label of it&#8217;s first column</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.listitem.ListView.select_on_drag">
+<tt class="descname">select_on_drag</tt><em class="property"> = None</em><a class="headerlink" href="#ui.listitem.ListView.select_on_drag" title="Permalink to this definition">¶</a></dt>
+<dd><p>should an item be select upon drag motion. By default select happens
+only when clicking</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-ui.combobox"></span><dl class="class">
+<dt id="ui.combobox.ComboBox">
+<em class="property">class </em><tt class="descclassname">ui.combobox.</tt><tt class="descname">ComboBox</tt><big>(</big><em>rows=</em><span class="optional">[</span><span class="optional">]</span>, <em>dropdown_height=None</em>, <em>open_below=True</em>, <em>overflow=&lt;enum PANGO_ELLIPSIZE_END of type PangoEllipsizeMode&gt;</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.combobox.ComboBox" title="Permalink to this definition">¶</a></dt>
+<dd><p>a button with a drop down menu.</p>
+<p><strong>Signals</strong>:</p>
+<p><strong>on-change</strong> <em>(sprite, new_val)</em>
+- fired after selecting a new value.</p>
+<dl class="attribute">
+<dt id="ui.combobox.ComboBox.DropdownClass">
+<tt class="descname">DropdownClass</tt><a class="headerlink" href="#ui.combobox.ComboBox.DropdownClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>class to use for the dropdown</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ListView</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.combobox.ComboBox.drop_mark_width">
+<tt class="descname">drop_mark_width</tt><em class="property"> = 20</em><a class="headerlink" href="#ui.combobox.ComboBox.drop_mark_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>how much space will the dropmark occupy</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.combobox.ComboBox.dropdown_height">
+<tt class="descname">dropdown_height</tt><em class="property"> = 200</em><a class="headerlink" href="#ui.combobox.ComboBox.dropdown_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum height of the dropdown</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.combobox.ComboBox.hide_dropdown">
+<tt class="descname">hide_dropdown</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.combobox.ComboBox.hide_dropdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>hide the dropdown</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.combobox.ComboBox.open_below">
+<tt class="descname">open_below</tt><em class="property"> = None</em><a class="headerlink" href="#ui.combobox.ComboBox.open_below" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the dropdown should appear below or over the input element</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.combobox.ComboBox.rows">
+<tt class="descname">rows</tt><em class="property"> = None</em><a class="headerlink" href="#ui.combobox.ComboBox.rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>the list of text strings available for selection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.combobox.ComboBox.show_dropdown">
+<tt class="descname">show_dropdown</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.combobox.ComboBox.show_dropdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>show the dropdown</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.slider">
+<span id="sliders"></span><h2>Sliders<a class="headerlink" href="#module-ui.slider" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.slider.Slider">
+<em class="property">class </em><tt class="descclassname">ui.slider.</tt><tt class="descname">Slider</tt><big>(</big><em>values=</em><span class="optional">[</span><span class="optional">]</span>, <em>selection=None</em>, <em>snap_to_ticks=True</em>, <em>range=False</em>, <em>grips_can_cross=True</em>, <em>snap_points=None</em>, <em>snap_distance=20</em>, <em>inverse=False</em>, <em>snap_on_release=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.slider.Slider" title="Permalink to this definition">¶</a></dt>
+<dd><p>a slider widget that allows the user to select a value by dragging
+a slider along a rail</p>
+<p><strong>Signals</strong>:</p>
+<p><strong>on-change</strong> <em>(sprite, val)</em>
+- fired when the current value of the widget is changed. brings the new
+current value with the event.</p>
+<dl class="attribute">
+<dt id="ui.slider.Slider.grips_can_cross">
+<tt class="descname">grips_can_cross</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.grips_can_cross" title="Permalink to this definition">¶</a></dt>
+<dd><p>works for ranges. if set to False, then it won&#8217;t be possible to move
+start grip after end grip and vice versa</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.inverse">
+<tt class="descname">inverse</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>if set to true, the selection will be painted on the outer range</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.range">
+<tt class="descname">range</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible values: [True, &#8220;start&#8221;, &#8220;end&#8221;]. When set to true will add
+second handler to select range.
+if &#8220;start&#8221; the selection range will be from start till current position
+if &#8220;end&#8221;, the selection range will be from current position till end
+Defaults is False which means that a single value is selected instead</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.selection">
+<tt class="descname">selection</tt><a class="headerlink" href="#ui.slider.Slider.selection" title="Permalink to this definition">¶</a></dt>
+<dd><p>current selection</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.slidergrip_class">
+<tt class="descname">slidergrip_class</tt><a class="headerlink" href="#ui.slider.Slider.slidergrip_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>class for the slidergrip</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">SliderGrip</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.slidersnappoint_class">
+<tt class="descname">slidersnappoint_class</tt><a class="headerlink" href="#ui.slider.Slider.slidersnappoint_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>class for the slidersnappoint</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">SliderSnapPoint</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.snap_distance">
+<tt class="descname">snap_distance</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.snap_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>distance in pixels at which the snap points should start attracting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.snap_on_release">
+<tt class="descname">snap_on_release</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.snap_on_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normally the grip snaps to the snap points when dragged.
+This changes behaviour so that dragging is free, but upon release,
+if a snap point is in the distance, snaps to that.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.snap_points">
+<tt class="descname">snap_points</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.snap_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of specially highlighted points</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.snap_to_ticks">
+<tt class="descname">snap_to_ticks</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.snap_to_ticks" title="Permalink to this definition">¶</a></dt>
+<dd><p>should the slider snap to the exact tick position</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.slider.Slider.values">
+<tt class="descname">values</tt><em class="property"> = None</em><a class="headerlink" href="#ui.slider.Slider.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of available items. It can be list of either strings or numbers
+for number ranges use the python <a class="reference external" href="http://docs.python.org/library/functions.html#range">range</a> generator.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.menu">
+<span id="menus"></span><h2>Menus<a class="headerlink" href="#module-ui.menu" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.menu.Menu">
+<em class="property">class </em><tt class="descclassname">ui.menu.</tt><tt class="descname">Menu</tt><big>(</big><em>contents=None</em>, <em>padding=1</em>, <em>horizontal=False</em>, <em>owner=None</em>, <em>open_on_hover=None</em>, <em>spacing=0</em>, <em>hide_on_leave=False</em>, <em>hide_on_interstitial=False</em>, <em>disable_toggling=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.menu.Menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>menu contains menuitems. menuitems can contain anything they want</p>
+<p><strong>Signals</strong>:</p>
+<p><strong>selected</strong> <em>(sprite, selected_item)</em>
+- fired when a menu item is selected.</p>
+<dl class="method">
+<dt id="ui.menu.Menu.collapse_submenus">
+<tt class="descname">collapse_submenus</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.menu.Menu.collapse_submenus" title="Permalink to this definition">¶</a></dt>
+<dd><p>collapses all sub menus, if there are any</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.Menu.disable_toggling">
+<tt class="descname">disable_toggling</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.Menu.disable_toggling" title="Permalink to this definition">¶</a></dt>
+<dd><p>if set, clicking on menu items with submenus will only show them instead of toggling
+this way the menu becomes more persistent</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.menu.Menu.get_submenus">
+<tt class="descname">get_submenus</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.menu.Menu.get_submenus" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a flattened list of submenus of this menu</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.Menu.open_on_hover">
+<tt class="descname">open_on_hover</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.Menu.open_on_hover" title="Permalink to this definition">¶</a></dt>
+<dd><p>if specified, will open submenus menu after cursor has been over the item for the specified seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.Menu.owner">
+<tt class="descname">owner</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.Menu.owner" title="Permalink to this definition">¶</a></dt>
+<dd><p>in case of a sub menu - a menu item that this menu belongs to</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.menu.MenuItem">
+<em class="property">class </em><tt class="descclassname">ui.menu.</tt><tt class="descname">MenuItem</tt><big>(</big><em>menu=None</em>, <em>padding=5</em>, <em>submenu_offset_x=2</em>, <em>submenu_offset_y=2</em>, <em>x_align=0</em>, <em>y_align=0.5</em>, <em>pressed_offset=0</em>, <em>secondary_label=''</em>, <em>mnemonic=''</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.menu.MenuItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>a menu item that can also own a menu</p>
+<dl class="method">
+<dt id="ui.menu.MenuItem.hide_menu">
+<tt class="descname">hide_menu</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.menu.MenuItem.hide_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>hide submenu</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.menu">
+<tt class="descname">menu</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>submenu of the item</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.mnemonic">
+<tt class="descname">mnemonic</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.mnemonic" title="Permalink to this definition">¶</a></dt>
+<dd><p>keypress that can also triger activation of this menu item
+This is string in for &#8220;Key+Key+Key&#8221;. For example: &#8220;Shift+c&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.secondary_display_label">
+<tt class="descname">secondary_display_label</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.secondary_display_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>the secondary label element</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.secondary_label">
+<tt class="descname">secondary_label</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.secondary_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>text of the secondary label that is placed to the right of the primary</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.secondary_label_class">
+<tt class="descname">secondary_label_class</tt><a class="headerlink" href="#ui.menu.MenuItem.secondary_label_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">Label</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.menu.MenuItem.show_menu">
+<tt class="descname">show_menu</tt><big>(</big><big>)</big><a class="headerlink" href="#ui.menu.MenuItem.show_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>display submenu</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.submenu_offset_x">
+<tt class="descname">submenu_offset_x</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.submenu_offset_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>if specified will push the submeny by the given pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.menu.MenuItem.submenu_offset_y">
+<tt class="descname">submenu_offset_y</tt><em class="property"> = None</em><a class="headerlink" href="#ui.menu.MenuItem.submenu_offset_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>if specified will push the submeny by the given pixels</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.menu.MenuSeparator">
+<em class="property">class </em><tt class="descclassname">ui.menu.</tt><tt class="descname">MenuSeparator</tt><big>(</big><em>spacing=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.menu.MenuSeparator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple menu item that is not selectable and is rendered as a separator</p>
+</dd></dl>
+
+</div>
+<div class="section" id="notebooks-tab-pages">
+<h2>Notebooks / tab pages<a class="headerlink" href="#notebooks-tab-pages" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.notebook.Notebook">
+<em class="property">class </em><tt class="descclassname">ui.notebook.</tt><tt class="descname">Notebook</tt><big>(</big><em>labels=None</em>, <em>tab_position='top'</em>, <em>tab_spacing=0</em>, <em>scroll_position=None</em>, <em>show_scroll='auto'</em>, <em>scroll_selects_tab=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.notebook.Notebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container that allows grouping children in tab pages</p>
+<dl class="method">
+<dt id="ui.notebook.Notebook.add_page">
+<tt class="descname">add_page</tt><big>(</big><em>tab</em>, <em>contents=None</em>, <em>index=None</em><big>)</big><a class="headerlink" href="#ui.notebook.Notebook.add_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>inserts a new page with the given label
+will perform insert if index is specified. otherwise will append the
+new tab to the end.
+tab can be either a string or a widget. if it is a string, a
+ui.NootebookTab will be created.</p>
+<p>Returns: added page and tab</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.after_tabs">
+<tt class="descname">after_tabs</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.after_tabs" title="Permalink to this definition">¶</a></dt>
+<dd><p>container for custom content after tabs</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.before_tabs">
+<tt class="descname">before_tabs</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.before_tabs" title="Permalink to this definition">¶</a></dt>
+<dd><p>container for custom content before tabs</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.current_page">
+<tt class="descname">current_page</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.current_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>current page</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.notebook.Notebook.find_page">
+<tt class="descname">find_page</tt><big>(</big><em>page</em><big>)</big><a class="headerlink" href="#ui.notebook.Notebook.find_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>find page by index, tab label or tab object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.pages">
+<tt class="descname">pages</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.pages" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of pages in the order of appearance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.pages_container">
+<tt class="descname">pages_container</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.pages_container" title="Permalink to this definition">¶</a></dt>
+<dd><p>container of the pages</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.pages_container_class">
+<tt class="descname">pages_container_class</tt><a class="headerlink" href="#ui.notebook.Notebook.pages_container_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>class for the pages container</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">Container</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.notebook.Notebook.remove_page">
+<tt class="descname">remove_page</tt><big>(</big><em>page</em><big>)</big><a class="headerlink" href="#ui.notebook.Notebook.remove_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove given page. can also pass in the page index</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.scroll_buttons_class">
+<tt class="descname">scroll_buttons_class</tt><a class="headerlink" href="#ui.notebook.Notebook.scroll_buttons_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>class to use for constructing the overflow buttons that appear on overflow</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ScrollButton</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.scroll_position">
+<tt class="descname">scroll_position</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.scroll_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>where to place the scroll buttons on tab overflow. one of &#8220;start&#8221;
+(both at the start), &#8220;end&#8221; (both at the end) or &#8220;around&#8221; (on left
+and right of the tabs)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.scroll_selects_tab">
+<tt class="descname">scroll_selects_tab</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.scroll_selects_tab" title="Permalink to this definition">¶</a></dt>
+<dd><p>wether scroll buttons should select next/previos tab or show the
+next/previos tab out of the view</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.notebook.Notebook.scroll_to_tab">
+<tt class="descname">scroll_to_tab</tt><big>(</big><em>tab</em><big>)</big><a class="headerlink" href="#ui.notebook.Notebook.scroll_to_tab" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll the tab list so that the specified tab is visible
+you can pass in the tab object, index or label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.show_scroll">
+<tt class="descname">show_scroll</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.show_scroll" title="Permalink to this definition">¶</a></dt>
+<dd><p>determines when to show scroll buttons. True for always, False for
+never, &#8220;auto&#8221; for auto appearing and disappearing, and
+&#8220;auto_invisible&#8221; for going transparent instead of disappearing
+(the latter avoids tab toggle)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tab_position">
+<tt class="descname">tab_position</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tab_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>tab position: top, right, bottom, left and combinations: &#8220;top-right&#8221;, &#8220;left-bottom&#8221;, etc.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabbox">
+<tt class="descname">tabbox</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tabbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>the wrapping container that holds also the scroll buttons and everyting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabbox_class">
+<tt class="descname">tabbox_class</tt><a class="headerlink" href="#ui.notebook.Notebook.tabbox_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>class for the wrapping container</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">HBox</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabs">
+<tt class="descname">tabs</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tabs" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of tabs in the order of appearance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabs_back">
+<tt class="descname">tabs_back</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tabs_back" title="Permalink to this definition">¶</a></dt>
+<dd><p>button to scroll tabs back</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabs_container">
+<tt class="descname">tabs_container</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tabs_container" title="Permalink to this definition">¶</a></dt>
+<dd><p>container of tabs. useful if you want to adjust padding/placement</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.notebook.Notebook.tabs_forward">
+<tt class="descname">tabs_forward</tt><em class="property"> = None</em><a class="headerlink" href="#ui.notebook.Notebook.tabs_forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>button to scroll tabs forward</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.scroll">
+<span id="scrolling"></span><h2>Scrolling<a class="headerlink" href="#module-ui.scroll" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.scroll.ScrollArea">
+<em class="property">class </em><tt class="descclassname">ui.scroll.</tt><tt class="descname">ScrollArea</tt><big>(</big><em>contents=None</em>, <em>border=1</em>, <em>step_size=None</em>, <em>scroll_horizontal='auto'</em>, <em>scroll_vertical='auto'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.scroll.ScrollArea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container that will display scroll bars (either horizontal or vertical or
+both) if the space occupied by child is larger than the available.</p>
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.border">
+<tt class="descname">border</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollArea.border" title="Permalink to this definition">¶</a></dt>
+<dd><p>with of the surrounding border in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.hscroll">
+<tt class="descname">hscroll</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollArea.hscroll" title="Permalink to this definition">¶</a></dt>
+<dd><p>horizontal scroll bar widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.scroll_horizontal">
+<tt class="descname">scroll_horizontal</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollArea.scroll_horizontal" title="Permalink to this definition">¶</a></dt>
+<dd><p>visibility of the horizontal scroll bar. True for always, False for never and &#8220;auto&#8221; for auto</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.scroll_vertical">
+<tt class="descname">scroll_vertical</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollArea.scroll_vertical" title="Permalink to this definition">¶</a></dt>
+<dd><p>visibility of the vertical scroll bar. True for always, False for never and &#8220;auto&#8221; for auto</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.scroll.ScrollArea.scroll_x">
+<tt class="descname">scroll_x</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#ui.scroll.ScrollArea.scroll_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll to x position</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.scroll.ScrollArea.scroll_y">
+<tt class="descname">scroll_y</tt><big>(</big><em>y</em><big>)</big><a class="headerlink" href="#ui.scroll.ScrollArea.scroll_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll to y position</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.step_size">
+<tt class="descname">step_size</tt><em class="property"> = 30</em><a class="headerlink" href="#ui.scroll.ScrollArea.step_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll step size in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollArea.vscroll">
+<tt class="descname">vscroll</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollArea.vscroll" title="Permalink to this definition">¶</a></dt>
+<dd><p>vertical scroll bar widget</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.scroll.ScrollBar">
+<em class="property">class </em><tt class="descclassname">ui.scroll.</tt><tt class="descname">ScrollBar</tt><big>(</big><em>horizontal=False</em>, <em>thickness=None</em>, <em>size=0</em>, <em>offset=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.scroll.ScrollBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>A scroll bar.</p>
+<p><strong>Signals</strong>:</p>
+<p><strong>on-scroll</strong> <em>(sprite, current_normalized_position)</em>
+- fired after scrolling.</p>
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.down">
+<tt class="descname">down</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.down" title="Permalink to this definition">¶</a></dt>
+<dd><p>the scroll down button</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.offset">
+<tt class="descname">offset</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>scroll position in range 0..1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.orient_horizontal">
+<tt class="descname">orient_horizontal</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.orient_horizontal" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the scroll bar is vertical or horizontal</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.size">
+<tt class="descname">size</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>width of the bar in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.slider">
+<tt class="descname">slider</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.slider" title="Permalink to this definition">¶</a></dt>
+<dd><p>slider widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.slider_zone">
+<tt class="descname">slider_zone</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.slider_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>slider container</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.thickness">
+<tt class="descname">thickness</tt><em class="property"> = 20</em><a class="headerlink" href="#ui.scroll.ScrollBar.thickness" title="Permalink to this definition">¶</a></dt>
+<dd><p>thickness of the bar in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.scroll.ScrollBar.up">
+<tt class="descname">up</tt><em class="property"> = None</em><a class="headerlink" href="#ui.scroll.ScrollBar.up" title="Permalink to this definition">¶</a></dt>
+<dd><p>the scroll up button</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ui.dialog">
+<span id="basic-dialogs"></span><h2>Basic dialogs<a class="headerlink" href="#module-ui.dialog" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ui.dialog.Dialog">
+<em class="property">class </em><tt class="descclassname">ui.dialog.</tt><tt class="descname">Dialog</tt><big>(</big><em>contents=None</em>, <em>title=None</em>, <em>draggable=True</em>, <em>width=500</em>, <em>modal=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.dialog.Dialog" title="Permalink to this definition">¶</a></dt>
+<dd><p>An in-window message box</p>
+<p><strong>Signals</strong></p>
+<blockquote>
+<div><strong>on-close</strong> <em>(sprite, pressed_button)</em>
+- fired when the window is closed. returns back the label of the button that triggered closing</div></blockquote>
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.background_fill">
+<tt class="descname">background_fill</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.background_fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>fill color for the background when the dialog is modal</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.background_opacity">
+<tt class="descname">background_opacity</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.background_opacity" title="Permalink to this definition">¶</a></dt>
+<dd><p>opacity of the background fill when the dialog is modal</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.box">
+<tt class="descname">box</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.box" title="Permalink to this definition">¶</a></dt>
+<dd><p>container for description and buttons</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.components">
+<tt class="descname">components</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.components" title="Permalink to this definition">¶</a></dt>
+<dd><p>the main container box that contains title and contents</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.contents">
+<tt class="descname">contents</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>dialog content - message and such like</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.dialog_box_class">
+<tt class="descname">dialog_box_class</tt><a class="headerlink" href="#ui.dialog.Dialog.dialog_box_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#ui.dialog.DialogBox" title="ui.dialog.DialogBox"><tt class="xref py py-class docutils literal"><span class="pre">DialogBox</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.modal">
+<tt class="descname">modal</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.modal" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the dialog is modal or not. in case of modality won&#8217;t be able
+to click on other interface elements while dialog is being displayed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.pre_dragged_absolute_position">
+<tt class="descname">pre_dragged_absolute_position</tt><em class="property"> = None</em><a class="headerlink" href="#ui.dialog.Dialog.pre_dragged_absolute_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>initial centered position as a tuple in lieu of scale_x, scale_y</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.dialog.Dialog.show">
+<tt class="descname">show</tt><big>(</big><em>scene</em><big>)</big><a class="headerlink" href="#ui.dialog.Dialog.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>show the dialog</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.dialog.Dialog.title_class">
+<tt class="descname">title_class</tt><a class="headerlink" href="#ui.dialog.Dialog.title_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#ui.dialog.DialogTitle" title="ui.dialog.DialogTitle"><tt class="xref py py-class docutils literal"><span class="pre">DialogTitle</span></tt></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.dialog.DialogBox">
+<em class="property">class </em><tt class="descclassname">ui.dialog.</tt><tt class="descname">DialogBox</tt><big>(</big><em>contents=None</em>, <em>spacing=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.dialog.DialogBox" title="Permalink to this definition">¶</a></dt>
+<dd><p>the container with dialog title, contents and buttons, classed out for
+themeing. set the dialog&#8217;s dialog_box_class to use your class</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.dialog.DialogTitle">
+<em class="property">class </em><tt class="descclassname">ui.dialog.</tt><tt class="descname">DialogTitle</tt><big>(</big><em>markup=''</em>, <em>size=16</em>, <em>background_color='#999'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#ui.dialog.DialogTitle" title="Permalink to this definition">¶</a></dt>
+<dd><p>dialog title - an ordinary label classed out for themeing.
+set the dialog&#8217;s title_class to use your class</p>
+</dd></dl>
+
+</div>
+<div class="section" id="customizing-tooltips">
+<h2>Customizing tooltips<a class="headerlink" href="#customizing-tooltips" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to fully customize the look and behavior of tooltips. For basic
+customization, override the <a class="reference internal" href="#ui.widget.Tooltip" title="ui.widget.Tooltip"><tt class="xref py py-class docutils literal"><span class="pre">Tooltip</span></tt></a> class-level properties. For more
+involved customization, refer to <a class="reference internal" href="#ui.widget.TooltipWindow" title="ui.widget.TooltipWindow"><tt class="xref py py-class docutils literal"><span class="pre">TooltipWindow</span></tt></a></p>
+<dl class="class">
+<dt id="ui.widget.Tooltip">
+<em class="property">class </em><tt class="descclassname">ui.widget.</tt><tt class="descname">Tooltip</tt><a class="headerlink" href="#ui.widget.Tooltip" title="Permalink to this definition">¶</a></dt>
+<dd><p>There is a single tooltip object per whole application and it is
+automatically created on the first call. The class attributes (color,
+padding, size, etc.) allow basic modifications of the looks.
+If you would like to have full control over the tooltip, you can set your
+own class in <a class="reference internal" href="#ui.widget.TooltipWindow" title="ui.widget.TooltipWindow"><tt class="xref py py-class docutils literal"><span class="pre">TooltipWindow</span></tt></a>.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># make tooltip background red for the whole application and add more padding</span>
+<span class="kn">import</span> <span class="nn">ui</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">Tooltip</span><span class="o">.</span><span class="n">background_color</span> <span class="o">=</span> <span class="s">&quot;#f00&quot;</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">Tooltip</span><span class="o">.</span><span class="n">padding</span> <span class="o">=</span> <span class="mi">20</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="ui.widget.Tooltip.background_color">
+<tt class="descname">background_color</tt><em class="property"> = '#333'</em><a class="headerlink" href="#ui.widget.Tooltip.background_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>background color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Tooltip.color">
+<tt class="descname">color</tt><em class="property"> = '#eee'</em><a class="headerlink" href="#ui.widget.Tooltip.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>font color</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Tooltip.font_desc">
+<tt class="descname">font_desc</tt><em class="property"> = 'Sans serif 10'</em><a class="headerlink" href="#ui.widget.Tooltip.font_desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>font description</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Tooltip.padding">
+<tt class="descname">padding</tt><em class="property"> = 5</em><a class="headerlink" href="#ui.widget.Tooltip.padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>padding around the label in pixels</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.Tooltip.set_tooltip">
+<tt class="descname">set_tooltip</tt><big>(</big><em>tooltip</em><big>)</big><a class="headerlink" href="#ui.widget.Tooltip.set_tooltip" title="Permalink to this definition">¶</a></dt>
+<dd><p>set_tooltip is internally called by the framework. Implement this
+function if you are creating a custom tooltip class.
+The <cite>tooltip</cite> parameter normally contains text, but you can set the
+<a class="reference internal" href="#ui.widget.Widget.tooltip" title="ui.widget.Widget.tooltip"><tt class="xref py py-class docutils literal"><span class="pre">Widget.tooltip</span></tt></a> to anything (even sprites)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.Tooltip.size">
+<tt class="descname">size</tt><em class="property"> = None</em><a class="headerlink" href="#ui.widget.Tooltip.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>default font size</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ui.widget.TooltipWindow">
+<em class="property">class </em><tt class="descclassname">ui.widget.</tt><tt class="descname">TooltipWindow</tt><a class="headerlink" href="#ui.widget.TooltipWindow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object that contains the actual tooltip <tt class="xref py py-class docutils literal"><span class="pre">gtk.Window</span></tt>.
+By setting class attributes here you can control the tooltip class and
+the timespan before showing the tooltip</p>
+<dl class="attribute">
+<dt id="ui.widget.TooltipWindow.TooltipClass">
+<tt class="descname">TooltipClass</tt><a class="headerlink" href="#ui.widget.TooltipWindow.TooltipClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>class that renders tooltip contents. override this attribute if you
+want to use your own tooltip class</p>
+<p>alias of <a class="reference internal" href="#ui.widget.Tooltip" title="ui.widget.Tooltip"><tt class="xref py py-class docutils literal"><span class="pre">Tooltip</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ui.widget.TooltipWindow.first_appearance_milis">
+<tt class="descname">first_appearance_milis</tt><em class="property"> = 300</em><a class="headerlink" href="#ui.widget.TooltipWindow.first_appearance_milis" title="Permalink to this definition">¶</a></dt>
+<dd><p>delay before showing the tooltip</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ui.widget.TooltipWindow.show">
+<tt class="descname">show</tt><big>(</big><em>widget</em>, <em>tooltip</em><big>)</big><a class="headerlink" href="#ui.widget.TooltipWindow.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show tooltip. This function is called automatically by the library.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">ui</span></tt> &#8211; User interface toolkit</a><ul>
+<li><a class="reference internal" href="#base-class-widget">Base class - Widget</a></li>
+<li><a class="reference internal" href="#containers">Containers</a></li>
+<li><a class="reference internal" href="#label">Label</a></li>
+<li><a class="reference internal" href="#module-ui.buttons">Buttons</a></li>
+<li><a class="reference internal" href="#module-ui.entry">Text input</a></li>
+<li><a class="reference internal" href="#module-ui.listitem">List items and combo boxes</a></li>
+<li><a class="reference internal" href="#module-ui.slider">Sliders</a></li>
+<li><a class="reference internal" href="#module-ui.menu">Menus</a></li>
+<li><a class="reference internal" href="#notebooks-tab-pages">Notebooks / tab pages</a></li>
+<li><a class="reference internal" href="#module-ui.scroll">Scrolling</a></li>
+<li><a class="reference internal" href="#module-ui.dialog">Basic dialogs</a></li>
+<li><a class="reference internal" href="#customizing-tooltips">Customizing tooltips</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">graphics</span></tt> &#8211; hamster graphics library</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/ui.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="index.html" title="graphics – hamster graphics library"
+             >previous</a></li>
+        <li><a href="index.html">hamster graphics 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010-2012, Toms Bauģis.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
