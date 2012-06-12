@@ -5,6 +5,10 @@ console.
 
 The graphics helper library is in lib/ folder.
 
+*Note:*: The UI widgets part of the hamster experiments is still pending cleanup
+and documentation updates. Until then follow the ui_demo.py lead for that part.
+The UI components are optional and not tied to the core library. More info will
+follow.
 
 "Read some docs":http://wiki.github.com/tbaugis/hamster_experiments/,
 "here's the hamster":http://projecthamster.wordpress.com/.
