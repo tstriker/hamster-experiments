@@ -21,13 +21,17 @@ class Node(graphics.Rectangle):
                                     fill = "#999",
                                     corner_radius = 3,
                                     pivot_x = 5, pivot_y = 5,
+                                    interactive=True,
                                     draggable = True)
 
-        self.connect("on-drag-start", self.on_drag_start)
-        self.connect("on-drag-finish", self.on_drag_finish)
+        # TODO - remember how the drag model has changed and fix the math
+        #self.connect("on-drag-start", self.on_drag_start)
+        #self.connect("on-drag-finish", self.on_drag_finish)
 
     def on_drag_start(self, sprite, event):
-        self.animate(width=50, height=50, pivot_x = 25, pivot_y = 25, drag_x = sprite.x - 25, drag_y = sprite.y - 25)
+        self.animate(width=50, height=50,
+                     pivot_x = 25, pivot_y = 25,
+                     drag_x = sprite.x - 25, drag_y = sprite.y - 25)
 
     def on_drag_finish(self, sprite, event):
         self.animate(width=10, height=10, pivot_x = 5, pivot_y = 5)

@@ -48,7 +48,8 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
         self.background_color = "#fafafa"
 
-        self.circle = graphics.Circle(100, 100, "#6ee", x=100, y=100, draggable=True)
+        self.circle = graphics.Circle(100, 100, "#6ee", x=100, y=100,
+                                      interactive=True, draggable=True)
 
         self.entry = Entry(x=40, y=40)
         self.circle.add_child(self.entry)

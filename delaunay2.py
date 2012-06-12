@@ -22,7 +22,7 @@ EPSILON = 0.00001
 
 class Node(graphics.Sprite):
     def __init__(self, x, y, point):
-        graphics.Sprite.__init__(self, x, y, draggable = True)
+        graphics.Sprite.__init__(self, x, y, interactive=True, draggable=True)
 
         self.draw_node()
         self.point = point
@@ -30,7 +30,7 @@ class Node(graphics.Sprite):
 
     def on_drag(self, sprite, event):
         self.point.x = event.x
-        self.point.y = event.y 
+        self.point.y = event.y
         self.draw_node()
 
     def draw_node(self):
@@ -116,6 +116,110 @@ class Canvas(graphics.Scene):
         self.draw_circles = False
 
 
+    def add_edge(self, p1, p2):
+        exists = self.edge_dict.get((p1, p2), self.edge_dict.get((p2, p1)))
+        if not exists:
+            edge = Edge(p1, p2)
+
+            self.edges.append(edge)
+            self.edge_dict[(p1, p2)] = edge
+            return edge, True
+        else:
+            return exists, False
+
+
+    def find_triangles(self):
+        # run through edges and detect triangles
+        for edge in self.edges:
+            pass
+
+    def triangulate(self):
+        self.edges = []
+        self.edge_dict = {}
+        self.centres = []
+
+        # find closest neighbours for the seed
+        neighbours = None
+        min_distance = None
+
+        for p1 in self.points:
+            for p2 in self.points:
+                if p1 == p2: continue
+
+                d = (p1 - p2).magnitude_squared()
+                if not min_distance or d < min_distance:
+                    neighbours = p1, p2
+                    min_distance = d
+
+        if not neighbours:
+            return
+
+        seed, new = self.add_edge(*neighbours)
+
+
+        edges = collections.deque([seed])
+        self.face_num = 0
+        while edges:
+            current = edges.popleft()
+
+            if not current.left_face:
+                edges.extend(self.check_edge(current, current.point1, current.point2))
+
+            if not current.right_face:
+                edges.extend(self.check_edge(current, current.point2, current.point1))
+
+
+    def check_edge(self, edge, point1, point2):
+        """
+         * Complete a facet by looking for the circle free point to the left
+         * of the edge.  Add the facet to the triangulation.
+        """
+
+        positive_products = (point for point in self.points if point not in (point1, point2) \
+                                                           and (point2 - point1).product(point - point1) > 0)
+
+        # Find a point on left of edge.
+        try:
+            left_point = positive_products.next()
+            left_point_circumcentre = Circle()
+            left_point_circumcentre.circumcircle(point1, point2, left_point)
+        except StopIteration:
+            edge.update_left_face(point1, point2, 0)
+            return [] #did not find anything
+
+        # now from all the left side points find the one that is circle-free
+        for point in positive_products:
+            if left_point_circumcentre.covers(point):
+                # move centre
+                left_point_circumcentre.circumcircle(point1, point2, point)
+                left_point = point
+
+        # now that we are done, add our successful candidate to the centres
+        if left_point_circumcentre not in self.centres:
+            self.centres.append(left_point_circumcentre)
+            self.face_num +=1
+
+
+        # Add new triangle or update edge info if s-t is on hull.
+        # Update face information of edge being completed.
+        edge.update_left_face(point1, point2, self.face_num)
+
+        # connect the dots
+        res = []
+
+        edge1, new = self.add_edge(left_point, point1)
+        edge1.update_left_face(left_point, point1, self.face_num)
+        if new: res.append(edge1)
+
+
+        edge2, new = self.add_edge(point2, left_point)
+        edge2.update_left_face(point2, left_point, self.face_num)
+        if new: res.append(edge2)
+
+
+        return res
+
+
     def on_mouse_click(self, area, event, target):
         if not target:
             point = Vector2(event.x, event.y)
@@ -175,113 +279,6 @@ class Canvas(graphics.Scene):
                 context.rectangle(centre.x-1, centre.y-1, 2, 2)
                 context.stroke()
 
-    def add_edge(self, p1, p2):
-        exists = self.edge_dict.get((p1, p2), self.edge_dict.get((p2, p1)))
-        if not exists:
-            edge = Edge(p1, p2)
-
-            self.edges.append(edge)
-            self.edge_dict[(p1, p2)] = edge
-            return edge, True
-        else:
-            return exists, False
-
-
-    def find_triangles(self):
-        # run through edges and detect triangles
-
-
-        for edge in self.edges:
-            pass
-
-    def triangulate(self):
-        self.edges = []
-        self.edge_dict = {}
-        self.centres = []
-
-
-
-        # find closest neighbours for the seed
-        neighbours = None
-        min_distance = None
-
-        for p1 in self.points:
-            for p2 in self.points:
-                if p1 == p2: continue
-
-                d = (p1 - p2).magnitude_squared()
-                if not min_distance or d < min_distance:
-                    neighbours = p1, p2
-                    min_distance = d
-
-        if not neighbours:
-            return
-
-        seed, new = self.add_edge(*neighbours)
-
-
-        edges = collections.deque([seed])
-        self.face_num = 0
-        while edges:
-            current = edges.popleft()
-
-            if not current.left_face:
-                edges.extend(self.check_edge(current, current.point1, current.point2))
-
-            if not current.right_face:
-                edges.extend(self.check_edge(current, current.point2, current.point1))
-
-
-
-    def check_edge(self, edge, point1, point2):
-        """
-         * Complete a facet by looking for the circle free point to the left
-         * of the edge.  Add the facet to the triangulation.
-        """
-
-        positive_products = (point for point in self.points if point not in (point1, point2) \
-                                                           and (point2 - point1).product(point - point1) > 0)
-
-        # Find a point on left of edge.
-        try:
-            left_point = positive_products.next()
-            left_point_circumcentre = Circle()
-            left_point_circumcentre.circumcircle(point1, point2, left_point)
-        except StopIteration:
-            edge.update_left_face(point1, point2, 0)
-            return [] #did not find anything
-
-        # now from all the left side points find the one that is circle-free
-        for point in positive_products:
-            if left_point_circumcentre.covers(point):
-                # move centre
-                left_point_circumcentre.circumcircle(point1, point2, point)
-                left_point = point
-
-        # now that we are done, add our successful candidate to the centres
-        if left_point_circumcentre not in self.centres:
-            self.centres.append(left_point_circumcentre)
-            self.face_num +=1
-
-
-        # Add new triangle or update edge info if s-t is on hull.
-        # Update face information of edge being completed.
-        edge.update_left_face(point1, point2, self.face_num)
-
-        # connect the dots
-        res = []
-
-        edge1, new = self.add_edge(left_point, point1)
-        edge1.update_left_face(left_point, point1, self.face_num)
-        if new: res.append(edge1)
-
-
-        edge2, new = self.add_edge(point2, left_point)
-        edge2.update_left_face(point2, left_point, self.face_num)
-        if new: res.append(edge2)
-
-
-        return res
 
 
 class BasicWindow:
@@ -322,9 +319,7 @@ class BasicWindow:
 
         button = gtk.Button("Clear")
         def on_click(*args):
-            self.canvas.nodes = []
-            self.canvas.mouse_node, self.canvas.prev_mouse_node = None, None
-            self.canvas.centres = []
+            self.canvas.points = []
             self.canvas.clear()
             self.canvas.redraw()
 
