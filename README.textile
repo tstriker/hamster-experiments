@@ -10,7 +10,7 @@ and documentation updates. Until then follow the ui_demo.py lead for that part.
 The UI components are optional and not tied to the core library. More info will
 follow.
 
-"Read some docs":http://wiki.github.com/tbaugis/hamster_experiments/,
+"Read some docs":http://wiki.github.com/projecthamster/experiments/,
 "here's the hamster":http://projecthamster.wordpress.com/.
 
 h1. Selective overview of demo scripts (just a few, but be sure to check them all!)
