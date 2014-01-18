@@ -1086,7 +1086,7 @@ class Sprite(Parent, gobject.GObject):
 
     def animate(self, duration = None, easing = None, on_complete = None,
                 on_update = None, round = False, **kwargs):
-        """Request paretn Scene to Interpolate attributes using the internal tweener.
+        """Request parent Scene to Interpolate attributes using the internal tweener.
            Specify sprite's attributes that need changing.
            `duration` defaults to 0.4 seconds and `easing` to cubic in-out
            (for others see pytweener.Easing class).
@@ -1103,6 +1103,12 @@ class Sprite(Parent, gobject.GObject):
             for key, val in kwargs.items():
                 setattr(self, key, val)
             return None
+
+    def stop_animation(self):
+        """stop animation without firing on_complete"""
+        scene = self.get_scene()
+        if scene:
+            scene.stop_animation(self)
 
     def get_local_matrix(self):
         if self._matrix is None:
@@ -1807,6 +1813,15 @@ class Scene(Parent, gtk.DrawingArea):
                                        **kwargs)
         self.redraw()
         return tween
+
+
+    def stop_animation(self, sprites):
+        """stop animation without firing on_complete"""
+        if isinstance(sprites, list) is False:
+            sprites = [sprites]
+
+        for sprite in sprites:
+            self.tweener.kill_tweens(sprite)
 
 
     def redraw(self):
