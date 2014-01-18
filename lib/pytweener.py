@@ -6,7 +6,7 @@
 #
 # Released under M.I.T License - see above url
 # Python version by Ben Harling 2009
-# All kinds of slashing and dashing by Toms Baugis 2010
+# All kinds of slashing and dashing by Toms Baugis 2010, 2014
 import math
 import collections
 import datetime as dt
@@ -27,7 +27,7 @@ class Tweener(object):
 
 
     def add_tween(self, obj, duration = None, easing = None, on_complete = None,
-                  on_update = None, round = False, **kwargs):
+                  on_update = None, round = False, delay = None, **kwargs):
         """
             Add tween for the object to go from current values to set ones.
             Example: add_tween(sprite, x = 500, y = 200, duration = 0.4)
@@ -44,7 +44,7 @@ class Tweener(object):
 
         easing = easing or self.default_easing
 
-        tw = Tween(obj, duration, easing, on_complete, on_update, round, **kwargs )
+        tw = Tween(obj, duration, delay, easing, on_complete, on_update, round, **kwargs )
 
         if obj in self.current_tweens:
             for current_tween in tuple(self.current_tweens[obj]):
@@ -99,7 +99,7 @@ class Tweener(object):
 
         for obj in tuple(self.current_tweens):
             for tween in tuple(self.current_tweens[obj]):
-                done = tween._update(delta_seconds)
+                done = tween.update(delta_seconds)
                 if done:
                     self.current_tweens[obj].remove(tween)
                     if tween.on_complete: tween.on_complete(tween.target)
@@ -111,10 +111,11 @@ class Tweener(object):
 
 
 class Tween(object):
-    __slots__ = ('tweenables', 'target', 'delta', 'duration', 'ease', 'delta',
-                 'on_complete', 'on_update', 'complete', 'round')
+    __slots__ = ('tweenables', 'target', 'delta', 'duration', 'delay',
+                 'ease', 'delta', 'complete', 'round',
+                 'on_complete', 'on_update')
 
-    def __init__(self, obj, duration, easing, on_complete, on_update, round,
+    def __init__(self, obj, duration, delay, easing, on_complete, on_update, round,
                  **kwargs):
         """Tween object use Tweener.add_tween( ... ) to create"""
 
@@ -123,6 +124,10 @@ class Tween(object):
 
         #: duration of the tween
         self.duration = duration
+
+        #: delay before the animation should be started
+        self.delay = delay or 0
+
         self.target = obj
 
         #: easing function
@@ -144,19 +149,23 @@ class Tween(object):
         self.complete = False
 
     def finish(self):
-        self._update(self.duration)
+        self.update(self.duration)
 
-    def _update(self, ptime):
+    def update(self, ptime):
         """Update tween with the time since the last frame"""
-        self.delta = self.delta + ptime
-        if self.delta > self.duration:
-            self.delta = self.duration
+        delta = self.delta + ptime
+        total_duration = self.delay + self.duration
 
-        if self.delta == self.duration:
+        if delta > total_duration:
+            delta = total_duration
+
+        if delta < self.delay:
+            pass
+        elif delta == total_duration:
             for key, tweenable in self.tweenables:
                 setattr(self.target, key, tweenable.target_value)
         else:
-            fraction = self.ease(self.delta / self.duration)
+            fraction = self.ease((delta - self.delay) / (total_duration - self.delay))
 
             for key, tweenable in self.tweenables:
                 res = tweenable.update(fraction)
@@ -164,8 +173,10 @@ class Tween(object):
                     res = int(res)
                 setattr(self.target, key, res)
 
-        if self.delta == self.duration or len(self.tweenables) == 0:
+        if delta == total_duration or len(self.tweenables) == 0:
             self.complete = True
+
+        self.delta = delta
 
         if self.on_update:
             self.on_update(self.target)
@@ -337,24 +348,26 @@ if __name__ == "__main__":
     tweener = Tweener()
     objects = []
 
-    for i in range(10000):
-        objects.append(_Dummy(dt.datetime.now(), i-100, i-100))
+    object_count, update_times = 1000, 100
+
+    for i in range(object_count):
+        objects.append(_Dummy(i-100, i-100, i-100))
 
 
     total = dt.datetime.now()
 
     t = dt.datetime.now()
-    print "Adding 10000 objects..."
+    print "Adding %d tweens..." % object_count
     for i, o in enumerate(objects):
-        tweener.add_tween(o, a = dt.datetime.now() - dt.timedelta(days=3),
+        tweener.add_tween(o, a = i,
                              b = i,
                              c = i,
-                             duration = 1.0,
+                             duration = 0.1 * update_times,
                              easing=Easing.Circ.ease_in_out)
     print dt.datetime.now() - t
 
     t = dt.datetime.now()
-    print "Updating 10 times......"
-    for i in range(11):  #update 1000 times
+    print "Updating %d times......" % update_times
+    for i in range(update_times):  #update 1000 times
         tweener.update(0.1)
     print dt.datetime.now() - t
