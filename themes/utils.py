@@ -1,6 +1,9 @@
 import os, shutil
 import cairo
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GdkPixbuf
+
 from lib import graphics
 
 def install_font(font_filename):
@@ -63,7 +66,7 @@ class Image(object):
             if os.path.splitext(image)[1].lower() == ".png":
                 image = cairo.ImageSurface.create_from_png(image)
             else:
-                image = gtk.gdk.pixbuf_new_from_file(image)
+                image = gdk.pixbuf_new_from_file(image)
 
         self.image_data, self.width, self.height = image, image.get_width(), image.get_height()
 
@@ -97,9 +100,9 @@ class Slice9(object):
             # stretching border, it uses white pixels to blend in
             x, y = x - 1, y - 1
             img = cairo.ImageSurface(cairo.FORMAT_ARGB32, w+2, h+2)
-            ctx = gtk.gdk.CairoContext(cairo.Context(img))
+            ctx = cairo.Context(img)
 
-            if isinstance(image.image_data, gtk.gdk.Pixbuf):
+            if isinstance(image.image_data, GdkPixbuf.Pixbuf):
                 ctx.set_source_pixbuf(image.image_data, -x, -y)
             else:
                 ctx.set_source_surface(image.image_data, -x, -y)
@@ -135,7 +138,7 @@ class Slice9(object):
                 # that we put in there so that stretching does not borrow white
                 # pixels
                 img = cairo.ImageSurface(cairo.FORMAT_ARGB32, image[1], image[2])
-                ctx = gtk.gdk.CairoContext(cairo.Context(img))
+                ctx = cairo.Context(img)
                 ctx.set_source_surface(image[0],
                                        0 if self.stretch_w else -1,
                                        0 if self.stretch_h else -1)
@@ -222,8 +225,8 @@ class SpriteSheetImage(graphics.Sprite):
             surface = context.get_target().create_similar(self.sheet.cache_mode,
                                                           self.sheet.width,
                                                           self.sheet.height)
-            local_context = gtk.gdk.CairoContext(cairo.Context(surface))
-            if isinstance(self.sheet.image_data, gtk.gdk.Pixbuf):
+            local_context = cairo.Context(surface)
+            if isinstance(self.sheet.image_data, GdkPixbuf.Pixbuf):
                 local_context.set_source_pixbuf(self.sheet.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.sheet.image_data)

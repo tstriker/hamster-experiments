@@ -8,9 +8,17 @@
 from collections import defaultdict
 import math
 import datetime as dt
-import gtk, gobject
 
-import pango, cairo
+
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+from gi.repository import Pango as pango
+from gi.repository import PangoCairo as pangocairo
+
+import cairo
+from gi.repository import GdkPixbuf
+
 import re
 
 try:
@@ -20,15 +28,6 @@ except: # we can also live without tweener. Scene.animate will not work
 
 import colorsys
 from collections import deque
-
-if cairo.version in ('1.8.2', '1.8.4'):
-    # in these two cairo versions the matrix multiplication was flipped
-    # http://bugs.freedesktop.org/show_bug.cgi?id=19221
-    def cairo_matrix_multiply(matrix1, matrix2):
-        return matrix2 * matrix1
-else:
-    def cairo_matrix_multiply(matrix1, matrix2):
-        return matrix1 * matrix2
 
 
 class ColorUtils(object):
@@ -54,7 +53,7 @@ class ColorUtils(object):
                     match = self.hex_color_short.match(color)
                     color = [int(color + color, 16) / 255.0 for color in match.groups()]
 
-        elif isinstance(color, gtk.gdk.Color):
+        elif isinstance(color, gdk.Color):
             color = [color.red / 65535.0,
                      color.green / 65535.0,
                      color.blue / 65535.0]
@@ -73,7 +72,7 @@ class ColorUtils(object):
     def gdk(self, color):
         """returns gdk.Color object of the given color"""
         c = self.parse(color)
-        return gtk.gdk.Color(int(c[0] * 65535.0), int(c[1] * 65535.0), int(c[2] * 65535.0))
+        return gdk.Color(int(c[0] * 65535.0), int(c[1] * 65535.0), int(c[2] * 65535.0))
 
     def is_light(self, color):
         """tells you if color is dark or light, so you can up or down the
@@ -96,6 +95,10 @@ class ColorUtils(object):
 
 Colors = ColorUtils() # this is a static class, so an instance will do
 
+def get_gdk_rectangle(x, y, w, h):
+    rect = gdk.Rectangle()
+    rect.x, rect.y, rect.width, rect.height = x or 0, y or 0, w or 0, h or 0
+    return rect
 
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
@@ -407,9 +410,9 @@ class Graphics(object):
             if wrap is not None:
                 layout.set_wrap(wrap)
             else:
-                layout.set_ellipsize(ellipsize or pango.ELLIPSIZE_END)
+                layout.set_ellipsize(ellipsize or pango.EllipsizeMode.END)
 
-        context.show_layout(layout)
+        pangocairo.show_layout(context, layout)
 
     def create_layout(self, size = None):
         """utility function to create layout with the default font. Size and
@@ -420,7 +423,7 @@ class Graphics(object):
             #        should explain better
             raise "Can not create layout without existing context!"
 
-        layout = self.context.create_layout()
+        layout = pangocairo.create_layout(context)
         font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
         if size: font_desc.set_absolute_size(size * pango.SCALE)
 
@@ -447,14 +450,14 @@ class Graphics(object):
         """this function is most likely to change"""
         self._add_instruction(self._text_path, text)
 
-    def show_layout(self, text, font_desc, alignment = pango.ALIGN_LEFT,
+    def show_layout(self, text, font_desc, alignment = pango.Alignment.LEFT,
                     width = -1, wrap = None, ellipsize = None,
                     single_paragraph_mode = False):
         """display text. font_desc is string of pango font description
            often handier than calling this function directly, is to create
            a class:Label object
         """
-        layout = self._cache_layout = self._cache_layout or gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))).create_layout()
+        layout = self._cache_layout = self._cache_layout or pangocairo.create_layout(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
         self._add_instruction(self._show_layout, layout, text, font_desc,
                               alignment, width, wrap, ellipsize, single_paragraph_mode)
 
@@ -523,15 +526,15 @@ class Graphics(object):
 
             # measure the path extents so we know the size of cache surface
             # also to save some time use the context to paint for the first time
-            extents = gtk.gdk.Rectangle()
+            extents = gdk.Rectangle()
             for instruction, args in self.__instruction_cache:
                 if instruction in path_end_instructions:
                     self.paths.append((instruction, "path", context.copy_path()))
                     exts = context.path_extents()
-                    exts = gtk.gdk.Rectangle(int(exts[0]), int(exts[1]),
+                    exts = get_gdk_rectangle(int(exts[0]), int(exts[1]),
                                              int(exts[2]-exts[0]), int(exts[3]-exts[1]))
                     if extents.width and extents.height:
-                        extents = extents.union(exts)
+                        extents = gdk.rectangle_union(extents, exts)
                     else:
                         extents = exts
                 elif instruction in (self._save_context, self._restore_context,
@@ -570,7 +573,7 @@ class Graphics(object):
                 w = int(extents.width) + 1
                 h = int(extents.height) + 1
                 self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
-                ctx = gtk.gdk.CairoContext(cairo.Context(self.cache_surface))
+                ctx = cairo.Context(self.cache_surface)
                 ctx.translate(-extents.x, -extents.y)
 
                 ctx.transform(matrix)
@@ -764,7 +767,7 @@ class Sprite(Parent, gobject.GObject):
 
     graphics_unrelated_attrs = set(('drag_x', 'drag_y', 'sprites', 'mouse_cursor', '_sprite_dirty', 'id'))
 
-    #: mouse-over cursor of the sprite. Can be either a gtk.gdk cursor
+    #: mouse-over cursor of the sprite. Can be either a gdk cursor
     #: constants, or a pixbuf or a pixmap. If set to False, will be using
     #: scene's cursor. in order to have the cursor displayed, the sprite has
     #: to be interactive
@@ -928,15 +931,15 @@ class Sprite(Parent, gobject.GObject):
     def _get_mouse_cursor(self):
         """Determine mouse cursor.
         By default look for self.mouse_cursor is defined and take that.
-        Otherwise use gtk.gdk.FLEUR for draggable sprites and gtk.gdk.HAND2 for
+        Otherwise use gdk.CursorType.FLEUR for draggable sprites and gdk.CursorType.HAND2 for
         interactive sprites. Defaults to scenes cursor.
         """
         if self.mouse_cursor is not None:
             return self.mouse_cursor
         elif self.interactive and self.draggable:
-            return gtk.gdk.FLEUR
+            return gdk.CursorType.FLEUR
         elif self.interactive:
-            return gtk.gdk.HAND2
+            return gdk.CursorType.HAND2
 
     def bring_to_front(self):
         """adjusts sprite's z-order so that the sprite is on top of it's
@@ -991,7 +994,7 @@ class Sprite(Parent, gobject.GObject):
         """measure the extents of the sprite's graphics."""
         if self._sprite_dirty:
             # redrawing merely because we need fresh extents of the sprite
-            context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+            context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
             context.transform(self.get_matrix())
             self.emit("on-render")
             self.__dict__["_sprite_dirty"] = False
@@ -1004,7 +1007,7 @@ class Sprite(Parent, gobject.GObject):
         if not self.graphics.paths:
             return None
 
-        context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
+        context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
 
         # bit of a hack around the problem - looking for clip instructions in parent
         # so extents would not get out of it
@@ -1026,7 +1029,7 @@ class Sprite(Parent, gobject.GObject):
                         clip_regions.pop()
 
                 for ext in clip_regions:
-                    ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]), int(ext[2] - ext[0]), int(ext[3] - ext[1]))
+                    ext = get_gdk_rectangle(int(ext[0]), int(ext[1]), int(ext[2] - ext[0]), int(ext[3] - ext[1]))
                     clip_extents = (clip_extents or ext).intersect(ext)
 
         context.transform(self.get_local_matrix())
@@ -1041,7 +1044,7 @@ class Sprite(Parent, gobject.GObject):
 
 
         ext = context.path_extents()
-        ext = gtk.gdk.Rectangle(int(ext[0]), int(ext[1]),
+        ext = get_gdk_rectangle(int(ext[0]), int(ext[1]),
                                 int(ext[2] - ext[0]), int(ext[3] - ext[1]))
         if clip_extents:
             ext = clip_extents.intersect(ext)
@@ -1140,7 +1143,7 @@ class Sprite(Parent, gobject.GObject):
     def get_matrix(self):
         """return sprite's current transformation matrix"""
         if self.parent:
-            return cairo_matrix_multiply(self.get_local_matrix(), (self._prev_parent_matrix or self.parent.get_matrix()))
+            return self.get_local_matrix() * (self._prev_parent_matrix or self.parent.get_matrix())
         else:
             return self.get_local_matrix()
 
@@ -1199,7 +1202,7 @@ class Sprite(Parent, gobject.GObject):
                 context.restore()
 
         for sprite in self._z_ordered_sprites:
-            sprite._draw(context, self.opacity * opacity, cairo_matrix_multiply(matrix, parent_matrix))
+            sprite._draw(context, self.opacity * opacity, matrix * parent_matrix)
 
 
         context.restore()
@@ -1234,7 +1237,7 @@ class Sprite(Parent, gobject.GObject):
 class BitmapSprite(Sprite):
     """Caches given image data in a surface similar to targets, which ensures
        that drawing it will be quick and low on CPU.
-       Image data can be either :class:`cairo.ImageSurface` or :class:`gtk.gdk.Pixbuf`
+       Image data can be either :class:`cairo.ImageSurface` or :class:`GdkPixbuf.Pixbuf`
     """
     def __init__(self, image_data = None, cache_mode = None, **kwargs):
         Sprite.__init__(self, **kwargs)
@@ -1283,8 +1286,8 @@ class BitmapSprite(Sprite):
                                                           self.width,
                                                           self.height)
 
-            local_context = gtk.gdk.CairoContext(cairo.Context(surface))
-            if isinstance(self.image_data, gtk.gdk.Pixbuf):
+            local_context = cairo.Context(surface)
+            if isinstance(self.image_data, GdkPixbuf.Pixbuf):
                 local_context.set_source_pixbuf(self.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.image_data)
@@ -1346,15 +1349,15 @@ class Label(Sprite):
     cache_attrs = Sprite.cache_attrs | set(("_letter_sizes", "__surface", "_ascent", "_bounds_width", "_measures"))
 
     def __init__(self, text = "", size = None, color = None,
-                 alignment = pango.ALIGN_LEFT, single_paragraph = False,
+                 alignment = pango.Alignment.LEFT, single_paragraph = False,
                  max_width = None, wrap = None, ellipsize = None, markup = "",
                  font_desc = None, **kwargs):
         Sprite.__init__(self, **kwargs)
         self.width, self.height = None, None
 
 
-        self._test_context = gtk.gdk.CairoContext(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0)))
-        self._test_layout = self._test_context.create_layout()
+        self._test_context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A8, 0, 0))
+        self._test_layout = pangocairo.create_layout(self._test_context)
 
 
         #: absolute font size in pixels. this will execute set_absolute_size
@@ -1362,7 +1365,7 @@ class Label(Sprite):
         self.size = size
 
         #: pango.FontDescription, defaults to system font
-        self.font_desc = font_desc if font_desc else pango.FontDescription(gtk.Style().font_desc.to_string())
+        self.font_desc = pango.FontDescription(font_desc or "Sans Serif")
 
         #: color of label either as hex string or an (r,g,b) tuple
         self.color = color
@@ -1374,11 +1377,11 @@ class Label(Sprite):
         self.wrap = wrap
 
 
-        #: Ellipsize mode. Can be set to pango. [ELLIPSIZE_NONE,
-        #: ELLIPSIZE_START, ELLIPSIZE_MIDDLE, ELLIPSIZE_END]
+        #: Ellipsize mode. Can be set to pango.[EllipsizeMode.NONE,
+        #: EllipsizeMode.START, EllipsizeMode.MIDDLE, EllipsizeMode.END]
         self.ellipsize = ellipsize
 
-        #: alignment. one of pango.[ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER]
+        #: alignment. one of pango.[Alignment.LEFT, Alignment.RIGHT, Alignment.CENTER]
         self.alignment = alignment
 
         #: If setting is True, do not treat newlines and similar characters as
@@ -1477,7 +1480,7 @@ class Label(Sprite):
             layout.set_wrap(self.wrap)
             layout.set_ellipsize(pango.ELLIPSIZE_NONE)
         else:
-            layout.set_ellipsize(self.ellipsize or pango.ELLIPSIZE_END)
+            layout.set_ellipsize(self.ellipsize or pango.EllipsizeMode.END)
 
         if max_width is not None:
             layout.set_width(max_width * pango.SCALE)
@@ -1633,8 +1636,8 @@ class Scene(Parent, gtk.DrawingArea):
     """
 
     __gsignals__ = {
-        "expose-event": "override",
-        "configure_event": "override",
+       # "draw": "override",
+       # "configure_event": "override",
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-resize": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
@@ -1661,12 +1664,12 @@ class Scene(Parent, gtk.DrawingArea):
                        background_color = None, scale = False, keep_aspect = True):
         gtk.DrawingArea.__init__(self)
         if interactive:
-            self.set_flags(gtk.CAN_FOCUS)
-            self.set_events(gtk.gdk.POINTER_MOTION_MASK
-                            | gtk.gdk.LEAVE_NOTIFY_MASK | gtk.gdk.ENTER_NOTIFY_MASK
-                            | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK
-                            | gtk.gdk.SCROLL_MASK
-                            | gtk.gdk.KEY_PRESS_MASK)
+            self.set_can_focus(True)
+            self.set_events(gdk.EventMask.POINTER_MOTION_MASK
+                            | gdk.EventMask.LEAVE_NOTIFY_MASK | gdk.EventMask.ENTER_NOTIFY_MASK
+                            | gdk.EventMask.BUTTON_PRESS_MASK | gdk.EventMask.BUTTON_RELEASE_MASK
+                            | gdk.EventMask.SCROLL_MASK
+                            | gdk.EventMask.KEY_PRESS_MASK)
             self.connect("motion-notify-event", self.__on_mouse_move)
             self.connect("enter-notify-event", self.__on_mouse_enter)
             self.connect("leave-notify-event", self.__on_mouse_leave)
@@ -1727,8 +1730,7 @@ class Scene(Parent, gtk.DrawingArea):
         #: can be overidden by child sprites
         self.default_mouse_cursor = None
 
-        blank_pixmap = gtk.gdk.Pixmap(None, 1, 1, 1)
-        self._blank_cursor = gtk.gdk.Cursor(blank_pixmap, blank_pixmap, gtk.gdk.Color(), gtk.gdk.Color(), 0, 0)
+        self._blank_cursor = gdk.Cursor(gdk.CursorType.BLANK_CURSOR)
 
         self.__previous_mouse_signal_time = None
 
@@ -1761,6 +1763,7 @@ class Scene(Parent, gtk.DrawingArea):
         self._focus_sprite = None # our internal focus management
 
         self.__last_mouse_move = None
+        self.connect("draw", self.on_draw)
 
 
     def __setattr__(self, name, val):
@@ -1840,17 +1843,15 @@ class Scene(Parent, gtk.DrawingArea):
         return self.__drawing_queued
 
 
-    def do_expose_event(self, event):
-        context = self.window.cairo_create()
+    def on_draw(self, scene, context):
+        w, h = self.get_allocated_width(), self.get_allocated_height()
 
         # clip to the visible part
-        context.rectangle(event.area.x, event.area.y,
-                          event.area.width, event.area.height)
         if self.background_color:
+            context.rectangle(0, 0, w, h)
             color = self.colors.parse(self.background_color)
             context.set_source_rgb(*color)
             context.fill_preserve()
-        context.clip()
 
         if self.scale:
             aspect_x = self.width / self._original_width
@@ -1859,7 +1860,7 @@ class Scene(Parent, gtk.DrawingArea):
                 aspect_x = aspect_y = min(aspect_x, aspect_y)
             context.scale(aspect_x, aspect_y)
 
-        self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
+        cursor, self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
 
         # update tweens
         now = dt.datetime.now()
@@ -1957,15 +1958,15 @@ class Scene(Parent, gtk.DrawingArea):
             self._mouse_sprite = over
 
         if cursor is None:
-            cursor = self.default_mouse_cursor or gtk.gdk.ARROW # default
+            cursor = self.default_mouse_cursor or gdk.CursorType.ARROW # default
         elif cursor is False:
             cursor = self._blank_cursor
 
         if self.__last_cursor is None or cursor != self.__last_cursor:
-            if isinstance(cursor, gtk.gdk.Cursor):
-                self.window.set_cursor(cursor)
+            if isinstance(cursor, gdk.Cursor):
+                self.get_window().set_cursor(cursor)
             else:
-                self.window.set_cursor(gtk.gdk.Cursor(cursor))
+                self.get_window().set_cursor(gdk.Cursor(cursor))
 
             self.__last_cursor = cursor
 
@@ -1990,7 +1991,7 @@ class Scene(Parent, gtk.DrawingArea):
 
 
         if self._mouse_down_sprite and self._mouse_down_sprite.interactive \
-           and self._mouse_down_sprite.draggable and gtk.gdk.BUTTON1_MASK & event.state:
+           and self._mouse_down_sprite.draggable and gdk.ModifierType.BUTTON1_MASK & event.state:
             # dragging around
             if not self.__drag_started:
                 drag_started = (self.__drag_start_x is not None and \
@@ -2021,7 +2022,7 @@ class Scene(Parent, gtk.DrawingArea):
             self.emit("on-drag", self._drag_sprite, event)
 
         if self._mouse_sprite:
-            sprite_event = gtk.gdk.Event.copy(event)
+            sprite_event = gdk.Event.copy(event)
             sprite_event.x, sprite_event.y = self._mouse_sprite.from_scene_coords(event.x, event.y)
             self._mouse_sprite._do_mouse_move(sprite_event)
 
@@ -2058,24 +2059,24 @@ class Scene(Parent, gtk.DrawingArea):
         self._mouse_down_sprite = target
 
         # differentiate between the click count!
-        if event.type == gtk.gdk.BUTTON_PRESS:
+        if event.type == gdk.EventType.BUTTON_PRESS:
             self.emit("on-mouse-down", event)
             if target:
-                target_event = gtk.gdk.Event.copy(event)
+                target_event = gdk.Event.copy(event)
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_mouse_down(target_event)
             else:
                 scene._focus_sprite = None  # lose focus if mouse ends up nowhere
-        elif event.type == gtk.gdk._2BUTTON_PRESS:
+        elif event.type == gdk.EventType._2BUTTON_PRESS:
             self.emit("on-double-click", event)
             if target:
-                target_event = gtk.gdk.Event.copy(event)
+                target_event = gdk.Event.copy(event)
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_double_click(target_event)
-        elif event.type == gtk.gdk._3BUTTON_PRESS:
+        elif event.type == gdk.EventType._3BUTTON_PRESS:
             self.emit("on-triple-click", event)
             if target:
-                target_event = gtk.gdk.Event.copy(event)
+                target_event = gdk.Event.copy(event)
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_triple_click(target_event)
 
@@ -2094,7 +2095,7 @@ class Scene(Parent, gtk.DrawingArea):
                                            (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
             if target and target == self._mouse_down_sprite:
-                target_event = gtk.gdk.Event.copy(event)
+                target_event = gdk.Event.copy(event)
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_click(target_event)
 
