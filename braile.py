@@ -7,9 +7,9 @@
 """
 
 import string
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Pango as pango
 from lib import graphics
-import pango
 
 braile_letters = {
     "a": (1,), "b": (1, 2), "c": (1, 4), "d": (1, 4, 5), "e": (1, 5),
@@ -158,7 +158,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(800, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -166,4 +166,6 @@ class BasicWindow:
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

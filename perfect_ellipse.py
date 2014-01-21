@@ -7,7 +7,7 @@
 """
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 import math
 
@@ -46,7 +46,8 @@ class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
-        self.add_child(graphics.Label("Move mouse to change the size of the ellipse", 10, "#666", x = 5, y = 5))
+        self.add_child(graphics.Label("Move mouse to change the size of the ellipse",
+                                      12, "#666", x = 5, y = 5))
 
         self.ellipse = Ellipse(50, 50, 100, 200)
         self.ellipse.pivot_x, self.ellipse.pivot_y = 50, 100 #center
@@ -72,11 +73,13 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

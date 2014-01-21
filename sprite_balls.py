@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
 
-from themes import utils
-
-import gtk, pango
+from gi.repository import Gtk as gtk
 from lib import graphics
-import ui
-from themes import bitmaps, utils
+from themes import utils
 
 import cairo
 
@@ -51,7 +48,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(800, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -61,4 +58,6 @@ class BasicWindow:
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

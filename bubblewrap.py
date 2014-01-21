@@ -5,7 +5,8 @@
 """Punishing cairo for expensive non-pixel-aligned stroking"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 from lib import graphics
 from lib.pytweener import Easing
 import random
@@ -43,7 +44,7 @@ class Scene(graphics.Scene):
     def on_mouse_move(self, scene, event):
         sprite = self.get_sprite_at_position(event.x, event.y)
 
-        if sprite and gtk.gdk.BUTTON1_MASK & event.state:
+        if sprite and gdk.ModifierType.BUTTON1_MASK & event.state:
             if self.paint_color is None:
                 if sprite.fill == "#f00":
                     self.paint_color =  "#aaa"
@@ -83,14 +84,14 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(800, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         vbox = gtk.VBox()
 
         self.scene = Scene()
-        vbox.pack_start(self.scene, True)
+        vbox.pack_start(self.scene, True, True, 0)
 
         self.button = gtk.Button("Cache as bitmap = True")
 
@@ -103,10 +104,12 @@ class BasicWindow:
 
 
         self.button.connect("clicked", on_click)
-        vbox.pack_start(self.button, False)
+        vbox.pack_start(self.button, False, False, 0)
 
         window.add(vbox)
         window.show_all()
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

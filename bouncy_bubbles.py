@@ -12,7 +12,7 @@
  Also added mass to the ball that is equal to the radius.
 """
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 import math
@@ -21,7 +21,7 @@ from random import randint
 
 SPRING = 0.05;
 GRAVITY = 0.03;
-FRICTION = -0.9;
+FRICTION = -0.5;
 
 
 class Ball(graphics.Circle):
@@ -124,8 +124,8 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(600, 200)
+        window = gtk.Window()
+        window.set_size_request(700, 300)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
@@ -133,4 +133,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

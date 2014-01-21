@@ -16,7 +16,7 @@
 """
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from contrib.euclid import Vector2
 from random import random, randint
@@ -92,12 +92,11 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
 
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.set_double_buffered(False) # cheap way how to get to continuous draw!
+        #self.set_double_buffered(False) # cheap way how to get to continuous draw!
 
         self.particles = []
 
         self.particle_count = 40 # these are the flies
-        self.max_path_count = 14   # set this bigger to get longer tails and fry your computer
         self.fade_step = 2         # the smaller is this the "ghostier" it looks (and slower too)
 
         self.target = Boid3()
@@ -131,11 +130,13 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(1000, 650)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

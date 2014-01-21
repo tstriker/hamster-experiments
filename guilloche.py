@@ -6,7 +6,7 @@
     http://ministryoftype.co.uk/words/article/guilloches/
 """
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 import math
@@ -17,9 +17,9 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
 
         self.theta_step = 0.01
-        self.R = 50 # big steps
+        self.R = 60 # big steps
         self.r = 0.08 # little steps
-        self.p = 25 # size of the ring
+        self.p = 35 # size of the ring
         self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
 
@@ -52,15 +52,15 @@ class Scene(graphics.Scene):
 
         context.stroke()
 
-        self.theta_step = self.theta_step -0.0000003
+        self.theta_step = self.theta_step - 0.0000002
         self.redraw()
 
 
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_size_request(500, 500)
+        window = gtk.Window()
+        window.set_size_request(600, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         window.add(Scene())
@@ -69,4 +69,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

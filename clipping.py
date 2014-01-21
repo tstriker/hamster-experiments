@@ -9,7 +9,7 @@ width and the other mouse_x -> window width
 """
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 
@@ -27,7 +27,7 @@ class Scene(graphics.Scene):
         g.rectangle(0, 0, self.mouse_x, self.height)
         g.clip()
         g.move_to(20, 100)
-        g.show_label("Hello", size=180, color="#fff")
+        g.show_label("Hello", font_desc="Sans Serif 150", color="#fff")
 
         g.restore_context()
 
@@ -35,7 +35,7 @@ class Scene(graphics.Scene):
         g.rectangle(self.mouse_x, 0, self.width, self.height)
         g.clip()
         g.move_to(20, 100)
-        g.show_label("Hello", size=180, color="#000")
+        g.show_label("Hello", font_desc="Sans Serif 150", color="#000")
         g.restore_context()
 
         self.redraw()
@@ -47,7 +47,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -55,4 +55,6 @@ class BasicWindow:
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

@@ -5,7 +5,7 @@
 """Base template"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 import cairo
 import struct
@@ -31,17 +31,17 @@ class DropShadow(graphics.Sprite):
 
         # first we will measure extents (lame)
         image_surface = cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)
-        image_context = gtk.gdk.CairoContext(cairo.Context(image_surface))
+        image_context = cairo.Context(image_surface)
         self.original_sprite._draw(image_context)
 
         extents = self.original_sprite.get_extents()
-        width  = int(extents[2] - extents[0]) + 10
-        height = int(extents[3] - extents[1]) + 10
+        width  = int(extents.width) + 10
+        height = int(extents.height) + 10
 
 
         # creating a in-memory image of current context
         image_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-        image_context = gtk.gdk.CairoContext(cairo.Context(image_surface))
+        image_context = cairo.Context(image_surface)
 
 
         self.original_sprite._draw(image_context)
@@ -69,8 +69,8 @@ class DropShadow(graphics.Sprite):
 
 
         extents = self.original_sprite.get_extents()
-        width  = int(extents[2] - extents[0]) + 10
-        height = int(extents[3] - extents[1]) + 10
+        width  = int(extents.width) + 10
+        height = int(extents.height) + 10
 
 
 
@@ -106,7 +106,8 @@ class SomeShape(graphics.Sprite):
         graphics.Sprite.__init__(self, interactive=True, draggable=True)
 
         #self.graphics.circle(25, 25, 15)
-        label = graphics.Label("Drag me around!", 24, "#fff")
+        label = graphics.Label("", 24, "#fff")
+        label.markup = "<b>Drag me around!</b>"
         self.add_child(label)
 
         self.graphics.rectangle(0, 0, label.width, label.height)
@@ -139,7 +140,7 @@ class Scene(graphics.Scene):
 
     def on_sprite_drag(self, scene, sprite, event):
         extents = sprite.get_extents()
-        width, height = extents[2] - extents[0], extents[3] - extents[1]
+        width, height = extents.width, extents.height
 
         sprite.shadow.x = sprite.x + (sprite.x + (width - self.width) / 2.0) / float(self.width) * 8
         sprite.shadow.y = sprite.y + (sprite.y + (height - self.height) / 2.0) / float(self.height) * 8
@@ -148,11 +149,13 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

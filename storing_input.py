@@ -10,7 +10,7 @@
  Ported from processing.js (http://processingjs.org/learning/basic/storinginput)
 """
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from lib.pytweener import Easing
 
@@ -61,7 +61,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(600, 400)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -71,4 +71,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

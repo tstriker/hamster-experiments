@@ -4,9 +4,12 @@
 """ guilloches, following.  observe how detail grows and your cpu melts.
     move mouse horizontally and vertically to change parameters
     http://ministryoftype.co.uk/words/article/guilloches/
+
+    TODO - this is now brokeh, need to find how to get back canvas-like behavior
+    which wouldn't repaint at each frame
 """
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 import colorsys
 import math
@@ -56,7 +59,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(800, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -66,4 +69,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

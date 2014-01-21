@@ -4,7 +4,7 @@
 
 import colorsys
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from lib.pytweener import Easing
 from random import randint
@@ -54,7 +54,7 @@ class Scene(graphics.Scene):
         easing = clicked.easing_method
 
         if clicked.left_side:
-            self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"), fill="#fff000")
+            self.animate(clicked, x = 300, easing = easing.__getattribute__("ease_out"), fill="#0f0")
         else:
             self.animate(clicked, x = 90, easing = easing.__getattribute__("ease_in"), fill="#aaa")
 
@@ -64,7 +64,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(450, 630)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -73,4 +73,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

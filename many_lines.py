@@ -16,7 +16,7 @@
 """
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from random import random
 import collections
@@ -65,7 +65,6 @@ class Scene(graphics.Scene):
         self.paths = collections.deque()
 
         self.particle_count = 50 # these are the flies
-        self.fade_step = 1         # the smaller is this the "ghostier" it looks (and slower too)
 
 
     def on_enter_frame(self, scene, context):
@@ -92,11 +91,13 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(1000, 650)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

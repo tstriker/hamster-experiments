@@ -9,7 +9,8 @@
  This most probably will go into graphics.py eventually.
 """
 
-import gtk, cairo
+from gi.repository import Gtk as gtk
+import cairo
 
 from lib import graphics
 
@@ -124,7 +125,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(640, 516)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -133,4 +134,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

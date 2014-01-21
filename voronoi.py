@@ -7,8 +7,7 @@
  http://www.dr-mikes-maths.com/
 """
 
-
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 import math
@@ -127,14 +126,14 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         self.scene = Scene()
 
         box = gtk.VBox()
-        box.pack_start(self.scene)
+        box.pack_start(self.scene, True, True, 0)
 
         button = gtk.Button("Clear")
         def on_click(*args):
@@ -143,7 +142,7 @@ class BasicWindow:
             self.canvas.redraw()
 
         button.connect("clicked", on_click)
-        box.pack_start(button, False)
+        box.pack_start(button, False, False, 0)
 
 
 
@@ -153,4 +152,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

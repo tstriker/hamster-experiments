@@ -5,7 +5,8 @@
 """Demonstrating pivot_x and pivot_y"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 from lib import graphics
 from contrib import euclid
 
@@ -109,7 +110,7 @@ class Scene(graphics.Scene):
         self.start_rotation = None
 
     def on_mouse_move(self, scene, event):
-        mouse_down = gtk.gdk.BUTTON1_MASK & event.state
+        mouse_down = gdk.ModifierType.BUTTON1_MASK & event.state
         if mouse_down and self.drag_point:
             pivot_x, pivot_y = self.thing.get_matrix().transform_point(self.thing.pivot_x, self.thing.pivot_y)
 
@@ -141,7 +142,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -149,4 +150,6 @@ class BasicWindow:
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

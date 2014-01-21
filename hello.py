@@ -4,7 +4,7 @@
 # Last example from the turorial
 # http://wiki.github.com/tbaugis/hamster_experiments/tutorial
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from lib.pytweener import Easing
 
@@ -19,6 +19,10 @@ class Scene(graphics.Scene):
                                               fill = "#999", stroke="#444", interactive = True))
 
         self.connect("on-mouse-over", self.on_mouse_over)
+        #self.connect("on-enter-frame", self.on_enter_frame)
+
+    def on_enter_frame(self, scene, context):
+        self.redraw()
 
     def on_mouse_over(self, scene, sprite):
         if not sprite: return #ignore blank clicks
@@ -38,4 +42,6 @@ window.set_size_request(640, 480)
 window.connect("delete_event", lambda *args: gtk.main_quit())
 window.add(Scene())
 window.show_all()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()

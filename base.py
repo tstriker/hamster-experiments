@@ -5,7 +5,7 @@
 """Base template"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 class Scene(graphics.Scene):
@@ -24,4 +24,6 @@ class BasicWindow:
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

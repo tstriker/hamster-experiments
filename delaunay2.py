@@ -10,7 +10,7 @@
 """
 
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 from contrib.euclid import Point2, Vector2
 
@@ -283,7 +283,7 @@ class Canvas(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -292,14 +292,14 @@ class BasicWindow:
         window.add(vbox)
 
         box = gtk.HBox()
-        vbox.pack_start(box, False)
+        vbox.pack_start(box, False, False, 0)
 
         self.canvas = Canvas()
-        vbox.pack_start(self.canvas)
+        vbox.add(self.canvas)
 
         box = gtk.HBox(False, 4)
 
-        vbox.pack_start(box, False)
+        vbox.pack_start(box, False, False, 0)
 
         button = gtk.Button("Generate points in centers")
         def on_click(*args):
@@ -315,7 +315,7 @@ class BasicWindow:
 
 
         button.connect("clicked", on_click)
-        box.pack_end(button, False)
+        box.pack_end(button, False, False, 0)
 
         button = gtk.Button("Clear")
         def on_click(*args):
@@ -324,7 +324,7 @@ class BasicWindow:
             self.canvas.redraw()
 
         button.connect("clicked", on_click)
-        box.pack_end(button, False)
+        box.pack_end(button, False, False, 0)
 
 
 
@@ -335,7 +335,7 @@ class BasicWindow:
             self.canvas.redraw()
 
         button.connect("clicked", on_click)
-        box.pack_start(button, False)
+        box.pack_start(button, False, False, 0)
 
 
         window.show_all()
@@ -343,4 +343,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

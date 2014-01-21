@@ -5,7 +5,8 @@
 """Emulating the wheel from apple products"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 from lib import graphics
 from contrib import euclid
 
@@ -50,7 +51,7 @@ class Scene(graphics.Scene):
             self.ticker.animate(opacity=0, duration=0.2)
 
     def on_mouse_move(self, scene, event):
-        mouse_down = gtk.gdk.BUTTON1_MASK & event.state
+        mouse_down = gdk.ModifierType.BUTTON1_MASK & event.state
         if not mouse_down:
             return
         sprite = self.get_sprite_at_position(event.x, event.y)
@@ -95,18 +96,20 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(240, 280)
         window.set_title("iThing")
         window.connect("delete_event", lambda *args: gtk.main_quit())
         vbox = gtk.VBox()
 
         progress_bar = gtk.ProgressBar()
-        vbox.pack_start(Scene(progress_bar), True)
-        vbox.pack_start(progress_bar, False)
+        vbox.pack_start(Scene(progress_bar), True, True, 0)
+        vbox.pack_start(progress_bar, False, False, 0)
         window.add(vbox)
         window.show_all()
 
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

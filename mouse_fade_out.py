@@ -10,9 +10,7 @@
     still this example teaches something too.
 """
 
-import colorsys
-
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 class Scene(graphics.Scene):
@@ -25,6 +23,7 @@ class Scene(graphics.Scene):
         self.radius = 30
         self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-enter-frame", self.on_enter_frame)
+        self.fade_tick = 0
 
 
     def on_mouse_move(self, area, event):
@@ -47,9 +46,12 @@ class Scene(graphics.Scene):
                             y - self.radius,
                             self.radius * 2,
                             self.radius * 2, 3)
+            #print alpha
             g.fill("#999", alpha)
 
-        if len(self.coords) > 1:
+        self.fade_tick += 1
+        if len(self.coords) > 1 and self.fade_tick > 2:
+            self.fade_tick = 0
             self.coords.pop(-1)
 
         self.redraw() # constant redraw (maintaining the requested frame rate)
@@ -57,7 +59,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(300, 300)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -67,4 +69,6 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

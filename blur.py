@@ -15,7 +15,7 @@
  one has to unpack structures, which again is tad expensive.
 """
 
-import gtk
+from gi.repository import Gtk as gtk
 from lib import graphics
 import math
 import random
@@ -144,22 +144,15 @@ class Canvas(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(200, 200)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-
-        canvas = Canvas()
-
-        box = gtk.VBox()
-        box.pack_start(canvas)
-
-
-
-
-        window.add(box)
+        window.add(Canvas())
         window.show_all()
 
 
 if __name__ == "__main__":
     example = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()
