@@ -623,15 +623,15 @@ class GlobalShortcuts(object):
             for item in items:
                 if item.mnemonic and self._check_mnemonic(item.mnemonic, event):
                     item._do_mnemonic_activated(event)
-                    self._pressed_key = chr(event.keyval).lower()
+                    self._pressed_key = chr(event.keyval).lower() if chr < 256 else event.keyval
                     return #grab the first and go home. TODO - we are doing depth-first. consider doing width-first
 
 
     def on_key_release(self, target, event):
         if not event.string:
             return
-
-        if chr(event.keyval).lower() == self._pressed_key:
+        event_key = chr(event.keyval).lower() if chr < 256 else event.keyval
+        if event_key == self._pressed_key:
             self._pressed_key = None
 
 
