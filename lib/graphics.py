@@ -548,7 +548,7 @@ class Graphics(object):
                     x = args[1] if len(args) > 1 else 0
                     y = args[2] if len(args) > 2 else 0
                     self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
-                    self._clip()
+                    self._clip(context)
 
                 if instruction == self._paint and opacity < 1:
                     context.paint_with_alpha(opacity)
@@ -1030,7 +1030,7 @@ class Sprite(Parent, gobject.GObject):
 
                 for ext in clip_regions:
                     ext = get_gdk_rectangle(int(ext[0]), int(ext[1]), int(ext[2] - ext[0]), int(ext[3] - ext[1]))
-                    clip_extents = (clip_extents or ext).intersect(ext)
+                    intersect, clip_extents = gdk.rectangle_intersect((clip_extents or ext), ext)
 
         context.transform(self.get_local_matrix())
 
@@ -1047,7 +1047,7 @@ class Sprite(Parent, gobject.GObject):
         ext = get_gdk_rectangle(int(ext[0]), int(ext[1]),
                                 int(ext[2] - ext[0]), int(ext[3] - ext[1]))
         if clip_extents:
-            ext = clip_extents.intersect(ext)
+            intersect, ext = gdk.rectangle_intersect(clip_extents, ext)
 
         if not ext.width and not ext.height:
             ext = None
@@ -1478,7 +1478,7 @@ class Label(Sprite):
 
         if self.wrap is not None:
             layout.set_wrap(self.wrap)
-            layout.set_ellipsize(pango.ELLIPSIZE_NONE)
+            layout.set_ellipsize(pango.EllipsizeMode.NONE)
         else:
             layout.set_ellipsize(self.ellipsize or pango.EllipsizeMode.END)
 
@@ -1512,7 +1512,7 @@ class Label(Sprite):
             # when max width is specified and we are told to align in center
             # do that (the pango instruction takes care of aligning within
             # the lines of the text)
-            if self.alignment == pango.ALIGN_CENTER:
+            if self.alignment == pango.Alignment.CENTER:
                 self.graphics.move_to(-(self.max_width - self.width)/2, 0)
 
         bounds_width = max_width or self._bounds_width or -1
