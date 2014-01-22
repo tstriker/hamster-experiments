@@ -20,8 +20,8 @@ from random import randint
 
 
 SPRING = 0.05;
-GRAVITY = 0.03;
-FRICTION = -0.5;
+GRAVITY = 0.1;
+FRICTION = -0.3;
 
 
 class Ball(graphics.Circle):
