@@ -331,20 +331,20 @@ class Entry(Bin):
         elif key == gdk.KEY_Up and self.single_paragraph == False:
             iter = self._get_iter(self.cursor_position)
 
-            if str(iter.get_line()) != str(self.display_label._test_layout.get_line(0)):
-                char_pos = iter.get_char_extents()[0]
-                char_line = str(iter.get_line())
+            if str(iter.get_line_readonly()) != str(self.display_label._test_layout.get_line_readonly(0)):
+                char_pos = iter.get_char_extents().x
+                char_line = str(iter.get_line_readonly())
 
                 # now we run again to run until previous line
                 prev_iter, iter = self._get_iter(), self._get_iter()
                 prev_line = None
-                while str(iter.get_line()) != char_line:
-                    if str(prev_line) != str(iter.get_line()):
+                while str(iter.get_line_readonly()) != char_line:
+                    if str(prev_line) != str(iter.get_line_readonly()):
                         prev_iter = iter.copy()
-                        prev_line = iter.get_line()
+                        prev_line = iter.get_line_readonly()
                     iter.next_char()
 
-                index = prev_iter.get_line().x_to_index(char_pos - prev_iter.get_char_extents()[0])
+                index = prev_iter.get_line_readonly().x_to_index(char_pos - prev_iter.get_char_extents().x)
                 index = index[1] + index[2]
 
                 self.cursor_position = index
@@ -360,10 +360,10 @@ class Entry(Bin):
 
         elif key == gdk.KEY_Down and self.single_paragraph == False:
             iter = self._get_iter(self.cursor_position)
-            char_pos = iter.get_char_extents()[0]
+            char_pos = iter.get_char_extents().x
 
             if iter.next_line():
-                index = iter.get_line().x_to_index(char_pos - iter.get_char_extents()[0])
+                index = iter.get_line_readonly().x_to_index(char_pos - iter.get_char_extents().x)
                 index = index[1] + index[2]
                 self.cursor_position = index
 
@@ -384,18 +384,18 @@ class Entry(Bin):
                     self.selection_start = self.cursor_position
             else:
                 iter = self._get_iter(self.cursor_position)
-                line = str(iter.get_line())
+                line = str(iter.get_line_readonly())
 
                 # find the start of the line
                 iter = self._get_iter()
-                while str(iter.get_line()) != line:
+                while str(iter.get_line_readonly()) != line:
                     iter.next_char()
                 self.cursor_position = iter.get_index()
 
                 if shift:
                     start_iter = self._get_iter(self.selection_start)
                     end_iter = self._get_iter(self.selection_end)
-                    if str(start_iter.get_line()) == str(end_iter.get_line()):
+                    if str(start_iter.get_line_readonly()) == str(end_iter.get_line_readonly()):
                         self.selection_end = self.selection_start
                         self.selection_start = self.cursor_position
                     else:
@@ -414,10 +414,10 @@ class Entry(Bin):
                 iter = self._get_iter(self.cursor_position)
 
                 #find the end of the line
-                line = str(iter.get_line())
+                line = str(iter.get_line_readonly())
                 prev_iter = None
 
-                while str(iter.get_line()) == line:
+                while str(iter.get_line_readonly()) == line:
                     prev_iter = iter.copy()
                     moved = iter.next_char()
                     if not moved:
@@ -429,7 +429,7 @@ class Entry(Bin):
                 if shift:
                     start_iter = self._get_iter(self.selection_start)
                     end_iter = self._get_iter(self.selection_end)
-                    if str(start_iter.get_line()) == str(end_iter.get_line()):
+                    if str(start_iter.get_line_readonly()) == str(end_iter.get_line_readonly()):
                         self.selection_start = self.selection_end
                         self.selection_end = self.cursor_position
                     else:
@@ -566,29 +566,30 @@ class Entry(Bin):
         iter = self._get_iter(self.selection_start)
 
         char_exts = iter.get_char_extents()
-        cur_x, cur_y = char_exts[0] / pango.SCALE, char_exts[1] / pango.SCALE + self.display_label.y
+        cur_x, cur_y = char_exts.x / pango.SCALE, char_exts.y / pango.SCALE + self.display_label.y
 
         cur_line = None
         for i in range(self.selection_end - self.selection_start):
             prev_iter = pango.LayoutIter.copy(iter)
             iter.next_char()
 
-            line = iter.get_line()
+            line = iter.get_line_readonly()
             if str(cur_line) != str(line): # can't compare layout lines for some reason
-                char_exts = [ext / pango.SCALE for ext in prev_iter.get_char_extents()]
+                exts = prev_iter.get_char_extents()
+                char_exts = [ext / pango.SCALE for ext in (exts.x, exts.y, exts.width, exts.height)]
                 viewport.graphics.rectangle(cur_x + self.display_label.x, cur_y,
                                             char_exts[0] + char_exts[2] - cur_x, char_exts[3])
 
                 char_exts = iter.get_char_extents()
-                cur_x, cur_y = char_exts[0] / pango.SCALE, char_exts[1] / pango.SCALE + self.display_label.y
+                cur_x, cur_y = char_exts.x / pango.SCALE, char_exts.y / pango.SCALE + self.display_label.y
 
             cur_line = line
 
-        char_exts = [ext / pango.SCALE for ext in iter.get_char_extents()]
+        exts = iter.get_char_extents()
+        char_exts = [ext / pango.SCALE for ext in  (exts.x, exts.y, exts.width, exts.height)]
+
         viewport.graphics.rectangle(cur_x + self.display_label.x, cur_y,
                                     char_exts[0] - cur_x, self.display_label.y + char_exts[1] - cur_y + char_exts[3])
-
-
         viewport.graphics.fill(self.selection_color)
 
 
