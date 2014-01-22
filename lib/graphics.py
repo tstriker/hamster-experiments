@@ -596,6 +596,18 @@ class Graphics(object):
 
 class Parent(object):
     """shared functions across scene and sprite"""
+
+    def find(self, id):
+        """breadth-first sprite search by ID"""
+        for sprite in self.sprites:
+            if sprite.id == id:
+                return sprite
+
+        for sprite in self.sprites:
+            found = sprite.find(id)
+            if found:
+                return found
+
     def traverse(self, attr_name = None, attr_value = None):
         """traverse the whole sprite tree and return child sprites which have the
         attribute and it's set to the specified value.
@@ -878,6 +890,11 @@ class Sprite(Parent, gobject.GObject):
 
 
     def __setattr__(self, name, val):
+        if isinstance(getattr(type(self), name, None), property) and \
+           getattr(type(self), name).fset is not None:
+            getattr(type(self), name).fset(self, val)
+            return
+
         if self.__dict__.get(name, "hamster_graphics_no_value_really") == val:
             return
         self.__dict__[name] = val
@@ -1588,11 +1605,15 @@ class Polygon(Sprite):
         self.connect("on-render", self.on_render)
 
     def on_render(self, sprite):
-        if not self.points: return
+        if not self.points:
+            self.graphics.clear()
+            return
 
         self.graphics.move_to(*self.points[0])
         self.graphics.line_to(self.points)
-        self.graphics.close_path()
+
+        if self.fill:
+            self.graphics.close_path()
 
         self.graphics.fill_stroke(self.fill, self.stroke, line_width = self.line_width)
 
