@@ -50,7 +50,7 @@ class Scene(graphics.Scene):
         self.connect("on-mouse-move", self.on_mouse_move)
 
     def on_mouse_move(self, scene, event):
-        if gtk.gdk.BUTTON1_MASK & event.state:
+        if gdk.ModifierType.BUTTON1_MASK & event.state:
             # rotate and scale on mouse
             base_angle = math.pi * 2 * ((self.width / 2 - event.x) / self.width) / 3
             distance_scale = math.sqrt((self.width / 2 - event.x) ** 2 + (self.height / 2 - event.y) ** 2) \
