@@ -100,6 +100,7 @@ def get_gdk_rectangle(x, y, w, h):
     rect.x, rect.y, rect.width, rect.height = x or 0, y or 0, w or 0, h or 0
     return rect
 
+
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
        operations on context instantly. Otherwise queues up the drawing
@@ -133,157 +134,106 @@ class Graphics(object):
         self.__instruction_cache = []
         self.paths = []
 
-    @staticmethod
-    def _stroke(context): context.stroke()
-    def stroke(self, color = None, alpha = 1):
-        if color or alpha < 1:self.set_color(color, alpha)
-        self._add_instruction(self._stroke,)
+    def stroke(self, color=None, alpha=1):
+        if color or alpha < 1:
+            self.set_color(color, alpha)
+        self._add_instruction("stroke")
 
-    @staticmethod
-    def _fill(context): context.fill()
     def fill(self, color = None, alpha = 1):
-        if color or alpha < 1:self.set_color(color, alpha)
-        self._add_instruction(self._fill,)
+        if color or alpha < 1:
+            self.set_color(color, alpha)
+        self._add_instruction("fill")
 
-    @staticmethod
-    def _mask(context, pattern): context.mask(pattern)
     def mask(self, pattern):
-        self._add_instruction(self._mask, pattern)
+        self._add_instruction("mask", pattern)
 
-    @staticmethod
-    def _stroke_preserve(context): context.stroke_preserve()
     def stroke_preserve(self, color = None, alpha = 1):
-        if color or alpha < 1:self.set_color(color, alpha)
-        self._add_instruction(self._stroke_preserve,)
+        if color or alpha < 1:
+            self.set_color(color, alpha)
+        self._add_instruction("stroke_preserve")
 
-    @staticmethod
-    def _fill_preserve(context): context.fill_preserve()
     def fill_preserve(self, color = None, alpha = 1):
-        if color or alpha < 1:self.set_color(color, alpha)
-        self._add_instruction(self._fill_preserve,)
+        if color or alpha < 1:
+            self.set_color(color, alpha)
+        self._add_instruction("fill_preserve")
 
-    @staticmethod
-    def _new_path(context): context.new_path()
     def new_path(self):
-        self._add_instruction(self._new_path,)
+        self._add_instruction("new_path")
 
-    @staticmethod
-    def _paint(context): context.paint()
     def paint(self):
-        self._add_instruction(self._paint,)
+        self._add_instruction("paint")
 
-    @staticmethod
-    def _set_font_face(context, face): context.set_font_face(face)
     def set_font_face(self, face):
-        self._add_instruction(self._set_font_face, face)
+        self._add_instruction("set_font_face", face)
 
-    @staticmethod
-    def _set_font_size(context, size): context.set_font_size(size)
     def set_font_size(self, size):
-        self._add_instruction(self._set_font_size, size)
+        self._add_instruction("set_font_size", size)
 
-    @staticmethod
-    def _set_source(context, image):
-        context.set_source(image)
     def set_source(self, image, x = 0, y = 0):
-        self._add_instruction(self._set_source, image)
+        self._add_instruction("set_source", image)
 
-    @staticmethod
-    def _set_source_surface(context, surface, x, y):
-        context.set_source_surface(surface, x, y)
     def set_source_surface(self, surface, x = 0, y = 0):
-        self._add_instruction(self._set_source_surface, surface, x, y)
+        self._add_instruction("set_source_surface", surface, x, y)
 
-    @staticmethod
-    def _set_source_pixbuf(context, pixbuf, x, y):
-        context.set_source_pixbuf(pixbuf, x, y)
     def set_source_pixbuf(self, pixbuf, x = 0, y = 0):
-        self._add_instruction(self._set_source_pixbuf, pixbuf, x, y)
+        self._add_instruction("set_source_pixbuf", pixbuf, x, y)
 
-    @staticmethod
-    def _save_context(context): context.save()
     def save_context(self):
-        self._add_instruction(self._save_context)
+        self._add_instruction("save")
 
-    @staticmethod
-    def _restore_context(context): context.restore()
     def restore_context(self):
-        self._add_instruction(self._restore_context)
+        self._add_instruction("restore")
 
-
-    @staticmethod
-    def _clip(context): context.clip()
     def clip(self):
-        self._add_instruction(self._clip)
+        self._add_instruction("clip")
 
-    @staticmethod
-    def _rotate(context, radians): context.rotate(radians)
     def rotate(self, radians):
-        self._add_instruction(self._rotate, radians)
+        self._add_instruction("rotate", radians)
 
-    @staticmethod
-    def _translate(context, x, y): context.translate(x, y)
     def translate(self, x, y):
-        self._add_instruction(self._translate, x, y)
+        self._add_instruction("translate", x, y)
 
-    @staticmethod
-    def _scale(context, x_factor, y_factor): context.scale(x_factor, y_factor)
     def scale(self, x_factor, y_factor):
-        self._add_instruction(self._scale, x_factor, y_factor)
+        self._add_instruction("scale", x_factor, y_factor)
 
-    @staticmethod
-    def _move_to(context, x, y): context.move_to(x, y)
     def move_to(self, x, y):
-        self._add_instruction(self._move_to, x, y)
+        self._add_instruction("move_to", x, y)
 
-    @staticmethod
-    def _line_to(context, x, y): context.line_to(x, y)
     def line_to(self, x, y = None):
         if y is not None:
-            self._add_instruction(self._line_to, x, y)
+            self._add_instruction("line_to", x, y)
         elif isinstance(x, list) and y is None:
             for x2, y2 in x:
-                self._add_instruction(self._line_to, x2, y2)
+                self._add_instruction("line_to", x2, y2)
 
 
-    @staticmethod
-    def _rel_line_to(context, x, y): context.rel_line_to(x, y)
     def rel_line_to(self, x, y = None):
         if x is not None and y is not None:
-            self._add_instruction(self._rel_line_to, x, y)
+            self._add_instruction("rel_line_to", x, y)
         elif isinstance(x, list) and y is None:
             for x2, y2 in x:
-                self._add_instruction(self._rel_line_to, x2, y2)
+                self._add_instruction("rel_line_to", x2, y2)
 
-
-    @staticmethod
-    def _curve_to(context, x, y, x2, y2, x3, y3):
-        context.curve_to(x, y, x2, y2, x3, y3)
     def curve_to(self, x, y, x2, y2, x3, y3):
         """draw a curve. (x2, y2) is the middle point of the curve"""
-        self._add_instruction(self._curve_to, x, y, x2, y2, x3, y3)
+        self._add_instruction("curve_to", x, y, x2, y2, x3, y3)
 
-    @staticmethod
-    def _close_path(context): context.close_path()
     def close_path(self):
-        self._add_instruction(self._close_path,)
-
-    @staticmethod
-    def _set_line_width(context, width):
-        context.set_line_width(width)
-    @staticmethod
-    def _set_dash(context, dash, dash_offset = 0):
-        context.set_dash(dash, dash_offset)
+        self._add_instruction("close_path")
 
     def set_line_style(self, width = None, dash = None, dash_offset = 0):
         """change width and dash of a line"""
         if width is not None:
-            self._add_instruction(self._set_line_width, width)
+            self._add_instruction("set_line_width", width)
 
         if dash is not None:
-            self._add_instruction(self._set_dash, dash, dash_offset)
+            self._add_instruction("set_dash", dash, dash_offset)
+
+
 
     def _set_color(self, context, r, g, b, a):
+        """the alpha has to changed based on the parent, so that happens at the
+        time of drawing"""
         if a < 1:
             context.set_source_rgba(r, g, b, a)
         else:
@@ -300,18 +250,16 @@ class Graphics(object):
         if len(color) == 4 and alpha is None:
             alpha = color[3]
         r, g, b = color[:3]
-        self._add_instruction(self._set_color, r, g, b, alpha)
+        self._add_instruction("set_color", r, g, b, alpha)
 
-    @staticmethod
-    def _arc(context, x, y, radius, start_angle, end_angle):
-        context.arc(x, y, radius, start_angle, end_angle)
+
     def arc(self, x, y, radius, start_angle, end_angle):
         """draw arc going counter-clockwise from start_angle to end_angle"""
-        self._add_instruction(self._arc, x, y, radius, start_angle, end_angle)
+        self._add_instruction("arc", x, y, radius, start_angle, end_angle)
 
     def circle(self, x, y, radius):
         """draw circle"""
-        self._add_instruction(self._arc, x, y, radius, 0, math.pi * 2)
+        self._add_instruction("arc", x, y, radius, 0, math.pi * 2)
 
     def ellipse(self, x, y, width, height, edges = None):
         """draw 'perfect' ellipse, opposed to squashed circle. works also for
@@ -335,38 +283,17 @@ class Graphics(object):
             self.line_to(p_x - min_x + x, p_y - min_y + y)
         self.line_to(points[0][0] - min_x + x, points[0][1] - min_y + y)
 
-
-    @staticmethod
-    def _arc_negative(context, x, y, radius, start_angle, end_angle):
-        context.arc_negative(x, y, radius, start_angle, end_angle)
     def arc_negative(self, x, y, radius, start_angle, end_angle):
         """draw arc going clockwise from start_angle to end_angle"""
-        self._add_instruction(self._arc_negative, x, y, radius, start_angle, end_angle)
+        self._add_instruction("arc_negative", x, y, radius, start_angle, end_angle)
 
-    @staticmethod
-    def _rounded_rectangle(context, x, y, x2, y2, corner_radius):
-        if isinstance(corner_radius, (int, float)):
-            corner_radius = [corner_radius] * 4
-
-        context.move_to(x + corner_radius[0], y)
-        context.line_to(x2 - corner_radius[1], y)
-        context.curve_to(x2 - corner_radius[1] / 2, y, x2, y + corner_radius[1] / 2, x2, y + corner_radius[1])
-        context.line_to(x2, y2 - corner_radius[2])
-        context.curve_to(x2, y2 - corner_radius[2] / 2, x2 - corner_radius[2] / 2, y2, x2 - corner_radius[2], y2)
-        context.line_to(x + corner_radius[3], y2)
-        context.curve_to(x + corner_radius[3] / 2, y2, x, y2 - corner_radius[3] / 2, x, y2 - corner_radius[3])
-        context.line_to(x, y + corner_radius[0])
-        context.curve_to(x, y + corner_radius[0] / 2, x + corner_radius[0] / 2, y, x + corner_radius[0], y)
-
-    @staticmethod
-    def _rectangle(context, x, y, w, h): context.rectangle(x, y, w, h)
     def rectangle(self, x, y, width, height, corner_radius = 0):
         """draw a rectangle. if corner_radius is specified, will draw
         rounded corners. corner_radius can be either a number or a tuple of
         four items to specify individually each corner, starting from top-left
         and going clockwise"""
         if corner_radius <= 0:
-            self._add_instruction(self._rectangle, x, y, width, height)
+            self._add_instruction("rectangle", x, y, width, height)
             return
 
         # convert into 4 border and  make sure that w + h are larger than 2 * corner_radius
@@ -375,13 +302,27 @@ class Graphics(object):
         corner_radius = [min(r, min(width, height) / 2) for r in corner_radius]
 
         x2, y2 = x + width, y + height
-        self._add_instruction(self._rounded_rectangle, x, y, x2, y2, corner_radius)
+        self._rounded_rectangle(x, y, x2, y2, corner_radius)
+
+    def _rounded_rectangle(self, x, y, x2, y2, corner_radius):
+        if isinstance(corner_radius, (int, float)):
+            corner_radius = [corner_radius] * 4
+
+        self._add_instruction("move_to", x + corner_radius[0], y)
+        self._add_instruction("line_to", x2 - corner_radius[1], y)
+        self._add_instruction("curve_to", x2 - corner_radius[1] / 2, y, x2, y + corner_radius[1] / 2, x2, y + corner_radius[1])
+        self._add_instruction("line_to", x2, y2 - corner_radius[2])
+        self._add_instruction("curve_to", x2, y2 - corner_radius[2] / 2, x2 - corner_radius[2] / 2, y2, x2 - corner_radius[2], y2)
+        self._add_instruction("line_to", x + corner_radius[3], y2)
+        self._add_instruction("curve_to", x + corner_radius[3] / 2, y2, x, y2 - corner_radius[3] / 2, x, y2 - corner_radius[3])
+        self._add_instruction("line_to", x, y + corner_radius[0])
+        self._add_instruction("curve_to", x, y + corner_radius[0] / 2, x + corner_radius[0] / 2, y, x + corner_radius[0], y)
+
 
     def fill_area(self, x, y, width, height, color, opacity = 1):
         """fill rectangular area with specified color"""
         self.rectangle(x, y, width, height)
         self.fill(color, opacity)
-
 
     def fill_stroke(self, fill = None, stroke = None, opacity = 1, line_width = None):
         """fill and stroke the drawn area in one go"""
@@ -394,25 +335,6 @@ class Graphics(object):
 
         if stroke:
             self.stroke(stroke)
-
-
-    @staticmethod
-    def _show_layout(context, layout, text, font_desc, alignment, width, wrap,
-                     ellipsize, single_paragraph_mode):
-        layout.set_font_description(font_desc)
-        layout.set_markup(text)
-        layout.set_width(int(width or -1))
-        layout.set_single_paragraph_mode(single_paragraph_mode)
-        if alignment is not None:
-            layout.set_alignment(alignment)
-
-        if width > 0:
-            if wrap is not None:
-                layout.set_wrap(wrap)
-            else:
-                layout.set_ellipsize(ellipsize or pango.EllipsizeMode.END)
-
-        pangocairo.show_layout(context, layout)
 
     def create_layout(self, size = None):
         """utility function to create layout with the default font. Size and
@@ -430,7 +352,6 @@ class Graphics(object):
         layout.set_font_description(font_desc)
         return layout
 
-
     def show_label(self, text, size = None, color = None, font_desc = None):
         """display text. unless font_desc is provided, will use system's default font"""
         font_desc = pango.FontDescription(font_desc or gtk.Style().font_desc.to_string())
@@ -438,17 +359,30 @@ class Graphics(object):
         if size: font_desc.set_absolute_size(size * pango.SCALE)
         self.show_layout(text, font_desc)
 
-
-    @staticmethod
-    def _show_text(context, text): context.show_text(text)
     def show_text(self, text):
-        self._add_instruction(self._show_text, text)
+        self._add_instruction("show_text", text)
 
-    @staticmethod
-    def _text_path(context, text): context.text_path(text)
     def text_path(self, text):
         """this function is most likely to change"""
-        self._add_instruction(self._text_path, text)
+        self._add_instruction("text_path", text)
+
+    def _show_layout(self, context, layout, text, font_desc, alignment, width, wrap,
+                     ellipsize, single_paragraph_mode):
+        layout.set_font_description(font_desc)
+        layout.set_markup(text)
+        layout.set_width(int(width or -1))
+        layout.set_single_paragraph_mode(single_paragraph_mode)
+        if alignment is not None:
+            layout.set_alignment(alignment)
+
+        if width > 0:
+            if wrap is not None:
+                layout.set_wrap(wrap)
+            else:
+                layout.set_ellipsize(ellipsize or pango.EllipsizeMode.END)
+
+        pangocairo.show_layout(context, layout)
+
 
     def show_layout(self, text, font_desc, alignment = pango.Alignment.LEFT,
                     width = -1, wrap = None, ellipsize = None,
@@ -458,12 +392,18 @@ class Graphics(object):
            a class:Label object
         """
         layout = self._cache_layout = self._cache_layout or pangocairo.create_layout(cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0)))
-        self._add_instruction(self._show_layout, layout, text, font_desc,
+        self._add_instruction("show_layout", layout, text, font_desc,
                               alignment, width, wrap, ellipsize, single_paragraph_mode)
+
 
     def _add_instruction(self, function, *params):
         if self.context:
-            function(self.context, *params)
+            if function == "set_color":
+                self._set_color(self.context, *params)
+            elif function == "show_layout":
+                self._show_layout(self.context, *params)
+            else:
+                getattr(self.context, function)(*params)
         else:
             self.paths = None
             self.__new_instructions.append((function, params))
@@ -473,7 +413,7 @@ class Graphics(object):
         """draw accumulated instructions in context"""
 
         # if we have been moved around, we should update bounds
-        fresh_draw = self.__new_instructions is not None and len(self.__new_instructions) > 0
+        fresh_draw = len(self.__new_instructions or []) > 0
         if fresh_draw: #new stuff!
             self.paths = []
             self.__instruction_cache = self.__new_instructions
@@ -484,19 +424,20 @@ class Graphics(object):
 
         for instruction, args in self.__instruction_cache:
             if fresh_draw:
-                if instruction in (self._new_path, self._stroke, self._fill, self._clip):
+                if instruction in ("new_path", "stroke", "fill", "clip"):
                     self.paths.append((instruction, "path", context.copy_path()))
 
-                elif instruction in (self._save_context, self._restore_context,
-                                     self._translate, self._scale, self._rotate):
+                elif instruction in ("save", "restore", "translate", "scale", "rotate"):
                     self.paths.append((instruction, "transform", args))
 
-            if opacity < 1 and instruction == self._set_color:
+            if instruction == "set_color":
                 self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-            elif opacity < 1 and instruction == self._paint:
+            elif instruction == "show_layout":
+                self._show_layout(context, *args)
+            elif opacity < 1 and instruction == "paint":
                 context.paint_with_alpha(opacity)
             else:
-                instruction(context, *args)
+                getattr(context, instruction)(*args)
 
 
 
@@ -509,79 +450,7 @@ class Graphics(object):
         matrix_changed = matrix != self._last_matrix
         new_instructions = self.__new_instructions is not None and len(self.__new_instructions) > 0
 
-        if new_instructions or matrix_changed:
-            if new_instructions:
-                self.__instruction_cache = list(self.__new_instructions)
-                self.__new_instructions = deque()
-
-            self.paths = []
-            self.extents = None
-
-            if not self.__instruction_cache:
-                # no instructions - nothing to do
-                return
-
-            # instructions that end path
-            path_end_instructions = (self._new_path, self._clip, self._stroke, self._fill, self._stroke_preserve, self._fill_preserve)
-
-            # measure the path extents so we know the size of cache surface
-            # also to save some time use the context to paint for the first time
-            extents = gdk.Rectangle()
-            for instruction, args in self.__instruction_cache:
-                if instruction in path_end_instructions:
-                    self.paths.append((instruction, "path", context.copy_path()))
-                    exts = context.path_extents()
-                    exts = get_gdk_rectangle(int(exts[0]), int(exts[1]),
-                                             int(exts[2]-exts[0]), int(exts[3]-exts[1]))
-                    if extents.width and extents.height:
-                        extents = gdk.rectangle_union(extents, exts)
-                    else:
-                        extents = exts
-                elif instruction in (self._save_context, self._restore_context,
-                                     self._translate, self._scale, self._rotate):
-                    self.paths.append((instruction, "transform", args))
-
-
-                if instruction in (self._set_source_pixbuf, self._set_source_surface):
-                    # draw a rectangle around the pathless instructions so that the extents are correct
-                    pixbuf = args[0]
-                    x = args[1] if len(args) > 1 else 0
-                    y = args[2] if len(args) > 2 else 0
-                    self._rectangle(context, x, y, pixbuf.get_width(), pixbuf.get_height())
-                    self._clip(context)
-
-                if instruction == self._paint and opacity < 1:
-                    context.paint_with_alpha(opacity)
-                elif instruction == self._set_color and opacity < 1:
-                    self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
-                else:
-                    instruction(context, *args)
-
-
-            # avoid re-caching if we have just moved
-            just_transforms = new_instructions == False and \
-                              matrix and self._last_matrix \
-                              and all([matrix[i] == self._last_matrix[i] for i in range(4)])
-
-            # TODO - this does not look awfully safe
-            extents.x += matrix[4]
-            extents.y += matrix[5]
-            self.extents = extents
-
-            if not just_transforms:
-                # now draw the instructions on the caching surface
-                w = int(extents.width) + 1
-                h = int(extents.height) + 1
-                self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
-                ctx = cairo.Context(self.cache_surface)
-                ctx.translate(-extents.x, -extents.y)
-
-                ctx.transform(matrix)
-                for instruction, args in self.__instruction_cache:
-                    instruction(ctx, *args)
-
-            self._last_matrix = matrix
-        else:
+        if not new_instructions and not matrix_changed:
             context.save()
             context.identity_matrix()
             context.translate(self.extents.x, self.extents.y)
@@ -591,7 +460,86 @@ class Graphics(object):
             else:
                 context.paint()
             context.restore()
+            return
 
+
+        if new_instructions:
+            self.__instruction_cache = list(self.__new_instructions)
+            self.__new_instructions = deque()
+
+        self.paths = []
+        self.extents = None
+
+        if not self.__instruction_cache:
+            # no instructions - nothing to do
+            return
+
+        # instructions that end path
+        path_end_instructions = ("new_path", "clip", "stroke", "fill", "stroke_preserve", "fill_preserve")
+
+        # measure the path extents so we know the size of cache surface
+        # also to save some time use the context to paint for the first time
+        extents = gdk.Rectangle()
+        for instruction, args in self.__instruction_cache:
+            if instruction in path_end_instructions:
+                self.paths.append((instruction, "path", context.copy_path()))
+                exts = context.path_extents()
+                exts = get_gdk_rectangle(int(exts[0]), int(exts[1]),
+                                         int(exts[2]-exts[0]), int(exts[3]-exts[1]))
+                if extents.width and extents.height:
+                    extents = gdk.rectangle_union(extents, exts)
+                else:
+                    extents = exts
+            elif instruction in ("save", "restore", "translate", "scale", "rotate"):
+                self.paths.append((instruction, "transform", args))
+
+
+            if instruction in ("set_source_pixbuf", "set_source_surface"):
+                # draw a rectangle around the pathless instructions so that the extents are correct
+                pixbuf = args[0]
+                x = args[1] if len(args) > 1 else 0
+                y = args[2] if len(args) > 2 else 0
+                context.rectangle(x, y, pixbuf.get_width(), pixbuf.get_height())
+                context.clip()
+
+            if instruction == "paint" and opacity < 1:
+                context.paint_with_alpha(opacity)
+            elif instruction == "set_color":
+                self._set_color(context, args[0], args[1], args[2], args[3] * opacity)
+            elif instruction == "show_layout":
+                self._show_layout(context, *args)
+            else:
+                getattr(context, instruction)(*args)
+
+
+        # avoid re-caching if we have just moved
+        just_transforms = new_instructions == False and \
+                          matrix and self._last_matrix \
+                          and all([matrix[i] == self._last_matrix[i] for i in range(4)])
+
+        # TODO - this does not look awfully safe
+        extents.x += matrix[4] - 5
+        extents.y += matrix[5] - 5
+        self.extents = extents
+
+        if not just_transforms:
+            # now draw the instructions on the caching surface
+            w = int(extents.width) + 10
+            h = int(extents.height) + 10
+            self.cache_surface = context.get_target().create_similar(cairo.CONTENT_COLOR_ALPHA, w, h)
+            ctx = cairo.Context(self.cache_surface)
+            ctx.translate(-extents.x, -extents.y)
+
+            ctx.transform(matrix)
+            for instruction, args in self.__instruction_cache:
+                if instruction == "set_color":
+                    self._set_color(ctx, args[0], args[1], args[2], args[3] * opacity)
+                elif instruction == "show_layout":
+                    self._show_layout(ctx, *args)
+                else:
+                    getattr(ctx, instruction)(*args)
+
+        self._last_matrix = matrix
 
 
 class Parent(object):
@@ -1034,7 +982,7 @@ class Sprite(Parent, gobject.GObject):
             if parent.graphics.paths:
                 clip_regions = []
                 for instruction, type, path in parent.graphics.paths:
-                    if instruction == Graphics._clip:
+                    if instruction == "clip":
                         context.append_path(path)
                         context.save()
                         context.identity_matrix()
@@ -1042,7 +990,7 @@ class Sprite(Parent, gobject.GObject):
                         clip_regions.append(context.fill_extents())
                         context.restore()
                         context.new_path()
-                    if instruction == Graphics._restore_context and clip_regions:
+                    elif instruction == "restore" and clip_regions:
                         clip_regions.pop()
 
                 for ext in clip_regions:
@@ -1055,7 +1003,7 @@ class Sprite(Parent, gobject.GObject):
             if type == "path":
                 context.append_path(path)
             else:
-                instruction(context, *path)
+                getattr(context, instruction)(*path)
 
         context.identity_matrix()
 
