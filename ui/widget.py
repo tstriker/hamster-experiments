@@ -4,7 +4,10 @@
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
 import math
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from lib import graphics
 import datetime as dt
 
@@ -223,8 +226,8 @@ class Widget(graphics.Sprite):
         return self.padding_top + self.padding_bottom
 
     def __on_mouse_over(self, sprite):
-        mouse_x, mouse_y, mods = sprite.get_scene().get_window().get_pointer()
-        if self.tooltip and not gtk.gdk.BUTTON1_MASK & mods:
+        cursor, mouse_x, mouse_y, mods = sprite.get_scene().get_window().get_pointer()
+        if self.tooltip and not gdk.ModifierType.BUTTON1_MASK & mods:
             self._set_tooltip(self.tooltip)
 
 
@@ -251,10 +254,10 @@ class Widget(graphics.Sprite):
 
 
     def __on_key_press(self, sprite, event):
-        if event.keyval in (gtk.keysyms.Tab, gtk.keysyms.ISO_Left_Tab):
+        if event.keyval in (gdk.KEY_Tab, gdk.KEY_ISO_Left_Tab):
             idx = self.parent.sprites.index(self)
 
-            if event.state & gtk.gdk.SHIFT_MASK: # going backwards
+            if event.state & gdk.ModifierType.SHIFT_MASK: # going backwards
                 if idx > 0:
                     idx -= 1
                     self.parent.sprites[idx].grab_focus()
@@ -515,7 +518,7 @@ class TooltipWindow(object):
 
     def __init__(self):
         self.label = None
-        self.popup = gtk.Window(type = gtk.WINDOW_POPUP)
+        self.popup = gtk.Window(type = gtk.WindowType.POPUP)
         self.popup_scene = graphics.Scene(interactive=False)
         self.popup.add(self.popup_scene)
 
@@ -558,9 +561,10 @@ class TooltipWindow(object):
         scene = widget.get_scene()
 
         parent_window = scene.get_parent_window()
-        window_x, window_y = parent_window.get_origin()
+        dummy, window_x, window_y = parent_window.get_origin()
 
-        widget_x, widget_y, widget_w, widget_h = widget.get_extents()
+        exts = widget.get_extents()
+        widget_x, widget_y, widget_w, widget_h = exts.x, exts.y, exts.width, exts.height
 
 
         screen = parent_window.get_screen()
@@ -637,10 +641,10 @@ class GlobalShortcuts(object):
             return
 
         mask_states = {
-            'Shift': event.state & gtk.gdk.SHIFT_MASK,
-            'Ctrl': event.state & gtk.gdk.CONTROL_MASK,
-            'Alt': event.state & gtk.gdk.MOD1_MASK,
-            'Super': event.state & gtk.gdk.SUPER_MASK,
+            'Shift': event.state & gdk.ModifierType.SHIFT_MASK,
+            'Ctrl': event.state & gdk.ModifierType.CONTROL_MASK,
+            'Alt': event.state & gdk.ModifierType.MOD1_MASK,
+            'Super': event.state & gdk.ModifierType.SUPER_MASK,
         }
         keys = mnemonic_string.split("+")
 

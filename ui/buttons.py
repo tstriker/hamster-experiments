@@ -3,7 +3,10 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from lib import graphics
 from ui.containers import Widget, Container, Bin, Table, Box, HBox, VBox, Fixed, Viewport, Group
 from ui.widgets import Label
@@ -89,8 +92,8 @@ class Button(Label):
             if self.repeat_down_delay > 0:
                 self._repeat_mouse_down()
         else:
-            mouse_x, mouse_y, mods = button.get_scene().get_window().get_pointer()
-            if gtk.gdk.BUTTON1_MASK & mods:
+            cursor, mouse_x, mouse_y, mods = button.get_scene().get_window().get_pointer()
+            if gdk.ModifierType.BUTTON1_MASK & mods:
                 if self._scene_mouse_up: # having scene_mouse_up means the mouse-down came from us
                     self._set_state("pressed")
             else:
@@ -225,7 +228,7 @@ class ToggleButton(Button):
         self.toggle()
 
     def on_key_press(self, sprite, event):
-        if event.keyval == gtk.keysyms.Return or event.keyval == gtk.keysyms.space:
+        if event.keyval == gdk.KEY_Return or event.keyval == gdk.KEY_space:
             self.toggle()
 
     def toggle(self):

@@ -8,7 +8,9 @@ accordion_text = "My contents - merely a label, nothing impressive. But i'll sti
 from themes import utils
 utils.install_font("danube_regular.ttf")
 
-import gtk, pango
+from gi.repository import Gtk as gtk
+from gi.repository import Pango as pango
+
 from lib import graphics
 import ui
 from themes import bitmaps
@@ -163,7 +165,7 @@ class Scene(graphics.Scene):
                                   slider,
                                   slider_value,
                                   ui.HBox([spinner, spinner_button], expand=False, spacing = 10),
-                                  ui.HBox([ui.ScrollArea(ui.Label(sample_text * 3, overflow = pango.WRAP_WORD, fill=True, padding=[2, 5]), height=45, scroll_horizontal=False),
+                                  ui.HBox([ui.ScrollArea(ui.Label(sample_text * 3, overflow = pango.WrapMode.WORD, fill=True, padding=[2, 5]), height=45, scroll_horizontal=False),
                                            ui.SpinButton(expand = False, fill=False)], expand = False),
                                   ],
                                  expand = False, spacing = 10))
@@ -253,17 +255,17 @@ class Scene(graphics.Scene):
 
 
         self.notebook.add_page("Accordion", ui.Accordion([
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
-            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WRAP_WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
+            ui.AccordionPage("I'm am the first in the row", [ui.Label(accordion_text, overflow = pango.WrapMode.WORD, padding=5)]),
             ui.AccordionPage("I'm different!", [
                 ui.VBox([
                     ui.Button("I'm a button", fill=False, expand=False),
@@ -427,17 +429,19 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(800, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
         scene = Scene()
-
         w, h = scene.notebook.get_min_size()
         window.set_size_request(int(w), int(h))
         window.add(scene)
         window.show_all()
 
+
 if __name__ == '__main__':
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

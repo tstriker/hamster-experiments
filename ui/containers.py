@@ -3,7 +3,11 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject, math
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
+import math
 from collections import defaultdict
 
 from lib import graphics
@@ -616,7 +620,7 @@ class Table(Container):
 
 
     def resize_children(self):
-        if not self.get_scene() or not self.get_scene().window:
+        if not self.get_scene() or not self.get_scene().get_window():
             return
 
         width = self.width - self.padding_left - self.padding_right
@@ -864,7 +868,7 @@ class Panes(Box):
 
 
     def resize_children(self):
-        if not self.get_scene() or not self.get_scene().window:
+        if not self.get_scene() or not self.get_scene().get_window():
             return
 
         if not self.sprites:
@@ -889,7 +893,7 @@ class Panes(Box):
 
 class PanesGrip(Widget):
     """a grip element between panes"""
-    mouse_cursor = gtk.gdk.SB_H_DOUBLE_ARROW
+    mouse_cursor = gdk.CursorType.SB_H_DOUBLE_ARROW
 
     def __init__(self, width=1, **kwargs):
         Widget.__init__(self, **kwargs)

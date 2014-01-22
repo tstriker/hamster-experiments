@@ -3,8 +3,10 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gobject
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from lib import graphics
 from ui import Widget, Button, Fixed
 

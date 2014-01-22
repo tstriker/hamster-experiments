@@ -3,7 +3,12 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, cairo
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GdkPixbuf
+from gi.repository import GObject as gobject
+
+import cairo
 from lib import graphics
 from ui import Widget
 
@@ -70,7 +75,7 @@ class Image(Widget):
             x, y = x - 1, y - 1
             image = cairo.ImageSurface(cairo.FORMAT_ARGB32, w+2, h+2)
             ctx = cairo.Context(image)
-            if isinstance(self.image_data, gtk.gdk.Pixbuf):
+            if isinstance(self.image_data, GdkPixbuf.Pixbuf):
                 ctx.set_source_pixbuf(self.image_data, -x, -y)
             else:
                 ctx.set_source_surface(self.image_data, -x, -y)

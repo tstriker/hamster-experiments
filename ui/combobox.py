@@ -3,8 +3,11 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
-import pango
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+from gi.repository import Pango as pango
+
 from lib import graphics
 
 from ui import ScrollArea, ListView, ToggleButton
@@ -33,7 +36,7 @@ class ComboBox(ToggleButton):
     DropdownClass = ListView
 
     def __init__(self, rows = [], dropdown_height=None, open_below = True,
-                 overflow = pango.ELLIPSIZE_END, **kwargs):
+                 overflow = pango.EllipsizeMode.END, **kwargs):
         ToggleButton.__init__(self, overflow = overflow, **kwargs)
 
         if dropdown_height:
@@ -91,7 +94,7 @@ class ComboBox(ToggleButton):
 
     def _set_label(self, item):
         if isinstance(item, (dict)):
-            label = item.get("text", pango.parse_markup(item.get("markup", ""))[1])
+            label = item.get("text", pango.parse_markup(item.get("markup", ""), -1, "0")[2])
         else:
             label = item
 
@@ -116,7 +119,7 @@ class ComboBox(ToggleButton):
         self.toggled = self.scrollbox in self.get_scene().sprites
 
     def _on_key_press(self, sprite, event):
-        if event.keyval == gtk.keysyms.Return:
+        if event.keyval == gdk.KEY_Return:
             self.toggle_display()
 
     def __on_mouse_down(self, sprite, event):

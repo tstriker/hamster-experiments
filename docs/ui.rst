@@ -15,7 +15,7 @@ full list.
 
 **Hello ui world**::
 
-    import gtk
+    from gi.repository import Gtk as gtk
     from lib import graphics
     import ui
 
@@ -27,7 +27,7 @@ full list.
             # And by disabling fill effectively center it.
             self.add_child(ui.VBox(ui.HBox(ui.Button("Click me!"), fill=False)))
 
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    window = gtk.Window()
     window.add(Scene())
     window.show_all()
     gtk.main()

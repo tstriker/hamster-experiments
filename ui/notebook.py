@@ -6,8 +6,10 @@
 import math
 
 import cairo
-import gtk
-import gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from lib import graphics
 from ui import Label, Container, Table, Box, HBox, Viewport, ToggleButton, Group, ScrollButton, Bin
 

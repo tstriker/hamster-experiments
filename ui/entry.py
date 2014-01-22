@@ -3,12 +3,15 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 import re
 from lib import graphics
 
 from ui import Bin, Viewport, ScrollArea, Button, Table, Label, Widget
-import pango
+from gi.repository import Pango as pango
 
 
 class Entry(Bin):
@@ -20,7 +23,7 @@ class Entry(Bin):
 
     padding = 5
 
-    mouse_cursor = gtk.gdk.XTERM
+    mouse_cursor = gdk.CursorType.XTERM
 
     font_desc = "Sans Serif 10" #: pango.FontDescription to use for the label
 
@@ -135,10 +138,10 @@ class Entry(Bin):
             self.display_label.width = val - self.horizontal_padding
 
         elif name == "overflow" and val != False and hasattr(self, "display_label"):
-            if val in (pango.WRAP_WORD, pango.WRAP_WORD_CHAR, pango.WRAP_CHAR):
+            if val in (pango.WrapMode.WORD, pango.WrapMode.WORD_CHAR, pango.WrapMode.CHAR):
                 self.display_label.wrap = val
                 self.display_label.ellipsize = None
-            elif val in (pango.ELLIPSIZE_START, pango.ELLIPSIZE_END):
+            elif val in (pango.EllipsizeMode.START, pango.EllipsizeMode.END):
                 self.display_label.wrap = None
                 self.display_label.ellipsize = val
 
@@ -189,7 +192,8 @@ class Entry(Bin):
     def _index_to_pos(self, index):
         """give coordinates for the position in text. maps to the
         display_label's pango function"""
-        extents = [ext / pango.SCALE for ext in self.display_label._test_layout.index_to_pos(index)]
+        ext = self.display_label._test_layout.index_to_pos(index)
+        extents = [e / pango.SCALE for e in (ext.x, ext.y, ext.width, ext.height)]
         return extents
 
     def _xy_to_index(self, x, y):
@@ -267,7 +271,9 @@ class Entry(Bin):
 
     def _do_key_press(self, event):
         """responding to key events"""
-        key, shift, control = event.keyval, event.state & gtk.gdk.SHIFT_MASK, event.state & gtk.gdk.CONTROL_MASK
+        key = event.keyval
+        shift = event.state & gdk.ModifierType.SHIFT_MASK
+        control = event.state & gdk.ModifierType.CONTROL_MASK
 
         if not self.editable:
             return
@@ -277,13 +283,13 @@ class Entry(Bin):
             return
 
 
-        if self.single_paragraph and key == gtk.keysyms.Return:
+        if self.single_paragraph and key == gdk.KEY_Return:
             self._edit_done()
             return emit_and_return()
 
         self._letter_positions = []
 
-        if key == gtk.keysyms.Left:
+        if key == gdk.KEY_Left:
             if shift and self.cursor_position == 0:
                 return emit_and_return()
 
@@ -300,7 +306,7 @@ class Entry(Bin):
             elif self.selection_start != self.selection_end:
                 self.cursor_position = self.selection_start
 
-        elif key == gtk.keysyms.Right:
+        elif key == gdk.KEY_Right:
             if shift and self.cursor_position == len(self.text):
                 return emit_and_return()
 
@@ -322,7 +328,7 @@ class Entry(Bin):
             elif self.selection_start != self.selection_end:
                 self.cursor_position = self.selection_end
 
-        elif key == gtk.keysyms.Up and self.single_paragraph == False:
+        elif key == gdk.KEY_Up and self.single_paragraph == False:
             iter = self._get_iter(self.cursor_position)
 
             if str(iter.get_line()) != str(self.display_label._test_layout.get_line(0)):
@@ -352,7 +358,7 @@ class Entry(Bin):
                     self.cursor_position = self.selection_start
 
 
-        elif key == gtk.keysyms.Down and self.single_paragraph == False:
+        elif key == gdk.KEY_Down and self.single_paragraph == False:
             iter = self._get_iter(self.cursor_position)
             char_pos = iter.get_char_extents()[0]
 
@@ -370,7 +376,7 @@ class Entry(Bin):
                     self.cursor_position = self.selection_end
 
 
-        elif key == gtk.keysyms.Home:
+        elif key == gdk.KEY_Home:
             if self.single_paragraph or control:
                 self.cursor_position = 0
                 if shift:
@@ -398,7 +404,7 @@ class Entry(Bin):
                         else:
                             self.selection_end = self.cursor_position
 
-        elif key == gtk.keysyms.End:
+        elif key == gdk.KEY_End:
             if self.single_paragraph or control:
                 self.cursor_position = len(self.text)
                 if shift:
@@ -433,7 +439,7 @@ class Entry(Bin):
                             self.selection_start = self.cursor_position
 
 
-        elif key == gtk.keysyms.BackSpace:
+        elif key == gdk.KEY_BackSpace:
             if self.selection_start != self.selection_end:
                 if not self.update_text(self.text[:self.selection_start] + self.text[self.selection_end:]):
                     return emit_and_return()
@@ -442,38 +448,38 @@ class Entry(Bin):
                     return emit_and_return()
                 self.cursor_position -= 1
 
-        elif key == gtk.keysyms.Delete:
+        elif key == gdk.KEY_Delete:
             if self.selection_start != self.selection_end:
                 if not self.update_text(self.text[:self.selection_start] + self.text[self.selection_end:]):
                     return emit_and_return()
             elif self.cursor_position < len(self.text):
                 if not self.update_text(self.text[:self.cursor_position] + self.text[self.cursor_position+1:]):
                     return emit_and_return()
-        elif key == gtk.keysyms.Escape:
+        elif key == gdk.KEY_Escape:
             return emit_and_return()
 
         #prevent garbage from common save file mneumonic
-        elif control and key in (gtk.keysyms.s, gtk.keysyms.S):
+        elif control and key in (gdk.KEY_s, gdk.KEY_S):
             return emit_and_return()
 
         # copying and pasting
-        elif control and key in (gtk.keysyms.c, gtk.keysyms.C): # copy
+        elif control and key in (gdk.KEY_c, gdk.KEY_C): # copy
             clipboard = gtk.Clipboard()
             clipboard.set_text(self.text[self.selection_start:self.selection_end])
             return emit_and_return()
 
-        elif control and key in (gtk.keysyms.x, gtk.keysyms.X): # cut
+        elif control and key in (gdk.KEY_x, gdk.KEY_X): # cut
             text = self.text[self.selection_start:self.selection_end]
             if self.update_text(self.text[:self.selection_start] + self.text[self.selection_end:]):
                 clipboard = gtk.Clipboard()
                 clipboard.set_text(text)
 
-        elif control and key in (gtk.keysyms.v, gtk.keysyms.V): # paste
+        elif control and key in (gdk.KEY_v, gdk.KEY_V): # paste
             clipboard = gtk.Clipboard()
             clipboard.request_text(self._on_clipboard_text)
             return emit_and_return()
 
-        elif control and key in (gtk.keysyms.a, gtk.keysyms.A): # select all
+        elif control and key in (gdk.KEY_a, gdk.KEY_A): # select all
             self.selection_start = 0
             self.cursor_position = self.selection_end = len(self.text)
             return emit_and_return()
@@ -524,9 +530,9 @@ class Entry(Bin):
 
         # align the label within the entry
         if self.display_label.width < self.viewport.width:
-            if self.alignment == pango.ALIGN_RIGHT:
+            if self.alignment == pango.Alignment.RIGHT:
                 self.display_label.x = self.viewport.width - self.display_label.width
-            elif self.alignment == pango.ALIGN_CENTER:
+            elif self.alignment == pango.Alignment.CENTER:
                 self.display_label.x = (self.viewport.width - self.display_label.width) / 2
 
         #if self.single_paragraph:
@@ -591,7 +597,7 @@ class TextArea(ScrollArea):
     """A text input field that displays scrollbar when text does not fit anymore"""
     padding = 5
 
-    mouse_cursor = gtk.gdk.XTERM
+    mouse_cursor = gdk.CursorType.XTERM
 
     font_desc = "Sans Serif 10" #: pango.FontDescription to use for the label
 

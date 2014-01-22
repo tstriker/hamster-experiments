@@ -1,5 +1,8 @@
-import gtk
-import cairo, pango
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import Pango as pango
+
+import cairo
 from lib import graphics
 import ui
 from utils import override, get_image

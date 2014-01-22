@@ -3,9 +3,12 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gobject, gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from ui import VBox, HBox, Fixed, Label, Button, ScrollArea
-import pango
+from gi.repository import Pango as pango
 
 
 class DialogTitle(Label):
@@ -151,7 +154,7 @@ class ConfirmationDialog(Dialog):
                  decline_label = "Cancel", width=500, modal = False):
         Dialog.__init__(self, title = title, width = width, modal=modal)
 
-        scrollbox = ScrollArea(Label(markup=message, padding=5, overflow=pango.WRAP_WORD),
+        scrollbox = ScrollArea(Label(markup=message, padding=5, overflow=pango.WrapMode.WORD),
                                     scroll_horizontal = False,
                                     border = 0,
                                     margin=2, margin_right=3,

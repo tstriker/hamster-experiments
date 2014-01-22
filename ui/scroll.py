@@ -3,7 +3,9 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
 
 from lib import graphics
 from ui import Widget, Table, Box, Viewport, Button
@@ -181,7 +183,7 @@ class ScrollArea(Table):
 
     """events"""
     def __on_mouse_scroll(self, sprite, event):
-        direction  = 1 if event.direction == gtk.gdk.SCROLL_DOWN else -1
+        direction  = 1 if event.direction == gdk.ScrollDirection.DOWN else -1
         self.scroll_y(self.viewport.child.y - self.step_size * direction)
 
     def on_scroll(self, bar, offset):

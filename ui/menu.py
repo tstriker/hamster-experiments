@@ -3,7 +3,10 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gobject, gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from ui import Widget, Box, Bin, Label, Button
 
 class Menu(Box):
@@ -218,9 +221,9 @@ class Menu(Box):
         for menuitem in self.sprites:
             menuitem.selected = False
 
-        mouse_x, mouse_y, mods = item.get_scene().get_window().get_pointer()
+        cursor, mouse_x, mouse_y, mods = item.get_scene().get_window().get_pointer()
 
-        if self.open_on_hover and not self._toggled and not gtk.gdk.BUTTON1_MASK & mods:
+        if self.open_on_hover and not self._toggled and not gdk.ModifierType.BUTTON1_MASK & mods:
             # show menu after specified seconds. we are emulating a click
             def show_menu():
                 self._on_item_mouse_down(item, None)

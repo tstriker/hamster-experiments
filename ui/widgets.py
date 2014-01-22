@@ -3,12 +3,15 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from lib import graphics
 
 from ui import Widget, Container, Bin, Table, Box, HBox, VBox, Fixed, Viewport, Group, TreeModel
 import math
-import pango
+from gi.repository import Pango as pango
 
 class _DisplayLabel(graphics.Label):
     cache_attrs = Box.cache_attrs | set(('_cached_w', '_cached_h'))
@@ -149,10 +152,10 @@ class Label(Bin):
             if val is False:
                 self.display_label.wrap = None
                 self.display_label.ellipsize = None
-            elif val in (pango.WRAP_WORD, pango.WRAP_WORD_CHAR, pango.WRAP_CHAR):
+            elif isinstance(val, pango.WrapMode) and val in (pango.WrapMode.WORD, pango.WrapMode.WORD_CHAR, pango.WrapMode.CHAR):
                 self.display_label.wrap = val
                 self.display_label.ellipsize = None
-            elif val in (pango.ELLIPSIZE_START, pango.ELLIPSIZE_MIDDLE, pango.ELLIPSIZE_END):
+            elif isinstance(val, pango.EllipsizeMode) and val in (pango.EllipsizeMode.START, pango.EllipsizeMode.MIDDLE, pango.EllipsizeMode.END):
                 self.display_label.wrap = None
                 self.display_label.ellipsize = val
 

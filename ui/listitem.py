@@ -3,11 +3,14 @@
 # Copyright (c) 2011-2012 Media Modifications, Ltd.
 # Dual licensed under the MIT or GPL Version 2 licenses.
 
-import gtk, gobject
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
+
 from ui import Widget, Label, TreeModel, TreeModelRow, Entry, VBox, HBox, Button, ScrollArea, Fixed
 from lib import graphics
 from bisect import bisect
-import pango
+from gi.repository import Pango as pango
 
 class Renderer(Widget):
     x_align = 0   #: horizontal alignment of the cell contents
@@ -63,7 +66,7 @@ class LabelRenderer(Renderer):
 
     def __init__(self, **kwargs):
         Renderer.__init__(self, **kwargs)
-        self.label = Label(padding = self.padding, overflow = pango.ELLIPSIZE_END)
+        self.label = Label(padding = self.padding, overflow = pango.EllipsizeMode.END)
         self.label.graphics = self.graphics
         self._prev_dict = {}
 
@@ -80,7 +83,7 @@ class LabelRenderer(Renderer):
 
     def get_mouse_cursor(self):
         if self.editable:
-            return gtk.gdk.XTERM
+            return gdk.CursorType.XTERM
         return False
 
     def show_editor(self, target, cell, event = None):
@@ -279,7 +282,7 @@ class ListView(Widget):
             return
 
         self._hover_row = self.rows[self.get_row_at_y(event.y)]
-        if self.select_on_drag and gtk.gdk.BUTTON1_MASK & event.state:
+        if self.select_on_drag and gdk.ModifierType.BUTTON1_MASK & event.state:
             self.current_row = self._hover_row
 
         # determine mouse cursor
@@ -354,7 +357,7 @@ class ListView(Widget):
 
 
     def on_mouse_scroll(self, sprite, event):
-        direction  = 1 if event.direction == gtk.gdk.SCROLL_DOWN else -1
+        direction  = 1 if event.direction == gdk.ScrollDirection.DOWN else -1
         parent = self.parent
         while parent and hasattr(parent, "vscroll") == False:
             parent = parent.parent
@@ -559,15 +562,15 @@ class ListView(Widget):
         else:
             idx = -1
 
-        if event.keyval == gtk.keysyms.Down:
+        if event.keyval == gdk.KEY_Down:
             idx = min(idx + 1, len(self.rows) - 1)
-        elif event.keyval == gtk.keysyms.Up:
+        elif event.keyval == gdk.KEY_Up:
             idx = max(idx - 1, 0)
-        elif event.keyval == gtk.keysyms.Home:
+        elif event.keyval == gdk.KEY_Home:
             idx = 0
-        elif event.keyval == gtk.keysyms.End:
+        elif event.keyval == gdk.KEY_End:
             idx = len(self.rows) - 1
-        elif event.keyval == gtk.keysyms.Return:
+        elif event.keyval == gdk.KEY_Return:
             self.emit("on-select", self.current_row)
 
         elif event.string:
@@ -598,7 +601,7 @@ class ListView(Widget):
         def label_matches(row, label):
             row_label = self.rows[i][0]
             if isinstance(row_label, dict):
-                row_label = row_label.get("text", pango.parse_markup(row_label.get("markup", ""))[1])
+                row_label = row_label.get("text", pango.parse_markup(row_label.get("markup", ""), -1, "0")[2])
             if fragment:
                 return row_label.lower().startswith(label.lower())
             else:

@@ -19,7 +19,7 @@ adding and manipulating sprites.
 
 **Hello world**::
 
-    import gtk
+    from gi.repository import Gtk as gtk
     from lib import graphics
 
     class Scene(graphics.Scene):
@@ -28,7 +28,7 @@ adding and manipulating sprites.
             label = graphics.Label("Hello World", 24, "#000", x = 5, y = 5)
             self.add_child(label) # remember to add sprites to the scene
 
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    window = gtk.Window()
     window.add(Scene())
     window.show_all()
     gtk.main()
