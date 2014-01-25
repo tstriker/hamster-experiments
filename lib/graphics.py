@@ -29,6 +29,10 @@ except: # we can also live without tweener. Scene.animate will not work
 import colorsys
 from collections import deque
 
+# lemme know if you know a better way how to get default font
+_test_label = gtk.Label("Hello")
+_font_desc = _test_label.get_style().font_desc.to_string()
+
 
 class ColorUtils(object):
     hex_color_normal = re.compile("#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})")
@@ -345,8 +349,8 @@ class Graphics(object):
             #        should explain better
             raise "Can not create layout without existing context!"
 
-        layout = pangocairo.create_layout(context)
-        font_desc = pango.FontDescription(gtk.Style().font_desc.to_string())
+        layout = pangocairo.create_layout(self.context)
+        font_desc = pango.FontDescription(_font_desc)
         if size: font_desc.set_absolute_size(size * pango.SCALE)
 
         layout.set_font_description(font_desc)
@@ -354,7 +358,7 @@ class Graphics(object):
 
     def show_label(self, text, size = None, color = None, font_desc = None):
         """display text. unless font_desc is provided, will use system's default font"""
-        font_desc = pango.FontDescription(font_desc or gtk.Style().font_desc.to_string())
+        font_desc = pango.FontDescription(font_desc or _font_desc)
         if color: self.set_color(color)
         if size: font_desc.set_absolute_size(size * pango.SCALE)
         self.show_layout(text, font_desc)
@@ -533,7 +537,7 @@ class Graphics(object):
             ctx.transform(matrix)
             for instruction, args in self.__instruction_cache:
                 if instruction == "set_color":
-                    self._set_color(ctx, args[0], args[1], args[2], args[3] * opacity)
+                    self._set_color(ctx, args[0], args[1], args[2], args[3])
                 elif instruction == "show_layout":
                     self._show_layout(ctx, *args)
                 else:
@@ -1161,7 +1165,7 @@ class Sprite(Parent, gobject.GObject):
                 color = debug_colors[depth % len(debug_colors)]
                 context.save()
                 context.identity_matrix()
-                context.rectangle(*exts)
+                context.rectangle(exts.x, exts.y, exts.width, exts.height)
                 context.set_source_rgb(*Colors.parse(color))
                 context.stroke()
                 context.restore()
@@ -1330,7 +1334,7 @@ class Label(Sprite):
         self.size = size
 
         #: pango.FontDescription, defaults to system font
-        self.font_desc = pango.FontDescription(font_desc or "Sans Serif")
+        self.font_desc = pango.FontDescription(font_desc or _font_desc)
 
         #: color of label either as hex string or an (r,g,b) tuple
         self.color = color
