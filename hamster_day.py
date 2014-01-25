@@ -4,8 +4,10 @@
 
 """Potential edit activities replacement"""
 
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
 
-import gtk, gobject
 from lib import graphics
 import hamster.client
 from hamster.lib import stuff
@@ -52,29 +54,34 @@ class Entry(graphics.Sprite):
         self.color = color
 
         self.interactive = True
-        self.mouse_cursor = gtk.gdk.XTERM
+        self.mouse_cursor = gdk.CursorType.XTERM
 
         self.fact_labels = graphics.Sprite()
 
-        self.start_label = graphics.Label("", color="#333", size=11, x=10, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.start_label = graphics.Label("", color="#333", size=11, x=10, y=5, interactive=True,
+                                          mouse_cursor=gdk.CursorType.XTERM)
         self.start_label.text = "%s - " % fact.start_time.strftime("%H:%M")
         self.fact_labels.add_child(self.start_label)
 
-        self.end_label = graphics.Label("", color="#333", size=11, x=65, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.end_label = graphics.Label("", color="#333", size=11, x=65, y=5, interactive=True,
+                                        mouse_cursor=gdk.CursorType.XTERM)
         if fact.end_time:
             self.end_label.text = fact.end_time.strftime("%H:%M")
         self.fact_labels.add_child(self.end_label)
 
-        self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=120, y=5, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.activity_label = graphics.Label(fact.activity, color="#333", size=11, x=120, y=5, interactive=True,
+                                             mouse_cursor=gdk.CursorType.XTERM)
         self.fact_labels.add_child(self.activity_label)
 
-        self.category_label = graphics.Label("", color="#333", size=9, y=7, interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.category_label = graphics.Label("", color="#333", size=9, y=7, interactive=True,
+                                             mouse_cursor=gdk.CursorType.XTERM)
         self.category_label.text = stuff.escape_pango(" - %s" % fact.category)
         self.category_label.x = self.activity_label.x + self.activity_label.width
         self.fact_labels.add_child(self.category_label)
 
 
-        self.duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333", interactive=True, mouse_cursor=gtk.gdk.XTERM)
+        self.duration_label = graphics.Label(stuff.format_duration(fact.delta), size=11, color="#333", interactive=True,
+                                             mouse_cursor=gdk.CursorType.XTERM)
         self.duration_label.x = self.width - self.duration_label.width - 5
         self.duration_label.y = 5
         self.fact_labels.add_child(self.duration_label)
@@ -354,7 +361,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
 
@@ -374,53 +381,53 @@ class BasicWindow:
 
 
         container = gtk.HBox(spacing=5)
-        self.edit_box.pack_start(container)
+        self.edit_box.add(container)
 
         start_entry = widgets.TimeInput()
         self.start_entry = start_entry
         box = gtk.VBox()
-        box.pack_start(start_entry, False)
-        container.pack_start(box, False)
+        box.add(start_entry)
+        container.add(box)
 
         end_entry = widgets.TimeInput()
         self.end_entry = end_entry
         box = gtk.VBox()
-        box.pack_start(end_entry, False)
-        container.pack_start(box, False)
+        box.add(end_entry)
+        container.add(box)
 
         entry_box = gtk.VBox(spacing=5)
-        container.pack_start(entry_box, False)
+        container.add(entry_box)
 
         activity_entry = widgets.ActivityEntry()
         activity_entry.set_width_chars(35)
         self.activity_entry = activity_entry
-        entry_box.pack_start(activity_entry, False)
+        entry_box.add(activity_entry)
 
         tags_entry = widgets.TagsEntry()
         self.tags_entry = tags_entry
-        entry_box.pack_start(tags_entry, False)
+        entry_box.add(tags_entry)
 
         description_entry = gtk.Entry()
         description_entry.set_width_chars(35)
         self.description_entry = description_entry
-        entry_box.pack_start(description_entry, False)
+        entry_box.add(description_entry)
 
         save_button = gtk.Button("Save")
-        entry_box.pack_start(save_button, False)
+        entry_box.add(save_button)
 
 
-        container.pack_start(gtk.HBox(), True)
-        vbox.pack_start(self.fixed)
+        container.add(gtk.HBox())
+        vbox.add(self.fixed)
 
         button_box = gtk.HBox(spacing=5)
-        vbox.pack_start(button_box, False)
+        vbox.add(button_box)
         window.add(vbox)
 
         prev_day = gtk.Button("Previous day")
         next_day = gtk.Button("Next day")
-        button_box.pack_start(gtk.HBox())
-        button_box.pack_start(prev_day, False)
-        button_box.pack_start(next_day, False)
+        button_box.add(gtk.HBox())
+        button_box.add(prev_day)
+        button_box.add(next_day)
 
         prev_day.connect("clicked", self.on_prev_day_click)
         next_day.connect("clicked", self.on_next_day_click)
@@ -443,4 +450,6 @@ if __name__ == '__main__':
     i18n.setup_i18n()
 
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()

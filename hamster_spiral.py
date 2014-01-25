@@ -5,7 +5,8 @@
 """Base template"""
 
 
-import gtk
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 from lib import graphics, pytweener
 import math
 import hamster.client
@@ -91,7 +92,7 @@ class Scene(graphics.Scene):
         self.day_counts = {}
         categories = defaultdict(int)
 
-        self.colors = ("#20b6de", "#fff", "#333", "#ff0", "#0ff")
+        self.colors = ("#20b6de", "#fff", "#333", "#ff0", "#0ff", "#aaa")
 
         self.container = graphics.Sprite()
         self.add_child(self.container)
@@ -141,9 +142,9 @@ class Scene(graphics.Scene):
 
 
     def on_scroll(self, scene, event):
-        if event.direction == gtk.gdk.SCROLL_UP:
+        if event.direction == gdk.ScrollDirection.UP:
             self.start_date -= dt.timedelta(days = 7)
-        elif event.direction == gtk.gdk.SCROLL_DOWN:
+        elif event.direction == gdk.ScrollDirection.DOWN:
             self.start_date += dt.timedelta(days = 7)
         else:
             print "other scroll"
@@ -179,7 +180,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_size_request(700, 600)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
@@ -187,4 +188,6 @@ class BasicWindow:
 
 
 example = BasicWindow()
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
 gtk.main()
