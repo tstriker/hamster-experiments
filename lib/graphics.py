@@ -62,10 +62,13 @@ class ColorUtils(object):
                      color.green / 65535.0,
                      color.blue / 65535.0]
 
-        else:
+        elif isinstance(color, list):
             # otherwise we assume we have color components in 0..255 range
             if color[0] > 1 or color[1] > 1 or color[2] > 1:
                 color = [c / 255.0 for c in color]
+        else:
+            color = [color.red, color.green, color.blue]
+
 
         return color
 
@@ -325,8 +328,12 @@ class Graphics(object):
 
     def fill_area(self, x, y, width, height, color, opacity = 1):
         """fill rectangular area with specified color"""
+        self.save_context()
+        self.rectangle(x, y, width, height)
+        self._add_instruction("clip")
         self.rectangle(x, y, width, height)
         self.fill(color, opacity)
+        self.restore_context()
 
     def fill_stroke(self, fill = None, stroke = None, opacity = 1, line_width = None):
         """fill and stroke the drawn area in one go"""
@@ -1257,7 +1264,7 @@ class BitmapSprite(Sprite):
 
             local_context = cairo.Context(surface)
             if isinstance(self.image_data, GdkPixbuf.Pixbuf):
-                local_context.set_source_pixbuf(self.image_data, 0, 0)
+                gdk.cairo_set_source_pixbuf(local_context, self.image_data, 0, 0)
             else:
                 local_context.set_source_surface(self.image_data)
             local_context.paint()
@@ -1293,7 +1300,7 @@ class Icon(BitmapSprite):
     """Displays icon by name and size in the theme"""
     def __init__(self, name, size=24, **kwargs):
         BitmapSprite.__init__(self, **kwargs)
-        self.theme = gtk.icon_theme_get_default()
+        self.theme = gtk.IconTheme.get_default()
 
         #: icon name from theme
         self.name = name
