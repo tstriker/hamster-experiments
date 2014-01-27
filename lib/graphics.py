@@ -62,7 +62,7 @@ class ColorUtils(object):
                      color.green / 65535.0,
                      color.blue / 65535.0]
 
-        elif isinstance(color, list):
+        elif isinstance(color, (list, tuple)):
             # otherwise we assume we have color components in 0..255 range
             if color[0] > 1 or color[1] > 1 or color[2] > 1:
                 color = [c / 255.0 for c in color]
