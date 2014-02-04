@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
-# Copyright (C) 2010 Toms Bauģis <toms.baugis at gmail.com>
+# Copyright (C) 2014 You <your.email@someplace>
 
 """Base template"""
 
@@ -16,7 +16,7 @@ class Scene(graphics.Scene):
 
 class BasicWindow:
     def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
