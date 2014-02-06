@@ -133,6 +133,4 @@ class BasicWindow:
 
 if __name__ == "__main__":
     example = BasicWindow()
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()
