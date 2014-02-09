@@ -9,9 +9,9 @@ import cairo
 import datetime as dt
 import re
 
-from gi.repository import GObject as gobject
-from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
+from gi.repository import Gtk as gtk
+from gi.repository import GObject as gobject
 from gi.repository import PangoCairo as pangocairo
 from gi.repository import Pango as pango
 from collections import defaultdict
@@ -21,6 +21,8 @@ import ui
 
 import hamster.client
 from hamster.lib import stuff
+
+
 
 
 
@@ -123,107 +125,46 @@ def extract_fact(text, phase=None):
 
     return {}
 
+def extract_search(text):
+    fact = extract_fact(text)
+    search = fact.get('activity') or ""
+    if 'category' in fact:
+        search += "@%s" % fact['category']
+    if 'tags' in fact:
+        search += " #%s" % (" #".join(fact['tags']))
+    return search
 
-
-
-
-
-
-
-class Scene(graphics.Scene):
-    def __init__(self):
-        graphics.Scene.__init__(self)
-
-        self.box = ui.VBox(expand=False)
-
-        big_box = ui.VBox()
-        big_box.add_child(self.box)
-        self.add_child(big_box)
-
-
-
-    def render_preview(self, text):
-        now = dt.datetime.now()
-
-        self.box.clear()
-
-        self.box.add_child(ui.Label("Preview", size=20, color="#333", padding_top=50))
-        container = ui.HBox(spacing=5)
-        self.box.add_child(container)
-
-        fact = extract_fact(text)
-        start_time = fact.get('start_time') or now
-        container.add_child(ui.Label(start_time.strftime("%H:%M - "),
-                                     expand=False, y_align=0))
-
-        if fact.get('end_time'):
-            container.add_child(ui.Label(fact['end_time'].strftime("%H:%M"),
-                                         expand=False, y_align=0))
-
-        nested = ui.VBox()
-        nested.add_child(ui.HBox([
-            ui.Label(fact.get('activity', ""), expand=False),
-            ui.Label((" - %s" % fact['category']) if fact.get('category') else "", size=12, color="#888")
-        ]))
-        container.add_child(nested)
-        if fact.get('tags'):
-            nested.add_child(ui.Label(", ".join(fact['tags'])))
-        if fact.get('description'):
-            nested.add_child(ui.Label(markup = "<i>%s</i>" % fact['description']))
-
-        end_time = fact.get('end_time') or now
-
-        if start_time != end_time:
-            minutes = (end_time - start_time).total_seconds() / 60
-            hours, minutes = minutes // 60, minutes % 60
-            label = ("%dh %dmin" % (hours, minutes)) if hours else "%dmin" % minutes
-            container.add_child(ui.Label(label, expand=False, y_align=0))
-
-
-
-
+class DataRow(object):
+    """want to split out visible label, description, activity data
+      and activity data with time (full_data)"""
+    def __init__(self, label, data=None, full_data=None, description=None):
+        self.label = label
+        self.data = data or label
+        self.full_data = full_data or data or label
+        self.description = description or ""
 
 class Label(object):
     """a much cheaper label that would be suitable for cellrenderer"""
-    def __init__(self, x=0, y=0, color=None, use_markup=True):
-        self.x = x
-        self.y = y
-        self.color = color
+    def __init__(self, x=0, y=0):
+        self.x, self.y = x, y
         self._label_context = cairo.Context(cairo.ImageSurface(cairo.FORMAT_A1, 0, 0))
         self.layout = pangocairo.create_layout(self._label_context)
         self.layout.set_font_description(pango.FontDescription(graphics._font_desc))
         self.layout.set_markup("Hamster") # dummy
         self.height = self.layout.get_pixel_size()[1]
-        self.use_markup = use_markup
 
-    def _set_text(self, text):
-        if self.use_markup:
-            self.layout.set_markup(text)
-        else:
-            self.layout.set_text(text, -1)
+    def show(self, g, text, color=None):
+        g.move_to(self.x, self.y)
 
-    def _show(self, g, color):
-        color = color or self.color
+        self.layout.set_markup(text)
+        g.save_context()
         if color:
             g.set_color(color)
         pangocairo.show_layout(g.context, self.layout)
-
-    def show(self, g, text, color=None, x=0, y=0):
-        g.save_context()
-        g.move_to(x or self.x, y or self.y)
-        self._set_text(text)
-        self._show(g, color)
         g.restore_context()
 
 
-class DataRow(object):
-    def __init__(self, label, data=None, full_data=None, description=None):
-        self.label = label
-        self.data = data or label
-        self.full_data = full_data or data
-        self.description = description or ""
-
-class CompleteTree(graphics.Scene, gtk.Scrollable):
+class CompleteTree(graphics.Scene):
     """
     ASCII Art
 
@@ -233,16 +174,9 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
 
     __gsignals__ = {
         # enter or double-click, passes in current day and fact
-        'on-activate-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         'on-select-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
-
-
-    hadjustment = gobject.property(type=gtk.Adjustment, default=None)
-    hscroll_policy = gobject.property(type=gtk.ScrollablePolicy, default=gtk.ScrollablePolicy.MINIMUM)
-    vadjustment = gobject.property(type=gtk.Adjustment, default=None)
-    vscroll_policy = gobject.property(type=gtk.ScrollablePolicy, default=gtk.ScrollablePolicy.MINIMUM)
 
     def __init__(self):
         graphics.Scene.__init__(self, style_class=gtk.STYLE_CLASS_VIEW)
@@ -250,52 +184,38 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
         self.set_can_focus(False)
 
         self.row_positions = []
-        self.row_heights = []
-
-        self.y = 0
 
         self.current_row = None
         self.rows = []
 
         self.style = self._style
 
-        self.label = Label()
+        self.label = Label(x=5, y=3)
+        self.row_height = self.label.height + 10
 
-        self.visible_range = None
-
-        self.connect("on-mouse-scroll", self.on_scroll)
-        self.connect("on-mouse-down", self.on_mouse_down)
-
-        self.connect("on-resize", self.on_resize)
         self.connect("on-key-press", self.on_key_press)
-        self.connect("notify::vadjustment", self._on_vadjustment_change)
         self.connect("on-enter-frame", self.on_enter_frame)
-        self.connect("on-double-click", self.on_double_click)
+        self.connect("on-mouse-move", self.on_mouse_move)
+        self.connect("on-mouse-down", self.on_mouse_down)
 
     def _get_mouse_row(self, event):
         hover_row = None
-        for rec in self.visible_range:
-            if rec['y'] <= event.y <= (rec['y'] + rec['h']):
-                hover_row = rec
+        for row, y in zip(self.rows, self.row_positions):
+            if y <= event.y <= (y + self.row_height):
+                hover_row = row
                 break
+        return hover_row
 
-        return hover_row['row'] if hover_row else None
+    def on_mouse_move(self, scene, event):
+        row = self._get_mouse_row(event)
+        if row:
+            self.current_row = row
+            self.redraw()
 
     def on_mouse_down(self, scene, event):
         row = self._get_mouse_row(event)
         if row:
             self.set_current_row(self.rows.index(row))
-            self.emit("on-select-row", self.current_row)
-
-    def on_double_click(self, scene, event):
-        row = self._get_mouse_row(event)
-        if row:
-            self.activate_row(row)
-
-
-
-    def activate_row(self, row):
-        self.emit("on-activate-row", row)
 
     def on_key_press(self, scene, event):
         if event.keyval == gdk.KEY_Up:
@@ -306,170 +226,54 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
             idx = self.rows.index(self.current_row) if self.current_row else -1
             self.set_current_row(idx + 1)
 
-        elif event.keyval == gdk.KEY_Page_Down:
-            self.y += self.height * 0.8
-            self.on_scroll()
-
-        elif event.keyval == gdk.KEY_Page_Up:
-            self.y -= self.height * 0.8
-            self.on_scroll()
-
-        elif event.keyval == gdk.KEY_Return:
-            self.activate_row(self.current_row)
-
-
     def set_current_row(self, idx):
         idx = max(0, min(len(self.rows) - 1, idx))
         row = self.rows[idx]
         self.current_row = row
-
-        if row.y < self.y:
-            self.y = row.y
-        if (row.y + 15) > (self.y + self.height):
-            self.y = row.y - self.height + 25
-        self.on_scroll()
-
-
-    def get_visible_range(self):
-        start, end = (bisect.bisect(self.row_positions, self.y) - 1,
-                      bisect.bisect(self.row_positions, self.y + self.height))
-
-        y = self.y
-        return [{"i": start + i, "y": pos - y, "h": height, "row": row}
-                    for i, (pos, height, row) in enumerate(zip(self.row_positions[start:end],
-                                                               self.row_heights[start:end],
-                                                               self.rows[start:end]))]
-
-
-    def _on_vadjustment_change(self, scene, vadjustment):
-        if not self.vadjustment:
-            return
-        self.vadjustment.connect("value_changed", self.on_scroll_value_changed)
-
+        self.redraw()
+        self.emit("on-select-row", row)
 
     def set_rows(self, rows):
-        self.y = 0
         self.current_row = None
+        self.rows = rows
+        self.set_row_positions()
 
-        if self.vadjustment:
-            self.vadjustment.set_value(0)
-
-
-        self.rows = []
-        for row in rows:
-            self.rows.append(DataRow(*row))
-
-        self.set_row_heights()
-
-        if self.height is not None:
-            self.on_scroll()
-
-
-    def set_row_heights(self):
-        """
-            the row height is defined by following factors:
-                * how many facts are there in the day
-                * does the fact have description / tags
-
-            This func creates a list of row start positions to be able to
-            quickly determine what to display
-        """
-        if self.height is None:
-            return
-
-        y, pos, heights = 0, [], []
-
-        for row in self.rows:
-            row_height = 25
-            row.y = y
-            row.height = row_height
-
-            pos.append(y)
-            heights.append(row_height)
-            y += row_height
-
-
-        self.row_positions, self.row_heights = pos, heights
-
-        maxy = max(y, 1)
-
-        if self.vadjustment:
-            self.vadjustment.set_lower(0)
-            self.vadjustment.set_upper(max(maxy, self.height))
-            self.vadjustment.set_page_size(self.height)
-
-        self.set_size_request(10, maxy)
-
-    def on_resize(self, scene, event):
-        self.set_row_heights()
-        self.on_scroll()
-
-
-    def on_scroll_value_changed(self, scroll):
-        self.y = int(scroll.get_value())
-        self.on_scroll()
-
-
-    def on_scroll(self, scene=None, event=None):
-        y_pos = self.y
-        direction = 0
-        if event and event.direction == gdk.ScrollDirection.UP:
-            direction = -1
-        elif event and event.direction == gdk.ScrollDirection.DOWN:
-            direction = 1
-
-        if self.vadjustment:
-            y_pos += 15 * direction
-            y_pos = max(0, min(self.vadjustment.get_upper() - self.height, y_pos))
-            self.vadjustment.set_value(y_pos)
-            self.y = y_pos
-
-        self.redraw()
-
-        self.visible_range = self.get_visible_range()
-
+    def set_row_positions(self):
+        """creates a list of row positions for simpler manipulation"""
+        self.row_positions = [i * self.row_height for i in range(len(self.rows))]
+        self.set_size_request(0, self.row_positions[-1] + self.row_height if self.row_positions else 0)
 
     def on_enter_frame(self, scene, context):
         if not self.height:
             return
 
-
-        has_focus = self.get_toplevel().has_toplevel_focus()
-        if has_focus:
-            colors = {
-                "normal": self.style.get_color(gtk.StateFlags.NORMAL),
-                "normal_bg": self.style.get_background_color(gtk.StateFlags.NORMAL),
-                "selected": self.style.get_color(gtk.StateFlags.SELECTED),
-                "selected_bg": self.style.get_background_color(gtk.StateFlags.SELECTED),
-            }
-        else:
-            colors = {
-                "normal": self.style.get_color(gtk.StateFlags.BACKDROP),
-                "normal_bg": self.style.get_background_color(gtk.StateFlags.BACKDROP),
-                "selected": self.style.get_color(gtk.StateFlags.BACKDROP),
-                "selected_bg": self.style.get_background_color(gtk.StateFlags.BACKDROP),
-            }
+        colors = {
+            "normal": self.style.get_color(gtk.StateFlags.NORMAL),
+            "normal_bg": self.style.get_background_color(gtk.StateFlags.NORMAL),
+            "selected": self.style.get_color(gtk.StateFlags.SELECTED),
+            "selected_bg": self.style.get_background_color(gtk.StateFlags.SELECTED),
+        }
 
         g = graphics.Graphics(context)
         g.set_line_style(1)
         g.translate(0.5, 0.5)
 
-        for rec in self.visible_range:
-            g.save_context()
-            g.translate(0, rec['y'])
 
+        for row, y in zip(self.rows, self.row_positions):
+            g.save_context()
+            g.translate(0, y)
 
             color, bg = colors["normal"], colors["normal_bg"]
-            if rec['row'] == self.current_row:
+            if row == self.current_row:
                 color, bg = colors["selected"], colors["selected_bg"]
-                g.fill_area(0, 0, self.width, 25, bg)
+                g.fill_area(0, 0, self.width, self.row_height, bg)
 
-            label = rec['row'].label
-            if rec['row'].description:
+            label = row.label
+            if row.description:
                 description_color = graphics.Colors.contrast(color, 50)
                 description_color = graphics.Colors.hex(description_color)
 
-                label += '<span color="%s"> - %s</span>' % (description_color, rec['row'].description)
+                label += '<span color="%s"> - %s</span>' % (description_color, row.description)
 
             self.label.show(g, label, color=color)
 
@@ -477,33 +281,86 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
 
 
 
+class ActivityEntry(gtk.Entry):
+    def __init__(self, **kwargs):
+        gtk.Entry.__init__(self)
 
-class BasicWindow:
-    def __init__(self):
-        window = gtk.Window()
-        window.set_default_size(600, 500)
-        window.connect("delete_event", lambda *args: gtk.main_quit())
-
-        self.entry = gtk.Entry()
-        self.scene = Scene()
-
-        box = gtk.Box(orientation=gtk.Orientation.VERTICAL)
-        box.set_border_width(12)
-        box.pack_start(self.entry, False, True, 0)
-        box.pack_end(self.scene, True, True, 0)
-
-        self.entry.grab_focus()
-        self.entry_checker = self.entry.connect("changed", self.on_entry_changed)
-        self.entry.connect("key-press-event", self.on_key_press)
+        self.popup = gtk.Window(type = gtk.WindowType.POPUP)
+        box = gtk.Frame()
+        box.set_shadow_type(gtk.ShadowType.IN)
+        self.popup.add(box)
 
         self.complete_tree = CompleteTree()
-        box.pack_end(self.complete_tree, False, False, 0)
-        self.complete_tree.connect("on-select-row", self.on_complete_selected)
-        self.complete_tree.connect("on-activate-row", self.on_complete_selected)
-
-
+        self.tree_checker = self.complete_tree.connect("on-select-row", self.on_tree_select_row)
+        box.add(self.complete_tree)
 
         self.storage = hamster.client.Storage()
+        self.load_suggestions()
+        self.ignore_stroke = False
+
+        self.set_icon_from_icon_name(gtk.EntryIconPosition.SECONDARY, "go-down-symbolic")
+
+        self.checker = self.connect("changed", self.on_changed)
+        self.connect("key-press-event", self.on_key_press)
+        self.connect("focus-out-event", self.on_focus_out)
+        self.connect("icon-press", self.on_icon_press)
+
+
+
+    def on_changed(self, entry):
+        text = self.get_text()
+
+        with self.complete_tree.handler_block(self.tree_checker):
+            self.show_suggestions(text)
+            if self.complete_tree.rows:
+                self.complete_tree.set_current_row(0)
+
+        if self.ignore_stroke:
+            self.ignore_stroke = False
+            return
+
+        def complete():
+            text, suffix = self.complete_first()
+            if suffix:
+                #self.ignore_stroke = True
+                with self.handler_block(self.checker):
+                    self.update_entry("%s%s" % (text, suffix))
+                    self.select_region(len(text), -1)
+        gobject.timeout_add(0, complete)
+
+    def on_focus_out(self, entry, event):
+        self.popup.hide()
+
+    def on_icon_press(self, entry, icon, event):
+        self.show_suggestions("")
+
+    def on_key_press(self, entry, event=None):
+        if event.keyval in (gdk.KEY_BackSpace, gdk.KEY_Delete):
+            self.ignore_stroke = True
+        elif event.keyval == gdk.KEY_Escape:
+            with self.handler_block(self.checker):
+                self.set_text("")
+                self.popup.hide()
+
+        elif event.keyval == gdk.KEY_Return:
+            self.popup.hide()
+            self.set_position(-1)
+
+
+        elif event.keyval in (gdk.KEY_Up, gdk.KEY_Down):
+            if not self.popup.get_visible():
+                self.show_suggestions(self.get_text())
+            self.complete_tree.on_key_press(self, event)
+            return True
+
+    def on_tree_select_row(self, tree, row):
+        with self.handler_block(self.checker):
+            label = row.full_data
+            self.update_entry(label)
+            self.set_position(-1)
+            self.popup.hide()
+
+    def load_suggestions(self):
         self.todays_facts = self.storage.get_todays_facts()
 
         # list of facts of last month
@@ -533,72 +390,23 @@ class BasicWindow:
 
         self.suggestions = sorted(suggestions.iteritems(), key=lambda x: x[1], reverse=True)
 
-        self.ignore_stroke = False
-
-        window.add(box)
-        window.show_all()
-        self.update_suggestions()
-
-    def update_entry(self, text):
-        self.entry.set_text(text)
-        self.scene.render_preview(text)
+    def complete_first(self):
+        text = self.get_text()
+        fact, search = extract_fact(text), extract_search(text)
+        if not self.complete_tree.rows or "activity" not in fact:
+            return text, None
 
 
-    def on_entry_changed(self, entry):
-        text = self.entry.get_text()
-        self.update_suggestions(text)
-        if self.complete_tree.rows:
-            self.complete_tree.set_current_row(0)
-
-        if self.ignore_stroke:
-            self.ignore_stroke = False
-            return
-
-
-
-        def complete():
-            text, suffix = self.complete_current()
-            if suffix:
-                #self.ignore_stroke = True
-                with self.entry.handler_block(self.entry_checker):
-                    self.update_entry("%s%s" % (text, suffix))
-                    self.entry.select_region(len(text), -1)
-        gobject.timeout_add(0, complete)
-
-
-    def on_key_press(self, entry, event=None):
-        if event.keyval in (gdk.KEY_BackSpace, gdk.KEY_Delete):
-            self.ignore_stroke = True
-
-        elif event.keyval in (gdk.KEY_Up, gdk.KEY_Down,
-                              gdk.KEY_Page_Up, gdk.KEY_Page_Down,
-                              gdk.KEY_Return):
-            self.complete_tree.on_key_press(self, event)
-
-            with self.entry.handler_block(self.entry_checker):
-                label = self.complete_tree.current_row.full_data
-                self.update_entry(label)
-                self.entry.set_position(len(label))
-            return True
-
-
-
-    def on_complete_selected(self, tree, current_row):
-        with self.entry.handler_block(self.entry_checker):
-            self.update_entry(self.complete_tree.current_row.full_data)
-
-
-    def complete_current(self):
-        current_text = self.entry.get_text()
-        if not self.complete_tree.rows:
-            return current_text, None
 
         label = self.complete_tree.rows[0].data
+        if label.startswith(search):
+            return text, label[len(search):]
 
-        if label.startswith(current_text):
-            return current_text, label[len(current_text):]
+        return text, None
 
-        return current_text, None
+
+    def update_entry(self, text):
+        self.set_text(text or "")
 
 
     def update_suggestions(self, text=""):
@@ -635,7 +443,7 @@ class BasicWindow:
 
         templates = {
             "start_time": "",
-            "start_delta": ("minutes ago", "-"),
+            "start_delta": ("start activity -n minutes ago", "-"),
         }
 
         # need to set the start_time template before
@@ -677,17 +485,13 @@ class BasicWindow:
 
         res = []
         for (description, variant) in variants:
-            res.append([variant, variant, variant, description])
+            res.append(DataRow(variant, description=description))
 
         # regular activity
         if (looking_for in ("start_time", "end_time") and not looks_like_time(text.split(" ")[-1])) or \
             looking_for in ("activity", "category"):
 
-            search = fact.get('activity') or ""
-            if 'category' in fact:
-                search += "@%s" % fact['category']
-            if 'tags' in fact:
-                search += " #%s" % (" #".join(fact['tags']))
+            search = extract_search(text)
 
             matches = []
             for match, score in self.suggestions:
@@ -706,11 +510,61 @@ class BasicWindow:
                 markup_label = label + " " + (match.replace(search, "<b>%s</b>" % search) if search else match)
                 label += " " + match
 
-                res.append([markup_label, match, label, ""])
+                res.append(DataRow(markup_label, match, label))
 
+        if not res:
+            # in case of nothing to show, add preview so that the user doesn't
+            # think they are lost
+            label = (fact.get('start_time') or now).strftime("%H:%M")
+            if fact.get('end_time'):
+                label += fact['end_time'].strftime("-%H:%M")
+
+            if 'activity' in fact:
+                label += " " + fact['activity']
+            if 'category' in fact:
+                label += "@" + fact['activity']
+
+            if 'tags' in fact:
+                label += " #" + " #".join(fact['tags'])
+
+            res.append(DataRow(label, description="Start tracking"))
 
         self.complete_tree.set_rows(res)
 
+
+    def show_suggestions(self, text):
+        entry_alloc = self.get_allocation()
+        entry_x, entry_y = self.get_window().get_origin()[1:]
+        x, y = entry_x + entry_alloc.x, entry_y + entry_alloc.y + entry_alloc.height
+
+        self.popup.show_all()
+
+        self.update_suggestions(text)
+
+        tree_w, tree_h = self.complete_tree.get_size_request()
+
+        self.popup.move(x, y)
+        self.popup.resize(entry_alloc.width, tree_h)
+        self.popup.show_all()
+
+
+
+
+
+class BasicWindow:
+    def __init__(self):
+        window = gtk.Window()
+        window.set_default_size(600, 500)
+        window.connect("delete_event", lambda *args: gtk.main_quit())
+
+        self.entry = ActivityEntry()
+        box = gtk.Box(orientation=gtk.Orientation.VERTICAL)
+        box.set_border_width(12)
+        box.pack_start(self.entry, False, True, 0)
+        window.add(box)
+
+        self.entry.grab_focus()
+        window.show_all()
 
 
 if __name__ == '__main__':
