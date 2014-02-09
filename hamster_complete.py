@@ -183,24 +183,6 @@ class Scene(graphics.Scene):
 
 
 
-
-
-
-class ActionRow(graphics.Sprite):
-    def __init__(self):
-        graphics.Sprite.__init__(self)
-        self.visible = False
-
-        self.restart = graphics.Icon("view-refresh-symbolic", size=18,
-                                     interactive=True,
-                                     mouse_cursor=gdk.CursorType.HAND1,
-                                     y=4)
-        self.add_child(self.restart)
-
-        self.width = 50 # Simon says
-
-
-
 class Label(object):
     """a much cheaper label that would be suitable for cellrenderer"""
     def __init__(self, x=0, y=0, color=None, use_markup=True):
@@ -252,7 +234,7 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
     __gsignals__ = {
         # enter or double-click, passes in current day and fact
         'on-activate-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        'on-change-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        'on-select-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
 
@@ -265,12 +247,13 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
     def __init__(self):
         graphics.Scene.__init__(self, style_class=gtk.STYLE_CLASS_VIEW)
 
+        self.set_can_focus(False)
+
         self.row_positions = []
         self.row_heights = []
 
         self.y = 0
 
-        self.hover_row = None
         self.current_row = None
         self.rows = []
 
@@ -281,7 +264,6 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
         self.visible_range = None
 
         self.connect("on-mouse-scroll", self.on_scroll)
-        self.connect("on-mouse-move", self.on_mouse_move)
         self.connect("on-mouse-down", self.on_mouse_down)
 
         self.connect("on-resize", self.on_resize)
@@ -290,20 +272,30 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
         self.connect("on-enter-frame", self.on_enter_frame)
         self.connect("on-double-click", self.on_double_click)
 
+    def _get_mouse_row(self, event):
+        hover_row = None
+        for rec in self.visible_range:
+            if rec['y'] <= event.y <= (rec['y'] + rec['h']):
+                hover_row = rec
+                break
+
+        return hover_row['row'] if hover_row else None
 
     def on_mouse_down(self, scene, event):
-        self.grab_focus()
-        if self.hover_row:
-            self.set_current_row(self.rows.index(self.hover_row))
+        row = self._get_mouse_row(event)
+        if row:
+            self.set_current_row(self.rows.index(row))
+            self.emit("on-select-row", self.current_row)
+
+    def on_double_click(self, scene, event):
+        row = self._get_mouse_row(event)
+        if row:
+            self.activate_row(row)
+
 
 
     def activate_row(self, row):
         self.emit("on-activate-row", row)
-
-
-    def on_double_click(self, scene, event):
-        if self.hover_row:
-            self.activate_row(self.hover_row)
 
     def on_key_press(self, scene, event):
         if event.keyval == gdk.KEY_Up:
@@ -335,8 +327,6 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
             self.y = row.y
         if (row.y + 15) > (self.y + self.height):
             self.y = row.y - self.height + 25
-
-        self.emit("on-change-row", self.current_row)
         self.on_scroll()
 
 
@@ -351,18 +341,6 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
                                                                self.rows[start:end]))]
 
 
-    def on_mouse_move(self, tree, event):
-        hover_day, hover_row = None, None
-
-        for rec in self.visible_range:
-            if rec['y'] <= event.y <= (rec['y'] + rec['h']):
-                hover_row = rec
-                break
-
-        if hover_row != self.hover_row:
-            self.hover_row = hover_row
-
-
     def _on_vadjustment_change(self, scene, vadjustment):
         if not self.vadjustment:
             return
@@ -371,7 +349,7 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
 
     def set_rows(self, rows):
         self.y = 0
-        self.current_row = self.hover_row = None
+        self.current_row = None
 
         if self.vadjustment:
             self.vadjustment.set_value(0)
@@ -520,7 +498,8 @@ class BasicWindow:
 
         self.complete_tree = CompleteTree()
         box.pack_end(self.complete_tree, False, False, 0)
-        self.complete_tree.connect("on-change-row", self.on_complete_changed)
+        self.complete_tree.connect("on-select-row", self.on_complete_selected)
+        self.complete_tree.connect("on-activate-row", self.on_complete_selected)
 
 
 
@@ -599,9 +578,9 @@ class BasicWindow:
 
 
 
-    def on_complete_changed(self, tree, current_row):
-        return
-        self.entry.set_text(self.complete_tree.current_row.data)
+    def on_complete_selected(self, tree, current_row):
+        with self.entry.handler_block(self.entry_checker):
+            self.entry.set_text(self.complete_tree.current_row.full_data)
 
 
     def complete_current(self):
