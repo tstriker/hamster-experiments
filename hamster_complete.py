@@ -88,13 +88,13 @@ def extract_fact(text, phase=None):
             return next_phase(fragment, phases[phases.index(phase)+1])
 
         elif time_re.match(fragment):
-            res[phase] = dt.datetime.strptime(fragment, "%H:%M")
+            res[phase] = dt.datetime.combine(now.date(), dt.datetime.strptime(fragment, "%H:%M").time())
             return next_phase(fragment, phases[phases.index(phase)+1])
 
         elif time_range_re.match(fragment) and phase == "start_time":
             start, end = fragment.split("-")
-            res["start_time"] = dt.datetime.strptime(start, "%H:%M")
-            res["end_time"] = dt.datetime.strptime(end, "%H:%M")
+            res["start_time"] = dt.datetime.combine(now.date(), dt.datetime.strptime(start, "%H:%M").time())
+            res["end_time"] = dt.datetime.combine(now.date(), dt.datetime.strptime(end, "%H:%M").time())
             phase = "activity"
             return next_phase(fragment, "activity")
 
@@ -539,6 +539,11 @@ class BasicWindow:
         window.show_all()
         self.update_suggestions()
 
+    def update_entry(self, text):
+        self.entry.set_text(text)
+        self.scene.render_preview(text)
+
+
     def on_entry_changed(self, entry):
         text = self.entry.get_text()
         self.update_suggestions(text)
@@ -556,7 +561,7 @@ class BasicWindow:
             if suffix:
                 #self.ignore_stroke = True
                 with self.entry.handler_block(self.entry_checker):
-                    self.entry.set_text("%s%s" % (text, suffix))
+                    self.update_entry("%s%s" % (text, suffix))
                     self.entry.select_region(len(text), -1)
         gobject.timeout_add(0, complete)
 
@@ -572,7 +577,7 @@ class BasicWindow:
 
             with self.entry.handler_block(self.entry_checker):
                 label = self.complete_tree.current_row.full_data
-                self.entry.set_text(label)
+                self.update_entry(label)
                 self.entry.set_position(len(label))
             return True
 
@@ -580,7 +585,7 @@ class BasicWindow:
 
     def on_complete_selected(self, tree, current_row):
         with self.entry.handler_block(self.entry_checker):
-            self.entry.set_text(self.complete_tree.current_row.full_data)
+            self.update_entry(self.complete_tree.current_row.full_data)
 
 
     def complete_current(self):
@@ -613,6 +618,7 @@ class BasicWindow:
 
             [start_time] | [-end_time] | activity | [@category] | [#tag]
         """
+        now = dt.datetime.now()
 
         text = text.lstrip()
 
@@ -630,14 +636,13 @@ class BasicWindow:
         templates = {
             "start_time": "",
             "start_delta": ("minutes ago", "-"),
-            "activity": ("start now", "hamster"),
         }
 
         # need to set the start_time template before
         prev_fact = self.todays_facts[-1] if self.todays_facts else None
         if prev_fact and prev_fact.end_time:
-            templates["start_time"] = ("from previous activity %s ago" % stuff.format_duration(prev_fact.delta),
-                                       prev_fact.end_time.strftime("%H:%M"))
+            templates["start_time"] = ("from previous activity %s ago" % stuff.format_duration(now - prev_fact.end_time),
+                                       prev_fact.end_time.strftime("%H:%M "))
 
         variants = []
 
@@ -675,10 +680,8 @@ class BasicWindow:
             res.append([variant, variant, variant, description])
 
         # regular activity
-        now = dt.datetime.now()
-
         if (looking_for in ("start_time", "end_time") and not looks_like_time(text.split(" ")[-1])) or \
-           looking_for in ("activity", "category"):
+            looking_for in ("activity", "category"):
 
             search = fact.get('activity') or ""
             if 'category' in fact:
@@ -696,18 +699,17 @@ class BasicWindow:
             matches = sorted(matches, key=lambda x: x[1], reverse=True)[:7] # need to limit these guys, sorry
 
             for match, score in matches:
-                label = (fact.get('start_time') or now).strftime("%H:%M-")
+                label = (fact.get('start_time') or now).strftime("%H:%M")
                 if fact.get('end_time'):
-                    label += fact['end_time'].strftime("%H:%M")
+                    label += fact['end_time'].strftime("-%H:%M")
 
-                markup_label = label + " " + match.replace(search, "<b>%s</b>" % search) if search else match
+                markup_label = label + " " + (match.replace(search, "<b>%s</b>" % search) if search else match)
                 label += " " + match
 
                 res.append([markup_label, match, label, ""])
 
 
         self.complete_tree.set_rows(res)
-        self.scene.render_preview(text)
 
 
 
