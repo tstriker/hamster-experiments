@@ -715,8 +715,6 @@ class BasicWindow:
 
                 label += " " + match.replace(search, "<b>%s</b>" % search) if search else match
 
-                print label
-
                 res.append([label, match])
 
 
