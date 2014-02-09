@@ -23,11 +23,6 @@ import hamster.client
 from hamster.lib import stuff
 
 
-
-
-
-
-
 def looks_like_time(fragment):
     if not fragment:
         return False
@@ -358,7 +353,6 @@ class ActivityEntry(gtk.Entry):
             label = row.full_data
             self.update_entry(label)
             self.set_position(-1)
-            self.popup.hide()
 
     def load_suggestions(self):
         self.todays_facts = self.storage.get_todays_facts()
