@@ -119,7 +119,7 @@ class Scene(graphics.Scene):
         self.reference_point = sprite
 
     def on_enter_frame(self, scene, context):
-        speed = 0.01
+        speed = 0.005
 
         self.inner.rotation += speed * 5
         self.outer.rotation -= speed
