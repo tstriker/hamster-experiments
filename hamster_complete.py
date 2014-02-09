@@ -249,7 +249,7 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
 
     __gsignals__ = {
         # enter or double-click, passes in current day and fact
-        'on-activate-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+        'on-activate-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         'on-change-row': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
@@ -295,13 +295,13 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
             self.set_current_row(self.rows.index(self.hover_row))
 
 
-    def activate_row(self, day, fact):
-        self.emit("on-activate-row", day, fact)
+    def activate_row(self, row):
+        self.emit("on-activate-row", row)
 
 
     def on_double_click(self, scene, event):
         if self.hover_row:
-            self.activate_row(self.hover_day, self.hover_row)
+            self.activate_row(self.hover_row)
 
     def on_key_press(self, scene, event):
         if event.keyval == gdk.KEY_Up:
@@ -321,7 +321,7 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
             self.on_scroll()
 
         elif event.keyval == gdk.KEY_Return:
-            self.activate_row(self.hover_day, self.current_row)
+            self.activate_row(self.current_row)
 
 
     def set_current_row(self, idx):
@@ -518,22 +518,32 @@ class BasicWindow:
         self.storage = hamster.client.Storage()
         self.todays_facts = self.storage.get_todays_facts()
 
-        # list of all activities
-        self.activities = self.storage.get_activities()
-
         # list of facts of last month
         now = dt.datetime.now()
         last_month = self.storage.get_facts(now - dt.timedelta(days=30), now)
 
         # naive recency and frequency rank
         # score is as simple as you get 30-days_ago points for each occurence
-        activity_category = defaultdict(int)
+        suggestions = defaultdict(int)
         for fact in last_month:
             days = 30 - (now - dt.datetime.combine(fact.date, dt.time())).total_seconds() / 60 / 60 / 24
-            activity_category["%s@%s" % (fact.activity, fact.category or "Unsorted")] += days
+            label = fact.activity
+            if fact.category:
+                label += "@%s" % fact.category
 
-        activity_category = sorted(activity_category.iteritems(), key=lambda x: x[1], reverse=True)
+            suggestions[label] += days
 
+            if fact.tags:
+                label += " #%s" % (" #".join(fact.tags))
+                suggestions[label] += days
+
+        for rec in self.storage.get_activities():
+            label = rec["name"]
+            if rec["category"]:
+                label += "@%s" % rec["category"]
+            suggestions[label] += 0
+
+        self.suggestions = sorted(suggestions.iteritems(), key=lambda x: x[1], reverse=True)
 
         self.ignore_stroke = False
 
@@ -567,27 +577,35 @@ class BasicWindow:
         if event.keyval in (gdk.KEY_BackSpace, gdk.KEY_Delete):
             self.ignore_stroke = True
 
+        elif event.keyval in (gdk.KEY_Up, gdk.KEY_Down,
+                              gdk.KEY_Page_Up, gdk.KEY_Page_Down,
+                              gdk.KEY_Return):
+            self.complete_tree.on_key_press(self, event)
+
+            with self.entry.handler_block(self.entry_checker):
+                label = self.complete_tree.current_row.label
+                self.entry.set_text(label)
+                self.entry.set_position(len(label))
+            return True
+
+
 
     def on_complete_changed(self, tree, current_row):
-        pass
-        #self.complete_current()
+        return
+        self.entry.set_text(self.complete_tree.current_row.data)
 
 
     def complete_current(self):
         current_text = self.entry.get_text()
-
-        current_row = self.complete_tree.current_row
-        if not current_row:
+        if not self.complete_tree.rows:
             return current_text, None
 
-        last_word = current_text.split(" ")[-1]
+        label = self.complete_tree.rows[0].data
 
-        current_label = current_row.data
+        if label.startswith(current_text):
+            return current_text, label[len(current_text):]
 
-        res = current_label[len(last_word):]
-
-        return current_text, res
-
+        return current_text, None
 
 
     def update_suggestions(self, text=""):
@@ -674,26 +692,35 @@ class BasicWindow:
 
         if (looking_for in ("start_time", "end_time") and not looks_like_time(text.split(" ")[-1])) or \
            looking_for in ("activity", "category"):
-            activities = self.storage.get_activities(current_fragment.strip() if looking_for in("activity", "category") else "")
-            for activity in activities:
+
+            search = fact.get('activity') or ""
+            if 'category' in fact:
+                search += "@%s" % fact['category']
+            if 'tags' in fact:
+                search += " #%s" % (" #".join(fact['tags']))
+
+            matches = []
+            for match, score in self.suggestions:
+                if search in match:
+                    if match.startswith(search):
+                        score += 10**8 # boost beginnings
+                    matches.append((match, score))
+
+            matches = sorted(matches, key=lambda x: x[1], reverse=True)
+
+            for match, score in matches:
                 label = (fact.get('start_time') or now).strftime("%H:%M-")
                 if fact.get('end_time'):
                     label += fact['end_time'].strftime("%H:%M")
 
-                label += " " + activity['name']
-                if activity['category']:
-                    label += "@%s" % activity['category']
+                label += " " + match.replace(search, "<b>%s</b>" % search) if search else match
 
+                print label
 
-
-
-                res.append([label, "%s@%s" % (activity['name'], activity['category'] or "")])
-
-
+                res.append([label, match])
 
 
         self.complete_tree.set_rows(res)
-
         self.scene.render_preview(text)
 
 
