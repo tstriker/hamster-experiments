@@ -56,6 +56,7 @@ def extract_fact(text, phase=None):
         "start_time",
         "end_time",
         "activity",
+        "category",
         "tags"
     ]
 
@@ -96,20 +97,26 @@ def extract_fact(text, phase=None):
             return next_phase(fragment, "activity")
 
     if "activity" in phases:
-        activity, category = fragment.split("@") if "@" in fragment else (fragment, None)
+        activity = re.split("[@|#|,]", text, 1)[0]
         if looks_like_time(activity):
             # want meaningful activities
             return res
 
         res["activity"] = activity
-        if category:
-            res["category"] = category
-        return next_phase(fragment, "tags")
+        return next_phase(activity, "category")
+
+    if "category" in phases:
+        category = re.split("[#|,]", text, 1)[0]
+        if category.lstrip().startswith("@"):
+            res["category"] = category.lstrip("@ ")
+            return next_phase(category, "tags")
+
+        return next_phase("", "tags")
 
     if "tags" in phases:
         tags, desc = text.split(",", 1) if "," in text else (text, None)
 
-        tags = [tag for tag in re.split("[\s|#]", tags.strip()) if tag]
+        tags = [tag.strip() for tag in re.split("[#]", tags) if tag.strip()]
         if tags:
             res["tags"] = tags
 
@@ -516,7 +523,7 @@ class ActivityEntry(gtk.Entry):
             if 'activity' in fact:
                 label += " " + fact['activity']
             if 'category' in fact:
-                label += "@" + fact['activity']
+                label += "@" + fact['category']
 
             if 'tags' in fact:
                 label += " #" + " #".join(fact['tags'])
