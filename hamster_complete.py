@@ -235,9 +235,11 @@ class Label(object):
 
 
 class DataRow(object):
-    def __init__(self, label, data=None):
+    def __init__(self, label, data=None, full_data=None, description=None):
         self.label = label
         self.data = data or label
+        self.full_data = full_data or data
+        self.description = description or ""
 
 class CompleteTree(graphics.Scene, gtk.Scrollable):
     """
@@ -484,7 +486,14 @@ class CompleteTree(graphics.Scene, gtk.Scrollable):
                 color, bg = colors["selected"], colors["selected_bg"]
                 g.fill_area(0, 0, self.width, 25, bg)
 
-            self.label.show(g, rec['row'].label, color=color)
+            label = rec['row'].label
+            if rec['row'].description:
+                description_color = graphics.Colors.contrast(color, 50)
+                description_color = graphics.Colors.hex(description_color)
+
+                label += '<span color="%s"> - %s</span>' % (description_color, rec['row'].description)
+
+            self.label.show(g, label, color=color)
 
             g.restore_context()
 
@@ -583,7 +592,7 @@ class BasicWindow:
             self.complete_tree.on_key_press(self, event)
 
             with self.entry.handler_block(self.entry_checker):
-                label = self.complete_tree.current_row.label
+                label = self.complete_tree.current_row.full_data
                 self.entry.set_text(label)
                 self.entry.set_position(len(label))
             return True
@@ -684,8 +693,7 @@ class BasicWindow:
 
         res = []
         for (description, variant) in variants:
-            res.append(['%s <span color="#666">- %s</span>' % (variant, description),
-                        variant])
+            res.append([variant, variant, variant, description])
 
         # regular activity
         now = dt.datetime.now()
@@ -706,16 +714,17 @@ class BasicWindow:
                         score += 10**8 # boost beginnings
                     matches.append((match, score))
 
-            matches = sorted(matches, key=lambda x: x[1], reverse=True)
+            matches = sorted(matches, key=lambda x: x[1], reverse=True)[:3] # need to limit these guys, sorry
 
             for match, score in matches:
                 label = (fact.get('start_time') or now).strftime("%H:%M-")
                 if fact.get('end_time'):
                     label += fact['end_time'].strftime("%H:%M")
 
-                label += " " + match.replace(search, "<b>%s</b>" % search) if search else match
+                markup_label = label + " " + match.replace(search, "<b>%s</b>" % search) if search else match
+                label += " " + match
 
-                res.append([label, match])
+                res.append([markup_label, match, label, ""])
 
 
         self.complete_tree.set_rows(res)
