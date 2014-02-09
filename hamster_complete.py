@@ -714,7 +714,7 @@ class BasicWindow:
                         score += 10**8 # boost beginnings
                     matches.append((match, score))
 
-            matches = sorted(matches, key=lambda x: x[1], reverse=True)[:3] # need to limit these guys, sorry
+            matches = sorted(matches, key=lambda x: x[1], reverse=True)[:7] # need to limit these guys, sorry
 
             for match, score in matches:
                 label = (fact.get('start_time') or now).strftime("%H:%M-")
