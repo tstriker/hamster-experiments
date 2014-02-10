@@ -8,8 +8,9 @@ import math
 
 from gi.repository import Gtk as gtk
 from lib import graphics
+from lib import layout
 from lib.pytweener import Easing
-import ui
+
 
 def tiles(items):
     """looks for the most rectangular grid for the given number of items,
@@ -47,18 +48,14 @@ class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self)
 
-        base = ui.VBox()
+        base = layout.VBox()
         self.add_child(base)
 
-        self.fiddly_bits_container = ui.VBox()
+        self.fiddly_bits_container = layout.VBox()
         base.add_child(self.fiddly_bits_container)
 
-        button_box = ui.VBox(expand=False, padding=10)
+        button_box = layout.VBox(expand=False, padding=10)
         base.add_child(button_box)
-
-        self.mo = ui.Button("Gimme mo")
-        self.mo.connect("on-click", self.gimme_mo)
-        button_box.add_child(self.mo)
 
         self.fiddly_bits = [FiddlyBit() for i in range(4)]
         self.populate_fiddlybits()
@@ -72,7 +69,7 @@ class Scene(graphics.Scene):
                 bit.animate(x=sprite.x, y=sprite.y,
                             easing=Easing.Expo.ease_out)
 
-    def gimme_mo(self, sprite, event):
+    def gimme_mo(self, button):
         self.fiddly_bits.append(FiddlyBit())
         self.populate_fiddlybits()
 
@@ -81,13 +78,13 @@ class Scene(graphics.Scene):
         x, y = tiles(self.fiddly_bits)
         k = 0
         for i in range(y):
-            box = ui.HBox()
+            box = layout.HBox()
             self.fiddly_bits_container.add_child(box)
             for j in range(x):
-                internal_box = ui.HBox()
+                internal_box = layout.HBox()
                 box.add_child(internal_box)
 
-                fixed = ui.Fixed(fill=False)
+                fixed = layout.Fixed(fill=False)
                 internal_box.add_child(fixed)
                 bit = self.fiddly_bits[k]
                 fixed.add_child(bit)
@@ -105,7 +102,16 @@ class BasicWindow:
         window = gtk.Window()
         window.set_default_size(600, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
-        window.add(Scene())
+
+        box = gtk.VBox(border_width=10)
+        scene = Scene()
+        box.pack_start(scene, True, True, 0)
+
+        gimme_mo = gtk.Button("Gimme Mo")
+        box.pack_end(gimme_mo, False, True, 0)
+        gimme_mo.connect("clicked", scene.gimme_mo)
+        window.add(box)
+
         window.show_all()
 
 if __name__ == '__main__':
