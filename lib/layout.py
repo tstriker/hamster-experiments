@@ -798,7 +798,7 @@ class _DisplayLabel(graphics.Label):
             self._cached_w, self._cached_h = self.measure(text, escape, -1)
         return self._cached_w, self._cached_h
 
-    def get_weight_for_width_size(self):
+    def get_height_for_width_size(self):
         if self._cached_wh_w:
             return self._cached_wh_w, self._cached_wh_h
 
