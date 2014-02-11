@@ -282,7 +282,7 @@ class Widget(graphics.Sprite):
         """width in pixels"""
         alloc_w = self.alloc_w
 
-        if self.parent and self.parent == self.get_scene():
+        if self.parent and isinstance(self.parent, graphics.Scene):
             alloc_w = self.parent.width
 
             def res(scene, event):
@@ -308,7 +308,7 @@ class Widget(graphics.Sprite):
         """height in pixels"""
         alloc_h = self.alloc_h
 
-        if self.parent and self.parent == self.get_scene():
+        if self.parent and isinstance(self.parent, graphics.Scene):
             alloc_h = self.parent.height
 
         min_height = (self.min_height or 0) + self.margin_top + self.margin_bottom
@@ -822,7 +822,7 @@ class Label(Bin):
 
     fill = False
     padding = 0
-    x_align = 0
+    x_align = 0.5
 
     def __init__(self, text = "", markup = "", spacing = 5, image = None,
                  image_position = None, size = None, font_desc = None,
