@@ -12,7 +12,7 @@ from lib import graphics
 class Roller(graphics.Sprite):
     def __init__(self, **kwargs):
         graphics.Sprite.__init__(self, **kwargs)
-        self.inner_radius = 40
+        self.inner_radius = 60
 
         self.y = -self.inner_radius
         self.direction = 1
@@ -25,7 +25,7 @@ class Roller(graphics.Sprite):
         # square has 4 sides, so our waves have to be shorter
         self.graphics.rectangle(-self.inner_radius, -self.inner_radius,
                                 self.inner_radius * 2, self.inner_radius * 2)
-        self.graphics.fill_stroke("#888", "#eee")
+        self.graphics.stroke("#eee")
 
         """
         # here's bit of behind the scenes - faking stuff like a boss
@@ -128,7 +128,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window()
-        window.set_default_size(600, 400)
+        window.set_default_size(500, 500)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
