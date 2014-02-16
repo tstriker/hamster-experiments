@@ -8,15 +8,16 @@ import math
 from gi.repository import Gtk as gtk
 from lib import graphics
 
-class Roller(graphics.Sprite):
-    def __init__(self, floor=0, **kwargs):
-        graphics.Sprite.__init__(self, **kwargs)
-        self.floor = floor
 
+class Roller(graphics.Sprite):
+    def __init__(self, **kwargs):
+        graphics.Sprite.__init__(self, **kwargs)
         self.inner_radius = 40
 
-        self.y = self.floor - self.inner_radius
+        self.y = -self.inner_radius
         self.direction = 1
+
+        self.vector = []
 
         self.connect("on-render", self.on_render)
 
@@ -27,6 +28,7 @@ class Roller(graphics.Sprite):
         self.graphics.fill_stroke("#888", "#eee")
 
         """
+        # here's bit of behind the scenes - faking stuff like a boss
         self.graphics.move_to(self.inner_radius, 0)
         self.graphics.circle(0, 0, self.inner_radius)
 
@@ -43,34 +45,40 @@ class Roller(graphics.Sprite):
 
 
     def roll(self):
-        self.inner_radius = 20 + self.rotation * 2
-
-
+        # adjust the outer radius here
         self.outer_radius = math.sqrt(2 * ((self.inner_radius) ** 2))
+        step = 3
 
-        step = 4
+        """
+        # based on the phase we can also do a little extra pushing
+        step_push = math.cos((self.rotation + math.radians(0)) * 4)
+        step += step_push * 1.5
+        """
         self.rotation += self.direction * math.radians(step)
 
-
-
-        dist = self.inner_radius
         # y has to variate between inner and outer radius based on the phase
         diff = self.outer_radius - self.inner_radius
-
-        rot = self.rotation * 2
-        dist += abs(diff * math.sin(rot))
-
-        self.y = self.floor - dist
-
-        # circumference = pi * r
-        #
-        #* math.pi step  # have to find
-        self.x += self.direction * (math.pi * dist) * step / 180.0
+        self.y = -self.inner_radius - abs(diff * math.sin(self.rotation * 2))
 
 
-        if self.x > 600 - self.outer_radius or self.x < self.outer_radius:
+
+class MovingRoller(Roller):
+    def __init__(self, size=100, **kwargs):
+        Roller.__init__(self, **kwargs)
+        self.size = size
+        self._prev_angle = 0
+
+    def roll(self):
+        Roller.roll(self)
+
+        angle = math.degrees(self.rotation)
+        step = abs(self._prev_angle - angle)
+        self._prev_angle = angle
+
+        self.x += self.direction * (math.pi * self.outer_radius) * step / 180.0
+        if (self.x > self.size - self.outer_radius and self.direction > 0) or \
+           (self.x < self.outer_radius and self.direction < 0):
             self.direction = -self.direction
-
 
 
 
@@ -80,8 +88,16 @@ class Scene(graphics.Scene):
         graphics.Scene.__init__(self)
         self.background_color = "#333"
 
-        self.roller = Roller(x = 100, floor = 199)
-        self.add_child(self.roller)
+
+        self.roller = MovingRoller(x = 100)
+        roller_container = graphics.Sprite(y=198)
+        roller_container.add_child(self.roller)
+
+        self.roller2 = MovingRoller(x = 100)
+        roller_container2 = graphics.Sprite(y=202, scale_y=-1)
+        roller_container2.add_child(self.roller2)
+
+        self.add_child(roller_container, roller_container2)
 
         self.connect("on-enter-frame", self.on_enter_frame)
 
@@ -93,7 +109,11 @@ class Scene(graphics.Scene):
         g.line_to(self.width - 10, 200)
         g.stroke("#eee")
 
+        self.roller.size = self.width
         self.roller.roll()
+
+        self.roller2.size = self.width
+        self.roller2.roll()
 
         self.redraw() # this is how to get a constant redraw loop (say, for animation)
 
@@ -102,7 +122,7 @@ class Scene(graphics.Scene):
 class BasicWindow:
     def __init__(self):
         window = gtk.Window()
-        window.set_default_size(600, 250)
+        window.set_default_size(600, 400)
         window.connect("delete_event", lambda *args: gtk.main_quit())
         window.add(Scene())
         window.show_all()
