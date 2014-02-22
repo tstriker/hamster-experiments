@@ -106,11 +106,11 @@ class RattleWithEase(graphics.Sprite):
 
         self._intensity = 0
 
-        self.shake_range = 3
+        self.shake_range = 4
         self.easing = Easing.Sine
 
         self.step_duration = 0.01
-        self.duration = 1
+        self.duration = 0.75
         self.fill = "#ddd"
         self.prev_x, self.prev_y = 0, 0
         self.next_x, self.next_y = 0, 0
@@ -122,8 +122,9 @@ class RattleWithEase(graphics.Sprite):
     def buzz_in(self, sprite=None):
         self.current_step += 1 / (self.duration / self.step_duration)
         if self.current_step > 1:
-            self.current_step = 0
-            self.buzz_out
+            self.current_step = 1
+            self.buzz_out()
+            return
 
         shake_range = self.easing.ease_in(self.current_step) * self.shake_range
         angle = random.randint(0, 360)
@@ -142,6 +143,7 @@ class RattleWithEase(graphics.Sprite):
         if self.current_step < 0:
             self.current_step = 0
             self.buzz_in()
+            return
 
         shake_range = self.easing.ease_in(self.current_step) * self.shake_range
         angle = random.randint(0, 360)
