@@ -2,7 +2,7 @@
 # - coding: utf-8 -
 # Copyright (C) 2014 Toms Baugis <toms.baugis@gmail.com>
 
-"""Base template"""
+"""A quick stab."""
 import math
 import random
 
@@ -19,7 +19,7 @@ class Rattle(graphics.Sprite):
 
         self._intensity = 0
 
-        self.shake_range = 10
+        self.shake_range = 5
         self.easing = Easing.Sine
         self.duration = 1.3
         self.fill = "#ddd"
@@ -92,6 +92,81 @@ class RattleRandomAngle2Shadow(RattleRandomAngleShadow):
         self.graphics.fill(self.fill)
 
 
+
+class RattleWithEase(graphics.Sprite):
+    """
+        Want to go from prev random to next random using animation.
+        It will be super-short steps, the intensity updated on completion of
+        each step
+    """
+    def __init__(self, **kwargs):
+        graphics.Sprite.__init__(self, **kwargs)
+        self.connect("on-render", self.on_render)
+        self.snap_to_pixel = False
+
+        self._intensity = 0
+
+        self.shake_range = 3
+        self.easing = Easing.Sine
+
+        self.step_duration = 0.01
+        self.duration = 1
+        self.fill = "#ddd"
+        self.prev_x, self.prev_y = 0, 0
+        self.next_x, self.next_y = 0, 0
+        self.current_step = 0
+
+    def buzz(self):
+        self.buzz_in()
+
+    def buzz_in(self, sprite=None):
+        self.current_step += 1 / (self.duration / self.step_duration)
+        if self.current_step > 1:
+            self.current_step = 0
+            self.buzz_out
+
+        shake_range = self.easing.ease_in(self.current_step) * self.shake_range
+        angle = random.randint(0, 360)
+
+        self.next_x = (1 - 2 * random.random()) * shake_range
+        self.next_y = (1 - 2 * random.random()) * shake_range
+
+        self.animate(x=self.next_x, y=self.next_y,
+                     duration=self.step_duration,
+                     easing=Easing.Linear.ease_in,
+                     on_update=self.on_render,
+                     on_complete=self.buzz_in)
+
+    def buzz_out(self, sprite=None):
+        self.current_step -= 1 / (self.duration / self.step_duration)
+        if self.current_step < 0:
+            self.current_step = 0
+            self.buzz_in()
+
+        shake_range = self.easing.ease_in(self.current_step) * self.shake_range
+        angle = random.randint(0, 360)
+        self.next_x = (1 - 2 * random.random()) * shake_range
+        self.next_y = (1 - 2 * random.random()) * shake_range
+
+        self.animate(x=self.next_x, y=self.next_y,
+                     duration=self.step_duration,
+                     easing=Easing.Linear.ease_in,
+                     on_update=self.on_render,
+                     on_complete=self.buzz_out)
+
+
+    def on_render(self, sprite):
+        self.graphics.rectangle(-25 + self.prev_x - self.x, -25 + self.prev_y - self.y, 50, 50)
+        self.graphics.fill(self.fill, 0.3)
+
+        self.graphics.rectangle(-25 - self.prev_x + self.x, -25 - self.prev_y + self.y, 50, 50)
+        self.graphics.fill(self.fill, 0.3)
+
+        self.graphics.rectangle(-25, -25, 50, 50)
+        self.graphics.fill(self.fill)
+        self.prev_x, self.prev_y = self.x, self.y
+
+
 class Scene(graphics.Scene):
     def __init__(self):
         graphics.Scene.__init__(self, background_color="#333")
@@ -102,6 +177,7 @@ class Scene(graphics.Scene):
             RattleRandomAngle(),
             RattleRandomAngleShadow(),
             RattleRandomAngle2Shadow(),
+            RattleWithEase(),
         ]
 
         box = layout.HBox()
