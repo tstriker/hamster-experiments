@@ -95,7 +95,7 @@ class ColorUtils(object):
     def gdk(self, color):
         """returns gdk.Color object of the given color"""
         c = self.parse(color)
-        return gdk.Color.from_floats(c)
+        return gdk.Color.from_floats(*c)
 
     def hex(self, color):
         c = self.parse(color)
@@ -126,6 +126,39 @@ def get_gdk_rectangle(x, y, w, h):
     rect = gdk.Rectangle()
     rect.x, rect.y, rect.width, rect.height = x or 0, y or 0, w or 0, h or 0
     return rect
+
+
+
+
+def chain(steps):
+    """chains the given list of functions and object animations into a callback string.
+
+        Expects something in the lines of:[
+            (object, {params}),
+            (callable, {params}),
+            (object, {params}),
+            (object, {params}),
+        ]
+    Assumes that all callees accept on_complete named param
+    """
+    if not steps:
+        return
+
+    def on_done(sprite=None):
+        chain(steps[1:])
+
+    step = steps[0]
+    if isinstance(step, list) or isinstance(step, tuple):
+        obj, params = step[0], (step[1] if len(step) > 1 else {})
+    else:
+        obj, params = step, {}
+
+    if len(steps) > 1:
+        params['on_complete'] = on_done
+    if callable(obj):
+        obj(**params)
+    else:
+        obj.animate(**params)
 
 
 class Graphics(object):
@@ -1639,6 +1672,7 @@ class Scene(Parent, gtk.DrawingArea):
     __gsignals__ = {
        # "draw": "override",
        # "configure_event": "override",
+        "on-first-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-enter-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-finish-frame": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
         "on-resize": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
@@ -1703,7 +1737,9 @@ class Scene(Parent, gtk.DrawingArea):
         self.colors = Colors
 
         #: read only info about current framerate (frames per second)
-        self.fps = 0 # inner frames per second counter
+        self.fps = None # inner frames per second counter
+
+        self._window = None # scenes don't really get reparented
 
         #: Last known x position of the mouse (set on expose event)
         self.mouse_x = None
@@ -1756,7 +1792,6 @@ class Scene(Parent, gtk.DrawingArea):
         self._focus_sprite = None # our internal focus management
 
         self.__last_mouse_move = None
-        self.connect("draw", self.on_draw)
 
         if interactive:
             self.set_can_focus(True)
@@ -1794,6 +1829,12 @@ class Scene(Parent, gtk.DrawingArea):
             if hasattr(self, "style_class"):
                 self._style.remove_class(self.style_class)
             self._style.add_class(val)
+        elif name == "background_color":
+            if val:
+                self.override_background_color(gtk.StateType.NORMAL,
+                                               gdk.RGBA(*Colors.parse(val)))
+            else:
+                self.override_background_color(gtk.StateType.NORMAL, None)
 
         self.__dict__[name] = val
 
@@ -1857,16 +1898,7 @@ class Scene(Parent, gtk.DrawingArea):
         return self.__drawing_queued
 
 
-    def on_draw(self, scene, context):
-        w, h = self.get_allocated_width(), self.get_allocated_height()
-
-        # clip to the visible part
-        if self.background_color:
-            context.rectangle(0, 0, w, h)
-            color = self.colors.parse(self.background_color)
-            context.set_source_rgb(*color)
-            context.fill_preserve()
-
+    def do_draw(self, context):
         if self.scale:
             aspect_x = self.width / self._original_width
             aspect_y = self.height / self._original_height
@@ -1874,18 +1906,21 @@ class Scene(Parent, gtk.DrawingArea):
                 aspect_x = aspect_y = min(aspect_x, aspect_y)
             context.scale(aspect_x, aspect_y)
 
-        cursor, self.mouse_x, self.mouse_y, mods = self.get_window().get_pointer()
+        if self.fps is None:
+            self._window = self.get_window()
+            self.emit("on-first-frame", context)
+
+        cursor, self.mouse_x, self.mouse_y, mods = self._window.get_pointer()
+
 
         # update tweens
         now = dt.datetime.now()
-        delta = (now - (self._last_frame_time or dt.datetime.now()))
-        delta = delta.seconds + delta.microseconds / 1000000.0
+        delta = (now - (self._last_frame_time or dt.datetime.now())).total_seconds()
         self._last_frame_time = now
         if self.tweener:
             self.tweener.update(delta)
 
         self.fps = 1 / delta
-
 
         # start drawing
         self.emit("on-enter-frame", context)
@@ -1978,9 +2013,9 @@ class Scene(Parent, gtk.DrawingArea):
 
         if self.__last_cursor is None or cursor != self.__last_cursor:
             if isinstance(cursor, gdk.Cursor):
-                self.get_window().set_cursor(cursor)
+                self._window.set_cursor(cursor)
             else:
-                self.get_window().set_cursor(gdk.Cursor(cursor))
+                self._window.set_cursor(gdk.Cursor(cursor))
 
             self.__last_cursor = cursor
 
