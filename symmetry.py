@@ -41,6 +41,7 @@ class SymmetricalRepeater(graphics.Sprite):
             self.graphics.rotate(math.radians(angle))
         self.graphics.stroke("#fff")
 
+
 class Handle(graphics.Sprite):
     def __init__(self, **kwargs):
         graphics.Sprite.__init__(self, **kwargs)
@@ -78,15 +79,9 @@ class Scene(graphics.Scene):
             self.handles.add_child(handle)
             handle.connect("on-drag", self.adjust_master_poly)
 
+
     def adjust_master_poly(self, sprite, event):
         self.repeater.master_poly = [(handle.x, handle.y) for handle in self.handles.sprites]
-
-
-    def on_enter_frame(self, scene, context):
-        # you could do all your drawing here, or you could add some sprites
-        g = graphics.Graphics(context)
-
-        # self.redraw() # this is how to get a constant redraw loop (say, for animation)
 
 
 
