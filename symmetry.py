@@ -61,12 +61,21 @@ class Scene(graphics.Scene):
         self.handles = graphics.Sprite()
         self.add_child(self.handles)
         self.repeater = None
+        self.connect("on-resize", self.on_resize)
+        self.connect("on-first-frame", self.on_first_frame)
+
+    def on_first_frame(self, scene, context):
         self.create_repeater(4)
+
+    def on_resize(self, scene, event):
+        for sprite in self.sprites:
+            sprite.x, sprite.y = self.width / 2, self.height / 2
+
 
     def create_repeater(self, sides):
         self.clear()
         master_poly = [(100, 0), (150, 0), (200, 0)]
-        self.repeater = SymmetricalRepeater(sides, master_poly=master_poly, x=300, y=250)
+        self.repeater = SymmetricalRepeater(sides, master_poly=master_poly, x=self.width/2, y=self.height/2)
         self.add_child(self.repeater)
 
         self.add_child(self.handles)
