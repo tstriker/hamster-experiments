@@ -50,9 +50,9 @@ class Button(Label):
         self.colors = {
             # fill, fill, stroke, outer stroke
             "normal": ("#fcfcfc", "#efefef", "#dedcda", "#918e8c"),
-            "highlight": ("#fff", "#F4F3F2", "#dedcda", "#918e8c"),
-            "pressed": ("#CFD1D3", "#B9BBC0", "#E0DEDD", "#5B7AA1"),
-            "focused": ("#fcfcfc", "#efefef", "#52749E", "#89ADDA")
+            "highlight": ("#fff", "#f4f3f2", "#dedcda", "#918e8c"),
+            "pressed": ("#cfd1d3", "#b9bbc0", "#e0dedd", "#5b7aa1"),
+            "focused": ("#fcfcfc", "#efefef", "#52749e", "#89adda")
         }
 
         self.connect("on-mouse-over", self.__on_mouse_over)
