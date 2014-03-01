@@ -140,6 +140,7 @@ def chain(*steps):
             object, {params}
     Assumes that all callees accept on_complete named param.
     The last item in the list can omit that.
+    XXX - figure out where to place these guys as they are quite useful
     """
     if not steps:
         return
@@ -155,6 +156,26 @@ def chain(*steps):
         obj(**params)
     else:
         obj.animate(**params)
+
+def full_pixels(space, data, gap_pixels=1):
+    """returns the given data distributed in the space ensuring it's full pixels
+    and with the given gap.
+    this will result in minor sub-pixel inaccuracies.
+    XXX - figure out where to place these guys as they are quite useful
+    """
+    available = space - (len(data) - 1) * gap_pixels # 8 recs 7 gaps
+
+    res = []
+    for i, val in enumerate(data):
+        # convert data to 0..1 scale so we deal with fractions
+        data_sum = sum(data[i:])
+        norm = val * 1.0 / data_sum
+
+
+        w = max(int(round(available * norm)), 1)
+        res.append(w)
+        available -= w
+    return res
 
 
 class Graphics(object):
@@ -633,6 +654,9 @@ class Parent(object):
             found = sprite.find(id)
             if found:
                 return found
+
+    def __getitem__(self, i):
+        return self.sprites[i]
 
     def traverse(self, attr_name = None, attr_value = None):
         """traverse the whole sprite tree and return child sprites which have the
