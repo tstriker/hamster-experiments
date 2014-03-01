@@ -343,6 +343,12 @@ class Graphics(object):
         """draw arc going clockwise from start_angle to end_angle"""
         self._add_instruction("arc_negative", x, y, radius, start_angle, end_angle)
 
+    def triangle(self, x, y, width, height):
+        self.move_to(x, y)
+        self.line_to(width/2 + x, height + y)
+        self.line_to(width + x, y)
+        self.line_to(x, y)
+
     def rectangle(self, x, y, width, height, corner_radius = 0):
         """draw a rectangle. if corner_radius is specified, will draw
         rounded corners. corner_radius can be either a number or a tuple of
@@ -374,6 +380,18 @@ class Graphics(object):
         self._add_instruction("line_to", x, y + corner_radius[0])
         self._add_instruction("curve_to", x, y + corner_radius[0] / 2, x + corner_radius[0] / 2, y, x + corner_radius[0], y)
 
+    def hexagon(self, x, y, height):
+        side = height * 0.5
+        angle_x = side * 0.5
+        angle_y = side * 0.8660254
+        self.move_to(x, y)
+        self.line_to(x + side, y)
+        self.line_to(x + side + angle_x, y + angle_y)
+        self.line_to(x + side, y + 2*angle_y)
+        self.line_to(x, y + 2*angle_y)
+        self.line_to(x - angle_x, y + angle_y)
+        self.line_to(x, y)
+        self.close_path()
 
     def fill_area(self, x, y, width, height, color, opacity = 1):
         """fill rectangular area with specified color"""
