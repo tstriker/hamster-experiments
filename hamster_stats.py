@@ -1,6 +1,9 @@
 import datetime as dt
 import itertools
 
+from collections import defaultdict
+
+
 def minutes(facts):
     time = dt.timedelta()
     for fact in facts:
