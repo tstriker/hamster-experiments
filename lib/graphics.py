@@ -95,7 +95,7 @@ class ColorUtils(object):
     def gdk(self, color):
         """returns gdk.Color object of the given color"""
         c = self.parse(color)
-        return gdk.Color.from_floats(*c)
+        return gdk.Color.from_floats(c)
 
     def hex(self, color):
         c = self.parse(color)
@@ -126,39 +126,6 @@ def get_gdk_rectangle(x, y, w, h):
     rect = gdk.Rectangle()
     rect.x, rect.y, rect.width, rect.height = x or 0, y or 0, w or 0, h or 0
     return rect
-
-
-
-
-def chain(steps):
-    """chains the given list of functions and object animations into a callback string.
-
-        Expects something in the lines of:[
-            (object, {params}),
-            (callable, {params}),
-            (object, {params}),
-            (object, {params}),
-        ]
-    Assumes that all callees accept on_complete named param
-    """
-    if not steps:
-        return
-
-    def on_done(sprite=None):
-        chain(steps[1:])
-
-    step = steps[0]
-    if isinstance(step, list) or isinstance(step, tuple):
-        obj, params = step[0], (step[1] if len(step) > 1 else {})
-    else:
-        obj, params = step, {}
-
-    if len(steps) > 1:
-        params['on_complete'] = on_done
-    if callable(obj):
-        obj(**params)
-    else:
-        obj.animate(**params)
 
 
 class Graphics(object):
@@ -1226,6 +1193,15 @@ class Sprite(Parent, gobject.GObject):
                 color = debug_colors[depth % len(debug_colors)]
                 context.save()
                 context.identity_matrix()
+
+                scene = self.get_scene()
+                if scene:
+                    # go figure - seems like the context we are given starts
+                    # in window coords when calling identity matrix
+                    scene_alloc = self.get_scene().get_allocation()
+                    context.translate(scene_alloc.x, scene_alloc.y)
+
+
                 context.rectangle(exts.x, exts.y, exts.width, exts.height)
                 context.set_source_rgb(*Colors.parse(color))
                 context.stroke()
