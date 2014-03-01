@@ -254,6 +254,8 @@ class Widget(graphics.Sprite):
             return ((self.min_width or 0) + self.horizontal_padding + self.margin_left + self.margin_right,
                     (self.min_height or 0) + self.vertical_padding + self.margin_top + self.margin_bottom)
 
+    def get_height_for_width_size(self):
+        return self.get_min_size()
 
 
     def insert(self, index = 0, *widgets):
@@ -467,10 +469,6 @@ class Container(Widget):
 
         return self._cached_w, self._cached_h
 
-    def get_height_for_width_size(self):
-        return self.get_min_size()
-
-
     def resize_children(self):
         """default container alignment is to pile stuff just up, respecting only
         padding, margin and element's alignment properties"""
@@ -615,6 +613,7 @@ class Box(Container):
             else:
                 sprite.alloc_w = width / sprite.scale_x
                 size = get_min_size(sprite)[1]
+
                 if hasattr(sprite, "get_height_for_width_size"):
                     size = max(size, sprite.get_height_for_width_size()[1] * sprite.scale_y)
                 size = size + props["margin_top"] + props["margin_bottom"]
