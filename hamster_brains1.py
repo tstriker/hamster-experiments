@@ -20,13 +20,13 @@ def minutes(delta):
     return delta.total_seconds() / 60.0
 
 class SparkBars(layout.Widget):
-    def __init__(self, items=None, width = None, height=None, **kwargs):
+    def __init__(self, items=None, width = None, height=None, color=None, **kwargs):
         layout.Widget.__init__(self, **kwargs)
 
         self.width = width or 100
         self.height = height or 20
         self.bar_width = 10
-        self.fill_color = "#777"
+        self.color = color or "#777"
         self.items = items or []
 
         self.connect("on-render", self.on_render)
@@ -49,7 +49,7 @@ class SparkBars(layout.Widget):
 
             self.graphics.rectangle(0, 0, width, -height)
             self.graphics.translate(width + gap, 0)
-        self.graphics.fill(self.fill_color)
+        self.graphics.fill(self.color)
 
         self.graphics.restore_context()
 
@@ -67,7 +67,6 @@ class Scene(graphics.Scene):
                                     size=50)
         self.add_child(layout.VBox(self.label))
 
-        self.connect("on-enter-frame", self.on_enter_frame)
         gobject.timeout_add(10, self.load_facts)
 
 
@@ -140,11 +139,16 @@ class Scene(graphics.Scene):
             label.max_width = 150
             activity_weekdays[0].add_child(label)
 
+            if workdays[activity]["pattern"] == "workday":
+                color = graphics.Colors.category10[0]
+            else:
+                color = graphics.Colors.category10[2]
+
             hours = [workdays[activity]["by_weekday"].get(i, {}).get("total", 0) for i in range(7)]
-            activity_weekdays[1].add_child(SparkBars(hours))
+            activity_weekdays[1].add_child(SparkBars(hours, color=color))
 
             weeks = by_activity[activity]["by_year_week"]
-            activity_weekdays[2].add_child(SparkBars(weeks, width=200))
+            activity_weekdays[2].add_child(SparkBars(weeks, width=200, color=color))
 
 
     def get_workday_pattern(self, facts_by_activity):
@@ -183,14 +187,6 @@ class Scene(graphics.Scene):
             stats["pattern"] = pattern
 
         return activity_days
-
-
-    def on_enter_frame(self, scene, context):
-        # you could do all your drawing here, or you could add some sprites
-        g = graphics.Graphics(context)
-
-        # self.redraw() # this is how to get a constant redraw loop (say, for animation)
-
 
 
 class BasicWindow:
