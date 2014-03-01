@@ -9,6 +9,7 @@ import math
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GObject as gobject
+from gi.repository import Pango as pango
 from collections import defaultdict
 
 import graphics
@@ -344,7 +345,7 @@ class Widget(graphics.Sprite):
                 w, h = max(w, w2), max(h, h2)
 
             self.graphics.rectangle(0.5, 0.5, w, h)
-            self.graphics.set_line_style(5)
+            self.graphics.set_line_style(3)
             self.graphics.stroke("#666", 0.5)
             self.graphics.restore_context()
 
@@ -812,7 +813,7 @@ class _DisplayLabel(graphics.Label):
 class Label(Bin):
     """a widget that displays a limited amount of read-only text"""
     #: pango.FontDescription to use for the label
-    font_desc = "Sans Serif 10"
+    font_desc = None
 
     #: image attachment. one of top, right, bottom, left
     image_position = "left"
@@ -826,8 +827,8 @@ class Label(Bin):
 
     def __init__(self, text = "", markup = "", spacing = 5, image = None,
                  image_position = None, size = None, font_desc = None,
-                 overflow = False,
-                 color = "#000", background_color = None, **kwargs):
+                 overflow = False, color = "#000", background_color = None,
+                 **kwargs):
 
         # TODO - am initiating table with fill = false but that yields suboptimal label placement and the 0,0 points to whatever parent gave us
         Bin.__init__(self, **kwargs)
