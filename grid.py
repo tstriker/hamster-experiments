@@ -3,12 +3,12 @@
 
 # Copyright 2013 Bryce W. Harrington <bryce@bryceharrington.org>
 # Dual licensed under the MIT or GPL Version 2 licenses.
-# See http://github.com/tbaugis/hamster_experiments/blob/master/README.textile
 
+from gi.repository import Gtk as gtk
 from lib import graphics
 
 class GridElement(object):
-    def __init__(self, i,j, height,width, **args):
+    def __init__(self, i, j, height,width, **args):
         self.__graphic = None
         self.i = i
         self.j = j
@@ -39,17 +39,11 @@ class GridElement(object):
 
     def on_over(self, sprite):
         '''Highlight the cell element when hovering over the element'''
-        if not sprite: return # ignore blank clicks
-        tmp = self.color_foreground
-        self.color_foreground = self.color_stroke
-        self.color_stroke = tmp
+        self.color_foreground, self.color_stroke = self.color_stroke, self.color_foreground
 
     def on_out(self, sprite):
         '''Unhighlight element when mouse no longer over the element'''
-        if not sprite: return # ignore blank clicks
-        tmp = self.color_foreground
-        self.color_foreground = self.color_stroke
-        self.color_stroke = tmp
+        self.color_foreground, self.color_stroke = self.color_stroke, self.color_foreground
 
     def on_render(self, sprite):
         '''Draw the shape for this element'''
@@ -64,7 +58,8 @@ class GridElement(object):
 
 
 class GridElementSprite(graphics.Sprite):
-    def __init__(self, i, j, width=100, height=100, color_foreground="#333", color_stroke="#000", stroke_width=2):
+    def __init__(self, i, j, width=100, height=100, color_foreground="#333",
+                 color_stroke="#000", stroke_width=2):
         graphics.Sprite.__init__(self)
         self.i = i
         self.j = j
@@ -78,21 +73,21 @@ class GridElementSprite(graphics.Sprite):
 
 class Grid(graphics.Sprite):
     '''Infinite 2D array of grid elements'''
-    def __init__(self, x=0, y=0, x_spacing=50, y_spacing=50):
+    def __init__(self, x_spacing=50, y_spacing=50, **kwargs):
         '''
         The x,y coordinates is the canvas location for the top left
         origin of the grid.  The x_spacing and y_spacing are the offsets
         of each subsequent grid element's location.  The spacings should
         be equal to the grid element dimensions to make a regular packed grid.
         '''
-        graphics.Sprite.__init__(self, x=x, y=y)
+        graphics.Sprite.__init__(self, **kwargs)
         self.x_spacing = x_spacing
         self.y_spacing = y_spacing
         self.__elements = {}
         self.connect("on-render", self.on_render)
 
     def add(self, e):
-        '''Adds an element to the grid at the element's i,j coordinate'''
+        '''Adds an element to the grid at the element's i, j coordinate'''
         if e.i not in self.__elements.keys():
             self.__elements[e.i] = {}
         self.__elements[e.i][e.j] = e
@@ -113,18 +108,18 @@ class Grid(graphics.Sprite):
         del self.__elements[i][j]
 
     def on_render(self, widget):
-        '''Handler to render all elements in the grid'''
+        '''Repopulate the grid'''
+        self.clear()
+
         x = 0
-        y = 0
-        self.graphics.clear()
-        self.sprites = []
         for column in self.__elements.values():
+            y = 0
             for e in column.values():
                 e.set_origin(x, y)
                 e.on_render(e.graphic)
                 self.add_child(e.graphic)
                 y += self.y_spacing
-            y = 0
+
             x += self.x_spacing
 
     def elements(self):
@@ -137,8 +132,6 @@ class Grid(graphics.Sprite):
 class TriangularGridElement(GridElement):
     x_spacing_factor = 0.5
     y_spacing_factor = 1
-    def __init__(self, i,j, height,width, **args):
-        GridElement.__init__(self, i,j, height,width, **args)
 
     def set_origin(self, x,y):
         if self.i % 2 == 0:
@@ -166,8 +159,6 @@ class TriangularGridElement(GridElement):
 class RectangularGridElement(GridElement):
     x_spacing_factor = 1
     y_spacing_factor = 1
-    def __init__(self, i,j, height,width, **args):
-        GridElement.__init__(self, i,j, height,width, **args)
 
     def set_origin(self, x,y):
         GridElement.set_origin(self, x, y)
@@ -183,18 +174,16 @@ class RectangularGridElement(GridElement):
 class HexagonalGridElement(GridElement):
     x_spacing_factor = 0.75
     y_spacing_factor = 0.866
-    def __init__(self, i,j, height,width, **args):
-        GridElement.__init__(self, i,j, height,width, **args)
 
-    def set_origin(self, x,y):
+    def set_origin(self, x, y):
         if self.i % 2 == 1:
-            GridElement.set_origin(self, x, y + self.height/2 * 0.866)
+            GridElement.set_origin(self, x, y + self.height / 2.0 * 0.866)
         else:
             GridElement.set_origin(self, x, y)
 
     def on_render(self, sprite):
         sprite.graphics.clear()
-        sprite.graphics.hexagon(0,0, self.height)
+        sprite.graphics.hexagon(0, 0, self.height)
         sprite.graphics.set_line_style(self.stroke_width)
         sprite.graphics.fill_preserve(self.color_foreground)
         sprite.graphics.stroke(self.color_stroke)
@@ -207,40 +196,41 @@ class Scene(graphics.Scene):
         RectangularGridElement,
         HexagonalGridElement,
         TriangularGridElement,
-        ]
+    ]
 
-    def __init__(self, width, height):
-        assert(width)
-        assert(height)
-
+    def __init__(self):
         graphics.Scene.__init__(self)
-        self.background_color = "#000"
+        self.background_color = "#333"
         self.element_number = 0
         self.size = 60
         self.margin = 30
         self.cols = 0
         self.rows = 0
-        self.old_width = width
-        self.old_height = height
+
+        self.grid = None
 
         self.connect('on-mouse-over', self.on_mouse_over)
         self.connect('on-mouse-out', self.on_mouse_out)
         self.connect('on-resize', self.on_resize)
-        self.create_grid(self.margin, self.margin, width-self.margin, height-self.margin)
+
+
+    def on_resize(self, scene, event):
+        if not self.grid:
+            self.create_grid(self.margin,
+                             self.margin,
+                             self.width - self.margin * 2,
+                             self.height - self.margin * 2)
+
+        self._resize_grid()
+        self.grid.on_render(scene)
 
     def cols_visible(self):
         '''Calculate the number of cols that should fit in the current window dimensions'''
-        w = self.width
-        if w is None:
-            w = self.old_width
-        return int( (w - 2*self.margin) / self.grid.x_spacing )
+        return int((self.width - 2 * self.margin) / self.grid.x_spacing)
 
     def rows_visible(self):
         '''Calculate the number of cols that should fit in the current window dimensions'''
-        h = self.height
-        if h is None:
-            h = self.old_height
-        return int( (h - 2*self.margin) / self.grid.y_spacing )
+        return int((self.height - 2 * self.margin) / self.grid.y_spacing)
 
     def create_element(self, cls, i, j):
         '''Create a sprite element of type cls at the given location'''
@@ -290,20 +280,22 @@ class Scene(graphics.Scene):
         '''Switch to different type of grid, and redraw'''
         self.element_number = element_number
         cls = self.ELEMENT_CLASSES[self.element_number]
+        self.grid.clear()
         for e in self.grid.elements():
             new_e = cls(e.i, e.j, self.size, self.size, **e.args)
             new_e.on_click = e.on_click
             self.grid.set(e.i, e.j, new_e)
+
         self.grid.x_spacing = self.size * new_e.x_spacing_factor
         self.grid.y_spacing = self.size * new_e.y_spacing_factor
         self._resize_grid()
         self.grid.on_render(new_e)
 
     def prev_grid_type(self, widget, event):
-        self._set_grid_type( (self.element_number - 1) % len(self.ELEMENT_CLASSES))
+        self._set_grid_type((self.element_number - 1) % len(self.ELEMENT_CLASSES))
 
     def next_grid_type(self, widget, event):
-        self._set_grid_type( (self.element_number + 1) % len(self.ELEMENT_CLASSES))
+        self._set_grid_type((self.element_number + 1) % len(self.ELEMENT_CLASSES))
 
     def _resize_grid(self):
         '''Add or remove cols and rows to fill window'''
@@ -347,10 +339,6 @@ class Scene(graphics.Scene):
         self.set_action(0, 0, self.prev_grid_type)
         self.set_action(self.cols-1, 0, self.next_grid_type)
 
-    def on_resize(self, scene, event):
-        self._resize_grid()
-        self.grid.on_render(scene)
-
     def on_mouse_over(self, scene, sprite):
         if not sprite: return # ignore blank clicks
         if self.tweener.get_tweens(sprite): return
@@ -366,15 +354,16 @@ class Scene(graphics.Scene):
 
 
 if __name__ == '__main__':
-    import gtk
-
     class BasicWindow:
         def __init__(self):
-            window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-            window.set_default_size(800, 800)
+            window = gtk.Window()
+            window.set_default_size(600, 600)
             window.connect("delete_event", lambda *args: gtk.main_quit())
-            window.add(Scene(800, 800))
+            window.add(Scene())
             window.show_all()
 
+
     window = BasicWindow()
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # gtk3 screws up ctrl+c
     gtk.main()
