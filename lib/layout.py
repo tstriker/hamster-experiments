@@ -826,8 +826,8 @@ class Label(Bin):
 
     def __init__(self, text = "", markup = "", spacing = 5, image = None,
                  image_position = None, size = None, font_desc = None,
-                 overflow = False, color = "#000", background_color = None,
-                 **kwargs):
+                 max_width = None, overflow = False, color = "#000",
+                 background_color = None, **kwargs):
 
         # TODO - am initiating table with fill = false but that yields suboptimal label placement and the 0,0 points to whatever parent gave us
         Bin.__init__(self, **kwargs)
@@ -857,6 +857,9 @@ class Label(Bin):
         #: if set to False will refuse to become smaller
         self.overflow = overflow
 
+        #: when specified, will deal with label with as specified in overflow
+        self.max_width = max_width
+
         self.add_child(self.container)
 
         self._position_contents()
@@ -882,7 +885,7 @@ class Label(Bin):
         return self.display_label.color
 
     def __setattr__(self, name, val):
-        if name in ("text", "markup", "color", "size"):
+        if name in ("text", "markup", "color", "size", "max_width"):
             if self.display_label.__dict__.get(name, "hamster_graphics_no_value_really") == val:
                 return
             setattr(self.display_label, name, val)
@@ -923,6 +926,12 @@ class Label(Bin):
                 self._position_contents()
                 self.container.queue_resize()
 
+    def get_min_size(self):
+        w, h = self.display_label.width, self.display_label.height
+        if self.display_label.max_width:
+            return min(w, self.display_label.max_width), h
+
+        return w, h
 
     def _update_max_width(self):
         # updates labels max width, respecting image and spacing
