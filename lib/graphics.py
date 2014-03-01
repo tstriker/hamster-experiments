@@ -128,6 +128,35 @@ def get_gdk_rectangle(x, y, w, h):
     return rect
 
 
+
+
+def chain(*steps):
+    """chains the given list of functions and object animations into a callback string.
+
+        Expects an interlaced list of object and params, something like:
+            object, {params},
+            callable, {params},
+            object, {},
+            object, {params}
+    Assumes that all callees accept on_complete named param.
+    The last item in the list can omit that.
+    """
+    if not steps:
+        return
+
+    def on_done(sprite=None):
+        chain(*steps[2:])
+
+    obj, params = steps[:2]
+
+    if len(steps) > 2:
+        params['on_complete'] = on_done
+    if callable(obj):
+        obj(**params)
+    else:
+        obj.animate(**params)
+
+
 class Graphics(object):
     """If context is given upon contruction, will perform drawing
        operations on context instantly. Otherwise queues up the drawing
