@@ -15,9 +15,9 @@ from lib import graphics
 from lib import layout
 
 from hamster.client import Storage
+from hamster_stats import Stats, minutes
 
-def minutes(delta):
-    return delta.total_seconds() / 60.0
+
 
 class SparkBars(layout.Widget):
     def __init__(self, items=None, width = None, height=None, **kwargs):
@@ -84,34 +84,8 @@ class Scene(graphics.Scene):
 
 
     def on_facts_loaded(self):
-        by_activity = {}
-        for fact in self.facts:
-            activity = "%s@%s" % (fact.activity, fact.category)
-            rec = by_activity.setdefault(activity,
-                                         {"activity": fact.activity,
-                                          "category": fact.category,
-                                          "facts": []})
-            rec['facts'].append(fact)
-
-
-
-        by_activity_hour = defaultdict(lambda: defaultdict(float))
-        for activity, stats in by_activity.iteritems():
-            for fact in stats["facts"]:
-                minutes = fact.delta.total_seconds() / 60.0
-                hours = int(minutes // 60)
-                minutes = round(minutes - hours * 60)
-
-                for i in range(hours):
-                    by_activity_hour[activity][(fact.start_time + dt.timedelta(hours=i)).hour] += 1
-
-                by_activity_hour[activity][(fact.start_time + dt.timedelta(hours=hours)).hour] += minutes / 60.0
-
-        hours = range(24)
-        hours = hours[6:] + hours[:6]
-        for activity in by_activity_hour.keys():
-            by_activity_hour[activity] = [by_activity_hour[activity][i] for i in hours]
-
+        stats = Stats(self.facts, lambda fact: (fact.category, fact.activity))
+        by_hour = stats.by_hour()
 
 
         self.clear()
@@ -131,13 +105,12 @@ class Scene(graphics.Scene):
         activity_weekdays[1].add_child(layout.Label("Hour of the day", expand=False, x_align=0))
 
 
-        for activity in sorted([(rec["category"], rec["activity"]) for rec in by_activity.itervalues()]):
-            activity = "%s@%s" % (activity[1], activity[0])
-
-            label = layout.Label(activity, color="#333", size=12, x_align=0, y_align=0.5)
+        for activity in sorted(stats.groups.keys()):
+            label = layout.Label("%s@%s" % (activity[1], activity[0]),
+                                 color="#333", size=12, x_align=0, y_align=0.5)
             label.max_width = 150
             activity_weekdays[0].add_child(label)
-            activity_weekdays[1].add_child(SparkBars(by_activity_hour[activity], 150))
+            activity_weekdays[1].add_child(SparkBars(by_hour[activity], 150))
 
 
 class BasicWindow:
