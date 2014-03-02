@@ -68,12 +68,15 @@ class Scene(graphics.Scene):
 
 
     def load_facts(self):
+        # chunk size
         end = self._load_end_date
-        start = end - dt.timedelta(days=365)
+        start = end - dt.timedelta(days=30)
         self.facts = self.storage.get_facts(start, end) + self.facts
 
         self._load_end_date = start - dt.timedelta(days=1)
-        if end > dt.datetime(2013, 1, 1):
+
+        # limiter
+        if end > dt.datetime.now() - dt.timedelta(days=365):
             self.label.text = "Loading %d..." % len(self.facts)
             gobject.timeout_add(10, self.load_facts)
         else:
@@ -133,44 +136,6 @@ class Scene(graphics.Scene):
 
             weeks = by_week[activity]
             activity_weekdays[2].add_child(SparkBars(weeks, width=200, color=color))
-
-
-    def get_workday_pattern(self, facts_by_activity):
-        activity_days = {}
-
-        for activity, rec in facts_by_activity.iteritems():
-            stats = activity_days.setdefault(activity,
-                                             {"by_weekday": {},
-                                              "workday_sums": {"count": 0, "total": 0},
-                                              "weekend_sums": {"count": 0, "total": 0},
-                                             })
-
-            for fact in rec['facts']:
-                weekday_rec = stats["by_weekday"].setdefault(fact.date.weekday(),
-                                                             {"facts": [],
-                                                              "total": 0})
-                weekday_rec["facts"].append(fact)
-                weekday_rec["total"] += minutes(fact.delta)
-
-                if fact.date.weekday() in  (5, 6):
-                    stats["weekend_sums"]["count"] += 1
-                    stats["weekend_sums"]["total"] += minutes(fact.delta)
-                else:
-                    stats["workday_sums"]["count"] += 1
-                    stats["workday_sums"]["total"] += minutes(fact.delta)
-
-
-        # reduce down to simple workday/weekday pattern
-        for activity, stats in activity_days.iteritems():
-            work, weekend = stats["workday_sums"], stats["weekend_sums"]
-
-            total = (work["total"] + weekend["total"])
-
-
-            pattern = "workday" if work["total"] / total > 0.8 and work["count"] > 10 else "other"
-            stats["pattern"] = pattern
-
-        return activity_days
 
 
 class BasicWindow:
