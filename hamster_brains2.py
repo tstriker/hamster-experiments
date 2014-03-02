@@ -71,12 +71,15 @@ class Scene(graphics.Scene):
 
 
     def load_facts(self):
+        # chunk size
         end = self._load_end_date
-        start = end - dt.timedelta(days=365)
+        start = end - dt.timedelta(days=30)
         self.facts = self.storage.get_facts(start, end) + self.facts
 
         self._load_end_date = start - dt.timedelta(days=1)
-        if end > dt.datetime(2013, 1, 1):
+
+        # limiter
+        if end > dt.datetime.now() - dt.timedelta(days=365):
             self.label.text = "Loading %d..." % len(self.facts)
             gobject.timeout_add(10, self.load_facts)
         else:
