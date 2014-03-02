@@ -76,15 +76,41 @@ class Scene(graphics.Scene):
         self._load_end_date = start - dt.timedelta(days=1)
 
         # limiter
-        if end > dt.datetime.now() - dt.timedelta(days=365):
+        if end > dt.datetime.now() - dt.timedelta(days=565):
             self.label.text = "Loading %d..." % len(self.facts)
             gobject.timeout_add(10, self.load_facts)
         else:
             self.on_facts_loaded()
 
-
     def on_facts_loaded(self):
-        stats = Stats(self.facts, lambda fact: (fact.category, fact.activity))
+        self.clear()
+        main = layout.VBox(padding=10, spacing=10)
+        self.add_child(main)
+
+        first_row = layout.HBox(spacing=10, expand=False)
+        main.add_child(first_row)
+
+        # add sparkbars of activity by weekday
+        row = layout.HBox([layout.VBox(spacing=20, expand=False),
+                                       layout.VBox(spacing=15, expand=False),
+                                       layout.VBox(spacing=15)
+                           ], spacing=20)
+        first_row.add_child(row)
+
+        row[0].add_child(layout.Label("Category", expand=False, x_align=0))
+        row[1].add_child(layout.Label("Weekdays", expand=False, x_align=0))
+        row[2].add_child(layout.Label("By week", expand=False, x_align=0))
+        self._add_stats(row, lambda fact: (fact.category, ""))
+
+        row[0].add_child(layout.Label("Activity", expand=False, x_align=0, margin_top=20))
+        row[1].add_child(layout.Label("Weekdays", expand=False, x_align=0, margin_top=20))
+        row[2].add_child(layout.Label("By week", expand=False, x_align=0, margin_top=20))
+        self._add_stats(row, lambda fact: (fact.category, fact.activity))
+
+
+
+    def _add_stats(self, container, toplevel_group):
+        stats = Stats(self.facts, toplevel_group)
         by_week = stats.by_week()
 
         # group by weekday
@@ -99,32 +125,12 @@ class Scene(graphics.Scene):
 
 
 
-
-        self.clear()
-        main = layout.VBox(padding=10, spacing=10)
-        self.add_child(main)
-
-        first_row = layout.HBox(spacing=10, expand=False)
-        main.add_child(first_row)
-
-        # add sparkbars of activity by weekday
-        activity_weekdays = layout.HBox([layout.VBox(spacing=15, expand=False),
-                                         layout.VBox(spacing=15, expand=False),
-                                         layout.VBox(spacing=15)
-                                        ], spacing=20)
-        first_row.add_child(activity_weekdays)
-
-        activity_weekdays[0].add_child(layout.Label("Activity", expand=False, x_align=0))
-        activity_weekdays[1].add_child(layout.Label("Weekdays", expand=False, x_align=0))
-        activity_weekdays[2].add_child(layout.Label("By week", expand=False, x_align=0))
-
-
         for activity in sorted(stats.groups.keys()):
             label = layout.Label("%s@%s" % (activity[1], activity[0]),
                                  color="#333",
                                  size=12, x_align=0, y_align=0.5)
             label.max_width = 150
-            activity_weekdays[0].add_child(label)
+            container[0].add_child(label)
 
             if by_work_hobby[activity] == "workday":
                 color = graphics.Colors.category10[0]
@@ -132,10 +138,13 @@ class Scene(graphics.Scene):
                 color = graphics.Colors.category10[2]
 
             hours = [rec for rec in by_weekday[activity]]
-            activity_weekdays[1].add_child(SparkBars(hours, color=color))
+            container[1].add_child(SparkBars(hours, color=color))
 
             weeks = by_week[activity]
-            activity_weekdays[2].add_child(SparkBars(weeks, width=200, color=color))
+            container[2].add_child(SparkBars(weeks, width=200, color=color))
+
+
+
 
 
 class BasicWindow:
