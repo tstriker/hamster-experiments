@@ -87,10 +87,6 @@ class Scene(graphics.Scene):
 
 
     def on_facts_loaded(self):
-        stats = Stats(self.facts, lambda fact: (fact.category, fact.activity))
-        by_hour = stats.by_hour()
-
-
         self.clear()
         main = layout.VBox(padding=10, spacing=10)
         self.add_child(main)
@@ -104,9 +100,22 @@ class Scene(graphics.Scene):
                                         ], spacing=20)
         first_row.add_child(activity_weekdays)
 
+        activity_weekdays[0].add_child(layout.Label("Category", expand=False, x_align=0))
+        activity_weekdays[1].add_child(layout.Label("Hour of the day", expand=False, x_align=0))
+        stats = Stats(self.facts, lambda fact: (fact.category, ""))
+        by_hour = stats.by_hour()
+        for activity in sorted(stats.groups.keys()):
+            label = layout.Label("%s@%s" % (activity[1], activity[0]),
+                                 color="#333", size=12, x_align=0, y_align=0.5)
+            label.max_width = 150
+            activity_weekdays[0].add_child(label)
+            activity_weekdays[1].add_child(SparkBars(by_hour[activity], 150))
+
+
         activity_weekdays[0].add_child(layout.Label("Activity", expand=False, x_align=0))
         activity_weekdays[1].add_child(layout.Label("Hour of the day", expand=False, x_align=0))
-
+        stats = Stats(self.facts, lambda fact: (fact.category, fact.activity))
+        by_hour = stats.by_hour()
 
         for activity in sorted(stats.groups.keys()):
             label = layout.Label("%s@%s" % (activity[1], activity[0]),
@@ -114,6 +123,8 @@ class Scene(graphics.Scene):
             label.max_width = 150
             activity_weekdays[0].add_child(label)
             activity_weekdays[1].add_child(SparkBars(by_hour[activity], 150))
+
+
 
 
 class BasicWindow:
