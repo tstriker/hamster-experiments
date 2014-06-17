@@ -2118,7 +2118,8 @@ class Scene(Parent, gtk.DrawingArea):
             self.emit("on-drag", self._drag_sprite, event)
 
         if self._mouse_sprite:
-            sprite_event = gdk.Event.copy(event)
+            sprite_event = event.copy()
+
             sprite_event.x, sprite_event.y = self._mouse_sprite.from_scene_coords(event.x, event.y)
             self._mouse_sprite._do_mouse_move(sprite_event)
 
@@ -2158,7 +2159,7 @@ class Scene(Parent, gtk.DrawingArea):
         if event.type == gdk.EventType.BUTTON_PRESS:
             self.emit("on-mouse-down", event)
             if target:
-                target_event = gdk.Event.copy(event)
+                target_event = event.copy()
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_mouse_down(target_event)
             else:
@@ -2166,13 +2167,13 @@ class Scene(Parent, gtk.DrawingArea):
         elif event.type == gdk.EventType._2BUTTON_PRESS:
             self.emit("on-double-click", event)
             if target:
-                target_event = gdk.Event.copy(event)
+                target_event = event.copy()
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_double_click(target_event)
         elif event.type == gdk.EventType._3BUTTON_PRESS:
             self.emit("on-triple-click", event)
             if target:
-                target_event = gdk.Event.copy(event)
+                target_event = event.copy()
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_triple_click(target_event)
 
@@ -2192,7 +2193,7 @@ class Scene(Parent, gtk.DrawingArea):
                                            (event.y - self.__drag_start_y) ** 2 < self.drag_distance
         if (click and self.__drag_started == False) or not self._drag_sprite:
             if target and target == self._mouse_down_sprite:
-                target_event = gdk.Event.copy(event)
+                target_event = event.copy()
                 target_event.x, target_event.y = target.from_scene_coords(event.x, event.y)
                 target._do_click(target_event)
 
