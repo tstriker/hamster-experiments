@@ -2071,6 +2071,7 @@ class Scene(Parent, gtk.DrawingArea):
     def __on_mouse_move(self, scene, event):
         if self.__last_mouse_move:
             gobject.source_remove(self.__last_mouse_move)
+            self.__last_mouse_move = None
 
         self.mouse_x, self.mouse_y = event.x, event.y
 
