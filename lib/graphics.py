@@ -1886,11 +1886,34 @@ class Scene(Parent, gtk.DrawingArea):
         self.__dict__[name] = val
 
     # these two mimic sprite functions so parent check can be avoided
-    def from_scene_coords(self, x, y): return x, y
-    def to_scene_coords(self, x, y): return x, y
-    def get_matrix(self): return cairo.Matrix()
-    def get_scene(self): return self
+    def from_scene_coords(self, x, y):
+        # unscale the coordinates
+        aspect_x, aspect_y = self._get_aspect_x_y()
+        return x / aspect_x, y / aspect_y
 
+    def to_scene_coords(self, x, y):
+        # scale the coordinates
+        aspect_x, aspect_y = self._get_aspect_x_y()
+        return x * aspect_x, y * aspect_y
+
+    def get_matrix(self):
+        # return the scaling matrix
+        aspect_x, aspect_y = self._get_aspect_x_y()
+        matrix = cairo.Matrix()
+        matrix.scale(aspect_x, aspect_y)
+        return matrix
+
+    def _get_aspect_x_y(self):
+        """returns the current aspect ratio for the Scene"""
+        if not self.scale:
+            return 1, 1
+        aspect_x = self.width / float(self._original_width)
+        aspect_y = self.height / float(self._original_height)
+        if self.keep_aspect:
+            aspect_x = aspect_y = min(aspect_x, aspect_y)
+        return aspect_x, aspect_y
+
+    def get_scene(self): return self
 
     def animate(self, sprite, duration = None, easing = None, on_complete = None,
                 on_update = None, round = False, **kwargs):
@@ -1947,10 +1970,7 @@ class Scene(Parent, gtk.DrawingArea):
 
     def do_draw(self, context):
         if self.scale:
-            aspect_x = self.width / self._original_width
-            aspect_y = self.height / self._original_height
-            if self.keep_aspect:
-                aspect_x = aspect_y = min(aspect_x, aspect_y)
+            aspect_x, aspect_y = self._get_aspect_x_y()
             context.scale(aspect_x, aspect_y)
 
         if self.fps is None:
@@ -2012,6 +2032,7 @@ class Scene(Parent, gtk.DrawingArea):
 
     def get_sprite_at_position(self, x, y):
         """Returns the topmost visible interactive sprite for given coordinates"""
+        x, y = self.from_scene_coords(x, y)
         over = None
         for sprite in self.all_mouse_sprites():
             if sprite.interactive and sprite.check_hit(x, y):
@@ -2108,6 +2129,7 @@ class Scene(Parent, gtk.DrawingArea):
 
         if self._drag_sprite:
             diff_x, diff_y = event.x - self.__drag_start_x, event.y - self.__drag_start_y
+            diff_x, diff_y = self.from_scene_coords(diff_x, diff_y)
             if isinstance(self._drag_sprite.parent, Sprite):
                 matrix = self._drag_sprite.parent.get_matrix()
                 matrix.invert()
