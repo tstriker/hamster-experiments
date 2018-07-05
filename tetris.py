@@ -4,6 +4,7 @@
 
 """Not tetris"""
 import gi
+import math
 import random
 
 gi.require_version("Gtk", "3.0")
@@ -11,7 +12,6 @@ from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GObject as gobject
 from lib import graphics
-from math import pi
 
 
 
@@ -108,6 +108,9 @@ class Tray(graphics.Sprite):
                 self.add_child(block)
                 self.blocks[-1].append(block)
 
+                #if row == self.height - 1 and col < self.width-1:
+                #    block.color = 1
+
         self.current_col = self.width // 2
         self.current_row = 0
         self.current = TShape(size=self.size, x=self.current_col * size, y=self.current_row)
@@ -184,6 +187,7 @@ class Tray(graphics.Sprite):
                     block.animate(scale_x=0, scale_y=0, duration=0.5, on_complete=self._kill_block)
 
             self.animate(duration=1, delay=2, on_complete=self._move_blocks)
+            self.emit("lines-cleared", len(popped))
 
     def _move_blocks(self, sprite):
         for r, row in enumerate(self.blocks):
@@ -225,39 +229,66 @@ class Scene(graphics.Scene):
         self.connect("on-key-press", self.on_key_press)
         self.connect("on-key-release", self.on_key_release)
 
+        self._init_tray()
+
+        self._throttling = False
+
+        gobject.timeout_add(1000 // (1 * 40), self._throttle_tick)
+        self._ticking = False
+        self.start_ticking()
+
+    def _init_tray(self):
+        self.clear()
         self.tray = Tray(size=30, x=50, y=50)
         self.tray.connect("game-over", self.on_game_over)
         self.tray.connect("lines-cleared", self.on_lines_cleared)
-
         self.add_child(self.tray)
-        self._throttling = False
-        self._ticking = False
 
-        self.start_ticking()
+        self.score_label = graphics.Label("Score: 0", size=20, x=400, y=100, color="#333")
+        self.level_label = graphics.Label("Level: 1", size=18, x=400, y=130, color="#555")
+        self.add_child(self.score_label, self.level_label)
+
+        self.lines_cleared = 0
+        self.score = 0
+        self.level = 1
 
     def _tick(self):
         if not self._throttling:
             self.tray.tick()
-        return self._ticking
+        return self._ticking is not None
 
     def _throttle_tick(self):
         if self._throttling:
             self.tray.tick()
-        return self._ticking
+        return self._ticking is not None
 
     def on_game_over(self, event):
-        self._ticking = False
+        self._init_tray()
 
-    def on_lines_cleared(self, lines):
-        pass
+    def on_lines_cleared(self, sprite, lines):
+        self.lines_cleared += lines
+        level = (self.lines_cleared // 20) + 1
+        if self.level != level:
+            self.level = level
+            self.level_label.text = "Level: %d" % self.level
+            gobject.source_remove(self._ticking)
+            self.start_ticking()
+
+
+        def _update_score_label(sprite):
+            self.score_label.text = "Score: %d" % int(sprite.score)
+        self.score_label.score = self.score
+        self.score += lines * 100 +  math.pow(max(0, lines-1), 2) * 5
+        self.score_label.animate(score=self.score, on_update=_update_score_label)
 
 
     def start_ticking(self):
-        self._ticking = True
-        gobject.timeout_add(1000 // (1 * 1), self._tick)
-        gobject.timeout_add(1000 // (1 * 40), self._throttle_tick)
+        self._ticking = gobject.timeout_add(1000 // (1 * self.level * 0.8), self._tick)
 
     def throttle(self, throttling=True):
+        if self._throttling == throttling:
+            return
+
         self._throttling = throttling;
         if throttling:
             self._tick()
