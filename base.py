@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # - coding: utf-8 -
-# Copyright (C) 2014 Toms Baugis <toms.baugis@gmail.com>
+# Copyright (C) 2018 Tom Striker <tom.striker.b@gmail.com>
 
 """Base template"""
 
